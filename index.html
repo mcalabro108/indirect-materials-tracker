@@ -1890,30 +1890,33 @@ function buildPrintFormHTML(sups, cats){
     var cs = cats[cat]||{bg:'#f9fafb',text:'#374151'};
     html += '<div style="background:' + cs.bg + ';color:' + cs.text + ';padding:7px 14px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid ' + cs.text + '22;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
       + escHtml(cat) + '</div>'
-      + '<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:13px">'
+      + '<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;table-layout:fixed">'
+      + '<colgroup><col style="width:13%"><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:12%"></colgroup>'
       + '<thead><tr>'
-        + '<th style="background:#f4f6f9;font-size:11px;font-weight:700;padding:7px 10px;border:1px solid #e2e6ed;text-align:left;min-width:160px">Supply Item</th>'
-        + '<th style="background:#e8ecf6;font-size:11px;font-weight:700;padding:7px 10px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;text-align:center;min-width:160px">Location 1<br><span style="font-weight:400;font-size:9px">Aisle / Col / Lvl</span></th>'
-        + '<th style="background:#e8ecf6;font-size:11px;font-weight:700;padding:7px 10px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;text-align:center;min-width:160px">Location 2<br><span style="font-weight:400;font-size:9px">Aisle / Col / Lvl</span></th>'
-        + '<th style="background:#e8ecf6;font-size:11px;font-weight:700;padding:7px 10px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;text-align:center;min-width:160px">Location 3<br><span style="font-weight:400;font-size:9px">Aisle / Col / Lvl</span></th>'
-        + '<th style="background:#f4f6f9;font-size:11px;font-weight:700;padding:7px 10px;border:1px solid #e2e6ed;min-width:100px">Notes</th>'
+        + '<th style="background:#f4f6f9;font-size:10px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;text-align:left">Supply Item</th>'
+        + '<th style="background:#e8ecf6;font-size:10px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;text-align:left">Location 1</th>'
+        + '<th style="background:#e8ecf6;font-size:10px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;text-align:left">Location 2</th>'
+        + '<th style="background:#e8ecf6;font-size:10px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;text-align:left">Location 3</th>'
+        + '<th style="background:#f4f6f9;font-size:10px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;text-align:left">Notes</th>'
       + '</tr></thead><tbody>';
     items.forEach(function(item, idx){
       var bg = idx%2===0 ? '#fff' : '#fafbfc';
-      var locCell = '<td style="background:#fff;padding:8px 10px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;vertical-align:middle">'
-        + '<div style="font-size:10px;font-weight:700;color:#1a2f5e;line-height:2.4">'
-          + 'Aisle <span style="display:inline-block;width:40px;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>&nbsp;&nbsp;'
-          + 'Col <span style="display:inline-block;width:30px;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>&nbsp;&nbsp;'
-          + 'Lvl <span style="display:inline-block;width:30px;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>'
+      var locCell = '<td style="background:'+bg+';padding:9px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;vertical-align:middle">'
+        + '<div style="font-size:10px;font-weight:700;color:#1a2f5e;display:block;margin-bottom:16px;line-height:1.6">'
+          + 'Aisle <span style="display:inline-block;width:15%;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>&nbsp;'
+          + 'Col <span style="display:inline-block;width:12%;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>&nbsp;'
+          + 'Lvl <span style="display:inline-block;width:12%;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>'
         + '</div>'
-        + '<div style="font-size:9px;color:#6b7280;margin-top:2px">ea. Pallets <span style="display:inline-block;width:28px;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>&nbsp;'
-          + 'ea. Cartons <span style="display:inline-block;width:28px;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>'
+        + '<div style="font-size:9px;color:#6b7280;display:block;line-height:1.6">'
+          + 'Each <span style="display:inline-block;width:13%;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>&nbsp;'
+          + 'Pallets <span style="display:inline-block;width:13%;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>&nbsp;'
+          + 'Cartons <span style="display:inline-block;width:13%;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>'
         + '</div>'
       + '</td>';
       html += '<tr style="background:' + bg + '">'
-        + '<td style="padding:8px 10px;border:1px solid #e2e6ed;font-weight:700;font-size:13px;vertical-align:middle">' + escHtml(item) + '</td>'
+        + '<td style="background:'+bg+';padding:8px 6px;border:1px solid #e2e6ed;font-weight:700;font-size:11px;vertical-align:middle;overflow:hidden">' + escHtml(item) + '</td>'
         + locCell + locCell + locCell
-        + '<td style="background:' + bg + ';padding:8px 10px;border:1px solid #e2e6ed"></td>'
+        + '<td style="background:'+bg+';padding:8px 6px;border:1px solid #e2e6ed"></td>'
       + '</tr>';
     });
     html += '</tbody></table></div>';
