@@ -124,8 +124,52 @@ body{font-family:'Inter',Arial,sans-serif;background:var(--offwhite);color:var(-
 .rack-wrap{overflow-x:auto;padding-bottom:1rem}
 .rack-grid{display:grid;gap:7px;min-width:fit-content}
 
-/* RACK CONTROLS - add/remove row/col buttons */
-.rack-ctrl-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+/* ── STEEL RACK ──────────────────────────────────────────────────────────── */
+.rack-wrap{overflow-x:auto;padding-bottom:1rem}
+.rack-frame{display:flex;gap:0;align-items:stretch;position:relative;background:#2a2f3a;border-radius:12px;padding:10px 8px 14px;box-shadow:0 4px 24px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)}
+.rack-frame::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--orange);border-radius:12px 12px 0 0}
+.rack-upright{width:14px;background:linear-gradient(to right,#3a4050,#4a5060,#3a4050);border-radius:4px;flex-shrink:0;position:relative;box-shadow:2px 0 6px rgba(0,0,0,.3)}
+.rack-upright::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:4px;height:100%;background:rgba(255,255,255,.07);border-radius:2px}
+.rack-col-tower{display:flex;flex-direction:column;flex:0 0 var(--slot-w);min-width:180px;position:relative}
+.rack-col-hd{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px 8px;background:#1e2330;border-bottom:2px solid var(--orange)}
+.rack-col-hd input.inline-name-input{background:transparent;border:none;border-bottom:1.5px solid rgba(255,255,255,.2);color:#e2e8f0;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;text-align:center;width:90%;padding:2px 4px;outline:none}
+.rack-col-hd input.inline-name-input:focus{border-bottom-color:var(--orange);color:#fff}
+.rack-col-hd .col-level-ctrl{display:flex;align-items:center;gap:5px;margin-top:3px}
+.rack-col-hd .col-level-ctrl span{font-size:10px;color:rgba(255,255,255,.35);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.rack-col-hd .col-level-ctrl button{width:20px;height:20px;border-radius:5px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;transition:all .12s}
+.rack-col-hd .col-level-ctrl button.add:hover{background:#16a34a;border-color:#16a34a;color:#fff}
+.rack-col-hd .col-level-ctrl button.sub:hover{background:#dc2626;border-color:#dc2626;color:#fff}
+.rack-beam{height:10px;background:linear-gradient(to bottom,#F47920,#d4641a);position:relative;margin:0 0;flex-shrink:0;box-shadow:0 2px 6px rgba(244,121,32,.4)}
+.rack-beam::before,.rack-beam::after{content:'';position:absolute;top:50%;transform:translateY(-50%);width:12px;height:12px;background:#2a2f3a;border-radius:50%;border:2px solid rgba(244,121,32,.6)}
+.rack-beam::before{left:6px}
+.rack-beam::after{right:6px}
+.rack-bay{padding:5px 6px;background:#1e2330;position:relative;flex:1;min-height:80px;display:flex;flex-direction:column;gap:0}
+.rack-bay-label{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 4px;gap:4px}
+.rack-bay-label input.inline-name-input{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.4);font-size:10px;font-weight:600;font-family:'Inter',sans-serif;padding:1px 2px;outline:none;width:70px}
+.rack-bay-label input.inline-name-input:focus{border-bottom-color:var(--orange);color:#fff}
+/* Slots inside bays */
+.rack-slot-row{display:flex;gap:4px;flex:1}
+.steel-slot{flex:1;background:#fff;border-radius:7px;padding:8px;cursor:pointer;position:relative;min-height:72px;transition:all .15s;border:2px solid transparent;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.steel-slot:hover{border-color:var(--orange);box-shadow:0 2px 10px rgba(244,121,32,.3);transform:translateY(-1px)}
+.steel-slot.filled{border-color:rgba(26,47,94,.2)}
+.steel-slot .slot-section-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:#2a2f3a;padding:0 4px;border-radius:3px;white-space:nowrap}
+/* Section controls */
+.slot-ctrl-bar{position:absolute;bottom:3px;right:3px;display:flex;gap:2px;opacity:0;transition:opacity .15s}
+.steel-slot:hover .slot-ctrl-bar{opacity:1}
+.slot-ctrl-btn{width:18px;height:18px;border-radius:4px;border:1px solid rgba(0,0,0,.15);background:rgba(255,255,255,.9);cursor:pointer;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;transition:all .12s}
+.slot-ctrl-btn.add-sec{color:#16a34a;border-color:#bbf7d0}
+.slot-ctrl-btn.add-sec:hover{background:#16a34a;color:#fff;border-color:#16a34a}
+.slot-ctrl-btn.rem-sec{color:#dc2626;border-color:#fecaca}
+.slot-ctrl-btn.rem-sec:hover{background:#dc2626;color:#fff;border-color:#dc2626}
+.slot-ctrl-btn.del-slot{color:#6b7280;border-color:#e5e7eb}
+.slot-ctrl-btn.del-slot:hover{background:#dc2626;color:#fff;border-color:#dc2626}
+/* Insert col strips */
+.rack-ins-col{width:22px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(79,70,229,.04);border-radius:6px;transition:background .15s;cursor:pointer}
+.rack-ins-col:hover{background:rgba(79,70,229,.12)}
+.rack-ins-col button{width:22px;height:22px;border-radius:7px;border:2px solid #c7d2fe;background:#eef2ff;cursor:pointer;font-size:14px;font-weight:800;color:#4f46e5;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0;line-height:1}
+.rack-ins-col button:hover{background:#4f46e5;border-color:#4f46e5;color:#fff;transform:scale(1.15)}
+/* Controls bar */
+.rack-ctrl-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
 .rack-ctrl-bar .rck-name{font-size:17px;font-weight:800;color:var(--dark)}
 .ctrl-group{display:flex;align-items:center;gap:0;background:#fff;border:1px solid var(--gray-lt);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07)}
 .ctrl-group .ctrl-lbl{font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;padding:0 10px;border-right:1px solid var(--gray-lt);background:var(--offwhite);height:38px;display:flex;align-items:center}
@@ -571,10 +615,25 @@ var fbSupListener = null;
 var sharedSupplies = null; // loaded from /shared path
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
+function emptySection(){
+  return {supply:"",cat:"",note:"",updated:"",updatedBy:"",qtys:{}};
+}
 function emptySlot(){
-  return {supply:"",cat:"",note:"",updated:"",updatedBy:"",lr:false,qtys:{},
-    left:{supply:"",cat:"",note:"",updated:"",updatedBy:"",qtys:{}},
-    right:{supply:"",cat:"",note:"",updated:"",updatedBy:"",qtys:{}}};
+  return {sections:[emptySection()]};
+}
+function slotFromLegacy(old){
+  // Convert old {supply,cat,note,qtys,lr,left,right} to new sections format
+  if(old&&old.sections) return old; // already new format
+  var s={sections:[]};
+  if(old&&old.lr&&old.left&&old.right){
+    s.sections.push({supply:old.left.supply||"",cat:old.left.cat||"",note:old.left.note||"",qtys:old.left.qtys||{},updated:old.left.updated||"",updatedBy:old.left.updatedBy||""});
+    s.sections.push({supply:old.right.supply||"",cat:old.right.cat||"",note:old.right.note||"",qtys:old.right.qtys||{},updated:old.right.updated||"",updatedBy:old.right.updatedBy||""});
+  } else if(old&&old.supply!==undefined){
+    s.sections.push({supply:old.supply||"",cat:old.cat||"",note:old.note||"",qtys:old.qtys||{},updated:old.updated||"",updatedBy:old.updatedBy||""});
+  } else {
+    s.sections.push(emptySection());
+  }
+  return s;
 }
 function objToArr(val, len){
   if(!val) return Array.from({length:len},function(){return emptySlot();});
@@ -593,15 +652,24 @@ function buildInitialDCState(){
          qtyTypes:["Pallets","Cartons"]};
   DEFAULT_RACKS.forEach(function(r){
     s.rackOrder.push(r.id);
-    s.racks[r.id]={name:r.name,cols:r.cols,levels:r.levels,rows:[],
-      colNames:makeColNames(r.cols), levelNames:makeLevelNames(r.levels)};
-    for(var lv=r.levels;lv>=1;lv--){
-      var row=[];
-      for(var c=0;c<r.cols;c++) row.push(emptySlot());
-      s.racks[r.id].rows.push(row);
-    }
+    s.racks[r.id]=buildRackData(r.name,r.cols,r.levels);
   });
   return s;
+}
+
+function buildRackData(name,cols,levels){
+  var r={name:name,cols:cols,levels:levels,
+    colNames:makeColNames(cols),
+    colLevels:Array.from({length:cols},function(){return levels;}),
+    colLevelNames:Array.from({length:cols},function(){return makeLevelNames(levels);}),
+    slots:{}};
+  // slots keyed by "ci_li"
+  for(var ci=0;ci<cols;ci++){
+    for(var li=0;li<levels;li++){
+      r.slots[ci+"_"+li]=emptySlot();
+    }
+  }
+  return r;
 }
 function makeColNames(n){
   var a=[];
@@ -625,18 +693,43 @@ function normaliseDCState(raw){
     if(!r.name)   r.name=rid;
     if(!r.cols)   r.cols=1;
     if(!r.levels) r.levels=1;
-    if(!r.rows)   r.rows=[];
-    // Ensure colNames / levelNames arrays exist and are correct length
+    // Migrate old rows format → new slots format
+    if(r.rows&&!r.slots){
+      r.slots={};
+      var rows=r.rows;
+      if(!Array.isArray(rows)) rows=Object.values(rows);
+      rows.forEach(function(row,li){
+        if(!Array.isArray(row)) row=Object.values(row||{});
+        row.forEach(function(slot,ci){
+          r.slots[ci+"_"+li]=slotFromLegacy(slot);
+        });
+      });
+      delete r.rows;
+    }
+    if(!r.slots) r.slots={};
+    // colNames
     if(!r.colNames||!Array.isArray(r.colNames)) r.colNames=makeColNames(r.cols);
     while(r.colNames.length<r.cols) r.colNames.push("Col "+(r.colNames.length+1));
     if(r.colNames.length>r.cols) r.colNames=r.colNames.slice(0,r.cols);
-    if(!r.levelNames||!Array.isArray(r.levelNames)) r.levelNames=makeLevelNames(r.levels);
-    while(r.levelNames.length<r.levels) r.levelNames.unshift("Lvl "+(r.levels-r.levelNames.length+1));
-    if(r.levelNames.length>r.levels) r.levelNames=r.levelNames.slice(0,r.levels);
-    // normalise rows array (Firebase object→array)
-    var outerLen=r.levels;
-    var outer=objToArr(r.rows, outerLen);
-    r.rows=outer.map(function(row){ return objToArr(row, r.cols); });
+    // colLevels — per-column level count
+    if(!r.colLevels||!Array.isArray(r.colLevels)) r.colLevels=Array.from({length:r.cols},function(){return r.levels;});
+    while(r.colLevels.length<r.cols) r.colLevels.push(r.levels);
+    if(r.colLevels.length>r.cols) r.colLevels=r.colLevels.slice(0,r.cols);
+    // colLevelNames — per-column, per-level names
+    if(!r.colLevelNames||!Array.isArray(r.colLevelNames)) r.colLevelNames=Array.from({length:r.cols},function(_,ci){return makeLevelNames(r.colLevels[ci]);});
+    while(r.colLevelNames.length<r.cols) r.colLevelNames.push(makeLevelNames(r.colLevels[r.colLevelNames.length]||r.levels));
+    if(r.colLevelNames.length>r.cols) r.colLevelNames=r.colLevelNames.slice(0,r.cols);
+    r.colLevelNames.forEach(function(names,ci){
+      if(!Array.isArray(names)) r.colLevelNames[ci]=makeLevelNames(r.colLevels[ci]);
+      var n=r.colLevels[ci];
+      while(r.colLevelNames[ci].length<n) r.colLevelNames[ci].unshift("Lvl "+(n-r.colLevelNames[ci].length));
+      if(r.colLevelNames[ci].length>n) r.colLevelNames[ci]=r.colLevelNames[ci].slice(0,n);
+    });
+    // Normalise all slots
+    Object.keys(r.slots).forEach(function(key){
+      r.slots[key]=slotFromLegacy(r.slots[key]);
+      if(!Array.isArray(r.slots[key].sections)||!r.slots[key].sections.length) r.slots[key].sections=[emptySection()];
+    });
   });
   return raw;
 }
@@ -853,23 +946,18 @@ function renderContent(){
 function renderRack(rack, rackId){
   var cats=sharedSupplies?sharedSupplies.cats:DCATS;
   var html='';
-
-  // Controls bar
+  // Controls bar — columns only (levels now per-column)
   html+='<div class="rack-ctrl-bar">'
     +'<div class="rck-name">'+rack.name+'</div>'
-    // Column controls
     +'<div class="ctrl-group">'
       +'<span class="ctrl-lbl">Columns</span>'
-      +'<button class="ctrl-btn sub" onclick="removeCol(\''+rackId+'\',null)" title="Remove last column">−</button>'
+      +'<button class="ctrl-btn sub" onclick="removeCol(\''+rackId+'\',null)">−</button>'
       +'<span class="ctrl-val">'+rack.cols+'</span>'
-      +'<button class="ctrl-btn add" onclick="addCol(\''+rackId+'\',null)" title="Add column at end">+</button>'
+      +'<button class="ctrl-btn add" onclick="addCol(\''+rackId+'\',null)">+</button>'
     +'</div>'
-    // Level controls
-    +'<div class="ctrl-group">'
-      +'<span class="ctrl-lbl">Levels</span>'
-      +'<button class="ctrl-btn sub" onclick="removeLevel(\''+rackId+'\',null)" title="Remove last level">−</button>'
-      +'<span class="ctrl-val">'+rack.levels+'</span>'
-      +'<button class="ctrl-btn add" onclick="addLevel(\''+rackId+'\',null)" title="Add level at bottom">+</button>'
+    +'<div style="font-size:12px;color:var(--gray);display:flex;align-items:center;gap:5px">'
+      +'<span style="display:inline-block;width:12px;height:3px;background:var(--orange);border-radius:2px"></span>'
+      +'Each column has independent level controls at the top'
     +'</div>'
     +'</div>';
 
@@ -881,95 +969,131 @@ function renderRack(rack, rackId){
   });
   html+='</div>';
 
-  // Grid column template: level label col + insert-before col + (slot + insert-after) per col
-  // We'll render: [level] [+col] [slot col1] [+col] [slot col2] ... [+col]
-  var colCount=rack.cols;
-  // Grid: 1 level col + (colCount + 1) insert cols + colCount slot cols
-  // Simpler: use flex rows instead for insert-at-position
-  html+='<div class="rack-wrap"><table style="border-collapse:separate;border-spacing:7px">';
+  // Steel rack frame
+  html+='<div class="rack-wrap"><div class="rack-frame">';
 
-  // Header row: level spacer + insert-col buttons + col labels
-  html+='<tr><td style="width:72px"></td>';
-  for(var ci=0;ci<=colCount;ci++){
-    html+='<td class="ins-col-cell">'
-      +'<button class="ins-col-btn" onclick="addCol(\''+rackId+'\','+ci+')" title="Insert column here">+</button></td>';
-    if(ci<colCount){
-      var cName=(rack.colNames&&rack.colNames[ci])||("Col "+(ci+1));
-      html+='<td style="vertical-align:bottom;text-align:center">'
-        +'<div class="col-lbl-wrap">'
-        +'<input class="inline-name-input" type="text" value="'+cName+'"'
+  for(var ci=0;ci<=rack.cols;ci++){
+    // Insert column strip
+    html+='<div class="rack-ins-col" title="Insert column here" onclick="addCol(\''+rackId+'\','+ci+')">'
+      +'<button onclick="event.stopPropagation();addCol(\''+rackId+'\','+ci+')" title="Insert column here">+</button>'
+    +'</div>';
+    if(ci>=rack.cols) break;
+
+    // Upright post
+    html+='<div class="rack-upright"></div>';
+
+    // Column tower
+    var colLevels=rack.colLevels&&rack.colLevels[ci]?rack.colLevels[ci]:rack.levels;
+    var colLevelNames=(rack.colLevelNames&&rack.colLevelNames[ci])||makeLevelNames(colLevels);
+    var cName=(rack.colNames&&rack.colNames[ci])||("Col "+(ci+1));
+
+    // Column tower — width scales with max sections in this column
+    var maxSec=1;
+    for(var li2=0;li2<colLevels;li2++){
+      var sk=ci+"_"+li2;
+      var sl=rack.slots&&rack.slots[sk];
+      if(sl&&sl.sections&&sl.sections.length>maxSec) maxSec=sl.sections.length;
+    }
+    var towerW=Math.max(180, maxSec*160);
+
+    html+='<div class="rack-col-tower" style="flex:0 0 '+towerW+'px;min-width:'+towerW+'px">'
+      // Column header
+      +'<div class="rack-col-hd">'
+        +'<input class="inline-name-input" type="text" value="'+escHtml(cName)+'"'
           +' onchange="renameCol(\''+rackId+'\','+ci+',this.value)"'
-          +' onclick="event.stopPropagation()" title="Click to rename column">'
-        +'<div style="display:flex;align-items:center;gap:2px">'
-        +'<button class="del-col-btn" onclick="removeCol(\''+rackId+'\','+ci+')" title="Remove this column">✕</button>'
-        +'</div></div></td>';
+          +' onclick="event.stopPropagation()" title="Click to rename">'
+        +'<div class="col-level-ctrl">'
+          +'<span>Levels</span>'
+          +'<button class="sub" onclick="removeColLevel(\''+rackId+'\','+ci+')" title="Remove level">−</button>'
+          +'<span style="color:#fff;font-size:11px;min-width:14px;text-align:center">'+colLevels+'</span>'
+          +'<button class="add" onclick="addColLevel(\''+rackId+'\','+ci+')" title="Add level">+</button>'
+        +'</div>'
+        +'<button onclick="removeCol(\''+rackId+'\','+ci+')" style="width:18px;height:18px;border-radius:5px;border:1px solid rgba(220,38,38,.4);background:rgba(220,38,38,.15);color:#fca5a5;font-size:11px;cursor:pointer;margin-top:3px" title="Remove column">✕</button>'
+      +'</div>';
+
+    // Levels — top to bottom
+    for(var li=0;li<colLevels;li++){
+      var lvName=colLevelNames[li]||("Lvl "+(colLevels-li));
+      var slotKey=ci+"_"+li;
+      var slot=(rack.slots&&rack.slots[slotKey])||emptySlot();
+      if(!slot.sections||!slot.sections.length) slot.sections=[emptySection()];
+
+      // Beam (orange horizontal bar) between levels
+      if(li>0) html+='<div class="rack-beam"></div>';
+
+      html+='<div class="rack-bay">'
+        +'<div class="rack-bay-label">'
+          +'<input class="inline-name-input" type="text" value="'+escHtml(lvName)+'"'
+            +' onchange="renameColLevel(\''+rackId+'\','+ci+','+li+',this.value)"'
+            +' onclick="event.stopPropagation()" title="Rename level">'
+          +'<button onclick="removeColLevel(\''+rackId+'\','+ci+')" style="width:14px;height:14px;border-radius:4px;border:none;background:rgba(220,38,38,.15);color:#fca5a5;font-size:9px;cursor:pointer;flex-shrink:0;line-height:1" title="Remove this level">✕</button>'
+        +'</div>'
+        +'<div class="rack-slot-row">';
+
+      // Sections
+      var numSec=slot.sections.length;
+      slot.sections.forEach(function(sec,si){
+        var secLabel=numSec>1?["Left","Ctr-L","Center","Ctr-R","Right"].slice(0,numSec)[si]||("S"+(si+1)):null;
+        html+='<div class="steel-slot'+(sec.supply?" filled":"")
+          +'" onclick="openSlotModal(\''+rackId+'\',\''+slotKey+'\','+si+')">'
+          +(secLabel?'<div class="slot-section-lbl">'+secLabel+'</div>':"")
+          +buildSlotInner(sec)
+          +'<div class="slot-ctrl-bar" onclick="event.stopPropagation()">'
+            +(numSec<5?'<button class="slot-ctrl-btn add-sec" onclick="addSection(\''+rackId+'\',\''+slotKey+'\')" title="Add section">+</button>':"")
+            +(numSec>1?'<button class="slot-ctrl-btn rem-sec" onclick="removeSection(\''+rackId+'\',\''+slotKey+'\')" title="Remove last section">−</button>':"")
+          +'</div>'
+        +'</div>';
+      });
+
+      html+='</div></div>'; // close slot-row + bay
     }
-  }
-  html+='</tr>';
-
-  // Data rows
-  for(var li=0;li<rack.rows.length;li++){
-    var lv=rack.levels-li;
-    var row=Array.isArray(rack.rows[li])?rack.rows[li]:[];
-
-    // Insert-level-above button row
-    html+='<tr>'
-      +'<td class="ins-row-cell">'
-        +'<button class="ins-row-btn" onclick="addLevel(\''+rackId+'\','+li+')" title="Insert level here">+</button>'
-      +'</td>'
-      +'<td colspan="'+(colCount*2+1)+'" style="background:linear-gradient(to right,rgba(22,163,74,.04),transparent);height:8px;border-radius:4px"></td></tr>';
-
-    // Actual level row
-    html+='<tr>';
-    var lvName=(rack.levelNames&&rack.levelNames[li])||("Lvl "+lv);
-    html+='<td style="vertical-align:middle">'
-      +'<div class="level-lbl-wrap" style="flex-direction:column;align-items:flex-start;gap:3px">'
-        +'<input class="inline-name-input" type="text" value="'+lvName+'"'
-          +' onchange="renameLevel(\''+rackId+'\','+li+',this.value)"'
-          +' onclick="event.stopPropagation()" title="Click to rename level" style="width:68px;font-size:11px">'
-        +'<button class="del-row-btn" onclick="removeLevel(\''+rackId+'\','+li+')" title="Remove this level">✕</button>'
-      +'</div></td>';
-
-    for(var ci2=0;ci2<=colCount;ci2++){
-      // Insert-col cell between slots
-      html+='<td class="ins-col-cell"></td>';
-      if(ci2<colCount){
-        var slot=row[ci2]||emptySlot();
-        html+='<td>'+buildSlotHTML(slot,rackId,li,ci2)+'</td>';
-      }
-    }
-    html+='</tr>';
+    html+='</div>'; // close col-tower
   }
 
-  // Bottom insert-level row
-  html+='<tr>'
-    +'<td class="ins-row-cell">'
-      +'<button class="ins-row-btn" onclick="addLevel(\''+rackId+'\','+rack.rows.length+')" title="Add level at bottom">+</button>'
-    +'</td>'
-    +'<td colspan="'+(colCount*2+1)+'" style="background:linear-gradient(to right,rgba(22,163,74,.04),transparent);height:8px;border-radius:4px"></td></tr>';
-
-  html+='</table></div>';
+  // Final upright
+  html+='<div class="rack-upright"></div>';
+  html+='</div></div>'; // close rack-frame + rack-wrap
   return html;
 }
 
 // ── ADD/REMOVE COLUMNS ────────────────────────────────────────────────────
 function addCol(rackId, atIndex){
   var r=state.racks[rackId]; if(!r)return;
-  var insertAt=(atIndex===null||atIndex===undefined)?r.cols:atIndex;
+  var at=(atIndex===null||atIndex===undefined)?r.cols:atIndex;
+  var newLevels=r.levels||3;
+  // Shift existing slot keys
+  var newSlots={};
+  Object.keys(r.slots||{}).forEach(function(k){
+    var parts=k.split("_"); var ci=parseInt(parts[0]),li=parseInt(parts[1]);
+    newSlots[(ci>=at?ci+1:ci)+"_"+li]=r.slots[k];
+  });
+  // Add new column slots
+  for(var li=0;li<newLevels;li++) newSlots[at+"_"+li]=emptySlot();
+  r.slots=newSlots;
   r.cols++;
-  if(!r.colNames) r.colNames=makeColNames(r.cols-1);
-  r.colNames.splice(insertAt,0,"Col "+(insertAt+1));
-  r.rows.forEach(function(row){ row.splice(insertAt,0,emptySlot()); });
+  r.colNames=r.colNames||makeColNames(r.cols-1);
+  r.colNames.splice(at,0,"Col "+(at+1));
+  r.colLevels=r.colLevels||Array.from({length:r.cols-1},function(){return r.levels;});
+  r.colLevels.splice(at,0,newLevels);
+  r.colLevelNames=r.colLevelNames||[];
+  r.colLevelNames.splice(at,0,makeLevelNames(newLevels));
   saveDB(); renderContent();
 }
 function removeCol(rackId, atIndex){
   var r=state.racks[rackId]; if(!r||r.cols<=1)return;
-  var removeAt=(atIndex===null||atIndex===undefined)?r.cols-1:atIndex;
-  var cName=(r.colNames&&r.colNames[removeAt])||("Col "+(removeAt+1));
-  if(!confirm("Remove column \""+cName+"\"? Any data in it will be lost."))return;
-  r.cols--;
-  if(r.colNames) r.colNames.splice(removeAt,1);
-  r.rows.forEach(function(row){ row.splice(removeAt,1); });
+  var at=(atIndex===null||atIndex===undefined)?r.cols-1:atIndex;
+  var cName=(r.colNames&&r.colNames[at])||("Col "+(at+1));
+  if(!confirm("Remove column \""+cName+"\"? All data in it will be lost."))return;
+  var newSlots={};
+  Object.keys(r.slots||{}).forEach(function(k){
+    var parts=k.split("_"); var ci=parseInt(parts[0]),li=parseInt(parts[1]);
+    if(ci===at)return;
+    newSlots[(ci>at?ci-1:ci)+"_"+li]=r.slots[k];
+  });
+  r.slots=newSlots; r.cols--;
+  if(r.colNames) r.colNames.splice(at,1);
+  if(r.colLevels) r.colLevels.splice(at,1);
+  if(r.colLevelNames) r.colLevelNames.splice(at,1);
   saveDB(); renderContent();
 }
 function renameCol(rackId, ci, val){
@@ -979,132 +1103,131 @@ function renameCol(rackId, ci, val){
   saveDB();
 }
 
-// ── ADD/REMOVE LEVELS ─────────────────────────────────────────────────────
-function addLevel(rackId, atIndex){
+// ── PER-COLUMN LEVEL CONTROLS ─────────────────────────────────────────────
+function addColLevel(rackId, ci){
   var r=state.racks[rackId]; if(!r)return;
-  var insertAt=(atIndex===null||atIndex===undefined)?r.rows.length:atIndex;
-  var newRow=[];
-  for(var c=0;c<r.cols;c++) newRow.push(emptySlot());
-  r.rows.splice(insertAt,0,newRow);
-  r.levels++;
-  if(!r.levelNames) r.levelNames=makeLevelNames(r.levels-1);
-  r.levelNames.splice(insertAt,0,"Lvl "+(r.levels-insertAt));
+  if(!r.colLevels) r.colLevels=Array.from({length:r.cols},function(){return r.levels;});
+  if(!r.colLevelNames) r.colLevelNames=Array.from({length:r.cols},function(_,i){return makeLevelNames(r.colLevels[i]||r.levels);});
+  var newLi=r.colLevels[ci]; // new level goes at bottom
+  r.colLevels[ci]++;
+  r.colLevelNames[ci].push("Lvl "+(r.colLevels[ci]));
+  if(!r.slots) r.slots={};
+  r.slots[ci+"_"+newLi]=emptySlot();
   saveDB(); renderContent();
 }
-function removeLevel(rackId, atIndex){
-  var r=state.racks[rackId]; if(!r||r.levels<=1)return;
-  var removeAt=(atIndex===null||atIndex===undefined)?r.rows.length-1:atIndex;
-  var lvName=(r.levelNames&&r.levelNames[removeAt])||("Lvl "+(r.levels-removeAt));
-  if(!confirm("Remove level \""+lvName+"\"? Any data in it will be lost."))return;
-  r.rows.splice(removeAt,1);
-  r.levels--;
-  if(r.levelNames) r.levelNames.splice(removeAt,1);
+function removeColLevel(rackId, ci){
+  var r=state.racks[rackId]; if(!r)return;
+  if(!r.colLevels) r.colLevels=Array.from({length:r.cols},function(){return r.levels;});
+  if(r.colLevels[ci]<=1){alert("Must have at least one level.");return;}
+  var removeLi=r.colLevels[ci]-1;
+  if(!confirm("Remove the bottom level of this column?"))return;
+  r.colLevels[ci]--;
+  if(r.colLevelNames&&r.colLevelNames[ci]) r.colLevelNames[ci].pop();
+  delete r.slots[ci+"_"+removeLi];
   saveDB(); renderContent();
 }
-function renameLevel(rackId, li, val){
+function renameColLevel(rackId, ci, li, val){
   var r=state.racks[rackId]; if(!r)return;
-  if(!r.levelNames) r.levelNames=makeLevelNames(r.levels);
-  r.levelNames[li]=(val||"").trim()||("Lvl "+(r.levels-li));
+  if(!r.colLevelNames) r.colLevelNames=Array.from({length:r.cols},function(_,i){return makeLevelNames(r.colLevels&&r.colLevels[i]||r.levels);});
+  if(!r.colLevelNames[ci]) r.colLevelNames[ci]=makeLevelNames(r.colLevels&&r.colLevels[ci]||r.levels);
+  r.colLevelNames[ci][li]=(val||"").trim()||("Lvl "+(r.colLevels[ci]-li));
   saveDB();
 }
 
-// ── SLOT RENDERING ────────────────────────────────────────────────────────
-function buildSlotHTML(slot,rackId,li,ci){
-  var esc=rackId.replace(/'/g,"\\'");
-  if(slot.lr){
-    return '<div class="slot has-lr">'
-      +'<button class="lr-btn" onclick="event.stopPropagation();doToggleLR(\''+esc+'\','+li+','+ci+')">merge</button>'
-      +'<div class="half" onclick="openModal(\''+esc+'\','+li+','+ci+',\'left\')"><div class="lr-lbl">Left</div>'+buildSlotInner(slot.left||{})+'</div>'
-      +'<div class="half" onclick="openModal(\''+esc+'\','+li+','+ci+',\'right\')"><div class="lr-lbl">Right</div>'+buildSlotInner(slot.right||{})+'</div>'
-      +'</div>';
-  }
-  return '<div class="slot" onclick="openModal(\''+esc+'\','+li+','+ci+',null)" style="padding-right:62px">'
-    +'<button class="lr-btn" onclick="event.stopPropagation();doToggleLR(\''+esc+'\','+li+','+ci+')">split L/R</button>'
-    +buildSlotInner(slot)+'</div>';
+// ── SECTION CONTROLS ─────────────────────────────────────────────────────
+function addSection(rackId, slotKey){
+  var r=state.racks[rackId]; if(!r)return;
+  if(!r.slots[slotKey]) r.slots[slotKey]=emptySlot();
+  if(r.slots[slotKey].sections.length>=5){alert("Maximum 5 sections per slot.");return;}
+  r.slots[slotKey].sections.push(emptySection());
+  saveDB(); renderContent();
 }
+function removeSection(rackId, slotKey){
+  var r=state.racks[rackId]; if(!r)return;
+  if(!r.slots[slotKey]||r.slots[slotKey].sections.length<=1)return;
+  if(!confirm("Remove the last section? Its data will be lost."))return;
+  r.slots[slotKey].sections.pop();
+  saveDB(); renderContent();
+}
+
+// ── SLOT RENDERING ────────────────────────────────────────────────────────
 function buildSlotInner(s){
   if(!s||!s.supply) return '<div class="s-empty">— empty —</div>';
   var cats=sharedSupplies?sharedSupplies.cats:DCATS;
   var c=cats[s.cat]||cats["Other"]||{bg:"#f9fafb",text:"#374151"};
   var qtys=s.qtys||{};
   var qtyTypes=(state&&state.qtyTypes)||["Pallets","Cartons"];
-  // Build qty badges — only show types that have a non-zero value
   var qtyBadges='';
   var allTypes=qtyTypes.slice();
-  // also include any custom keys stored on the slot not in qtyTypes
   Object.keys(qtys).forEach(function(k){ if(allTypes.indexOf(k)<0) allTypes.push(k); });
   allTypes.forEach(function(type){
     var val=qtys[type];
-    if(val&&parseInt(val)>0){
-      qtyBadges+='<div class="s-qty-badge"><span class="qty-val">'+val+'</span><span class="qty-lbl">'+type+'</span></div>';
-    }
+    if(val&&parseInt(val)>0) qtyBadges+='<div class="s-qty-badge"><span class="qty-val">'+val+'</span><span class="qty-lbl">'+type+'</span></div>';
   });
-  return '<div class="s-cat" style="background:'+c.bg+';color:'+c.text+'">'+s.cat+'</div>'
-    +'<div class="s-name">'+s.supply+'</div>'
+  return '<div class="s-cat" style="background:'+c.bg+';color:'+c.text+'">'+escHtml(s.cat)+'</div>'
+    +'<div class="s-name">'+escHtml(s.supply)+'</div>'
     +(qtyBadges?'<div class="s-qtys">'+qtyBadges+'</div>':"")
-    +(s.note?'<div class="s-note">'+s.note+'</div>':"")
-    +(s.updated?'<div class="s-date">Updated '+s.updated+'</div>':"")
-    +(s.updatedBy?'<div class="s-who">by '+s.updatedBy+'</div>':"");
-}
-function doToggleLR(rackId,li,ci){
-  state.racks[rackId].rows[li][ci].lr=!state.racks[rackId].rows[li][ci].lr;
-  saveDB(); renderContent();
+    +(s.note?'<div class="s-note">'+escHtml(s.note)+'</div>':"")
+    +(s.updated?'<div class="s-date">'+s.updated+(s.updatedBy?' · <span class="s-who">'+escHtml(s.updatedBy)+'</span>':"")+'</div>':"");
 }
 
 // ── MODAL ─────────────────────────────────────────────────────────────────
-function openModal(rackId,li,ci,side){
+var modalData=null;
+function openSlotModal(rackId, slotKey, si){
   var rack=state.racks[rackId]; if(!rack)return;
-  var slot=(rack.rows[li]&&rack.rows[li][ci])||emptySlot();
-  var data=side?(slot[side]||{}):slot;
-  var lv=rack.levels-li;
-  var colName=(rack.colNames&&rack.colNames[ci])||("Col "+(ci+1));
-  var lvName=(rack.levelNames&&rack.levelNames[li])||("Lvl "+lv);
-  var label=side?colName+" \xB7 "+lvName+" \xB7 "+(side==="left"?"Left":"Right"):colName+" \xB7 "+lvName;
-  modalData={rackId:rackId,li:li,ci:ci,side:side};
+  if(!rack.slots[slotKey]) rack.slots[slotKey]=emptySlot();
+  var slot=rack.slots[slotKey];
+  if(!slot.sections||!slot.sections.length) slot.sections=[emptySection()];
+  if(si>=slot.sections.length) si=slot.sections.length-1;
+  var sec=slot.sections[si];
+  var parts=slotKey.split("_"); var ci=parseInt(parts[0]),li=parseInt(parts[1]);
+  var cName=(rack.colNames&&rack.colNames[ci])||("Col "+(ci+1));
+  var colLevels=rack.colLevels&&rack.colLevels[ci]?rack.colLevels[ci]:rack.levels;
+  var colLevelNames=(rack.colLevelNames&&rack.colLevelNames[ci])||makeLevelNames(colLevels);
+  var lvName=colLevelNames[li]||("Lvl "+(colLevels-li));
+  var secLabel=slot.sections.length>1?(" · "+["Left","Ctr-L","Center","Ctr-R","Right"].slice(0,slot.sections.length)[si]):"";
+  var label=cName+" · "+lvName+secLabel;
+  modalData={rackId:rackId,slotKey:slotKey,si:si};
+
   var cats=sharedSupplies?sharedSupplies.cats:DCATS;
   var sups=sharedSupplies?sharedSupplies.supplies:DSUP;
-  var catOpts=Object.keys(cats).map(function(c){
-    return '<option value="'+c+'"'+(data.cat===c?" selected":"")+'>'+c+'</option>';
-  }).join("");
+  var catOpts=Object.keys(cats).map(function(c){ return '<option value="'+c+'"'+(sec.cat===c?" selected":"")+'>'+c+'</option>'; }).join("");
   var supOpts='<option value="">— select supply —</option>';
   Object.keys(sups).forEach(function(cat){
     var items=sups[cat]||[]; if(!items.length)return;
     supOpts+='<optgroup label="'+cat+'">';
-    items.forEach(function(i){ supOpts+='<option value="'+i+'"'+(data.supply===i?" selected":"")+'>'+i+'</option>'; });
+    items.forEach(function(i){ supOpts+='<option value="'+i+'"'+(sec.supply===i?" selected":"")+'>'+i+'</option>'; });
     supOpts+='</optgroup>';
   });
   supOpts+='<optgroup label="Custom"><option value="__custom__">+ Type custom name...</option></optgroup>';
   var qtyTypes=(state&&state.qtyTypes)||["Pallets","Cartons"];
-  var qtys=data.qtys||{};
-  // Build qty grid rows
+  var qtys=sec.qtys||{};
   var qtyInputs='<div class="m-qty-section"><label>Quantities</label><div class="m-qty-grid">';
   qtyTypes.forEach(function(type,ti){
-    var val=qtys[type]||"";
     qtyInputs+='<div class="m-qty-row">'
-      +'<span class="qty-type-lbl">'+type+'</span>'
-      +'<input type="number" min="0" id="mqty_'+ti+'" data-qtype="'+type.replace(/"/g,"&quot;")+'" value="'+val+'" placeholder="0">'
-      +'</div>';
+      +'<span class="qty-type-lbl">'+escHtml(type)+'</span>'
+      +'<input type="number" min="0" id="mqty_'+ti+'" data-qtype="'+escHtml(type)+'" value="'+(qtys[type]||"")+'" placeholder="0">'
+    +'</div>';
   });
   qtyInputs+='</div>'
     +'<div class="m-qty-custom-row" style="margin-top:8px">'
       +'<input type="text" id="mqty-new-type" placeholder="New quantity type (e.g. Units)">'
       +'<input type="number" min="0" id="mqty-new-val" placeholder="0" style="width:80px">'
       +'<button class="add-qty-type-btn" onclick="addQtyType()">+ Add Type</button>'
-    +'</div>'
-  +'</div>';
+    +'</div></div>';
 
   document.getElementById("mc").innerHTML=
     '<div class="modal-ov" onclick="closeModalOuter(event)">'
     +'<div class="modal" onclick="event.stopPropagation()">'
-    +'<div class="modal-hd"><span class="m-badge">'+rack.name+'</span><h3>'+label+'</h3></div>'
+    +'<div class="modal-hd"><span class="m-badge">'+escHtml(rack.name)+'</span><h3>'+escHtml(label)+'</h3></div>'
     +'<div class="modal-bd">'
     +'<label>Category</label><select id="mcat" onchange="catChanged()">'+catOpts+'</select>'
     +'<label>Supply item</label><select id="msup" onchange="supChanged()">'+supOpts+'</select>'
-    +'<input type="text" id="mcust" placeholder="Enter custom supply name" style="margin-top:8px;display:none">'
+    +'<input type="text" id="mcust" placeholder="Enter custom supply name" style="margin-top:8px;display:'+(sec.supply&&!Object.values(sups).flat().includes(sec.supply)?"block":"none")+'">'
     +qtyInputs
-    +'<label>Notes</label><textarea id="mnote" placeholder="Optional notes...">'+(data.note||"")+'</textarea>'
+    +'<label>Notes</label><textarea id="mnote" placeholder="Optional notes...">'+(sec.note||"")+'</textarea>'
     +'<div class="btn-row">'
-    +'<button class="btn b-danger" onclick="clearSlot()">Clear Slot</button>'
+    +'<button class="btn b-danger" onclick="clearSlot()">Clear</button>'
     +'<button class="btn" onclick="closeModal()">Cancel</button>'
     +'<button class="btn b-org" onclick="saveSlot()">Save</button>'
     +'</div></div></div></div>';
@@ -1129,65 +1252,53 @@ function supChanged(){
 function saveSlot(){
   if(!modalData)return;
   var d=modalData; var rack=state.racks[d.rackId]; if(!rack)return;
-  if(!rack.rows[d.li][d.ci]) rack.rows[d.li][d.ci]=emptySlot();
-  var slot=rack.rows[d.li][d.ci];
-  var data=d.side?(slot[d.side]||(slot[d.side]={})):slot;
+  if(!rack.slots[d.slotKey]) rack.slots[d.slotKey]=emptySlot();
+  var slot=rack.slots[d.slotKey];
+  if(!slot.sections[d.si]) slot.sections[d.si]=emptySection();
+  var sec=slot.sections[d.si];
   var sup=document.getElementById("msup").value;
   if(sup==="__custom__") sup=(document.getElementById("mcust").value||"").trim();
-  data.supply=sup; data.cat=document.getElementById("mcat").value;
-  data.note=(document.getElementById("mnote").value||"").trim();
-  data.updated=new Date().toLocaleDateString();
-  data.updatedBy=userName||"Unknown";
-  // Collect quantities from all qty inputs
+  sec.supply=sup; sec.cat=document.getElementById("mcat").value;
+  sec.note=(document.getElementById("mnote").value||"").trim();
+  sec.updated=new Date().toLocaleDateString();
+  sec.updatedBy=userName||"Unknown";
   var qtys={};
-  var qtyInputs=document.querySelectorAll("[id^='mqty_']");
-  qtyInputs.forEach(function(inp){
-    var type=inp.getAttribute("data-qtype");
-    var val=parseInt(inp.value)||0;
+  document.querySelectorAll("[id^='mqty_']").forEach(function(inp){
+    var type=inp.getAttribute("data-qtype"); var val=parseInt(inp.value)||0;
     if(type) qtys[type]=val;
   });
-  data.qtys=qtys;
+  sec.qtys=qtys;
   saveDB(); closeModal(); renderContent();
 }
-
 function addQtyType(){
   var typeEl=document.getElementById("mqty-new-type");
   var valEl=document.getElementById("mqty-new-val");
   var newType=(typeEl.value||"").trim();
   if(!newType){typeEl.focus();return;}
-  // Add to DC-level qtyTypes if not already there
   if(!state.qtyTypes) state.qtyTypes=["Pallets","Cartons"];
-  if(state.qtyTypes.indexOf(newType)<0){
-    state.qtyTypes.push(newType);
-    saveDB();
-  }
-  // Re-open modal to show new field — save current values first
+  if(state.qtyTypes.indexOf(newType)<0){ state.qtyTypes.push(newType); saveDB(); }
   if(!modalData)return;
   var d=modalData; var rack=state.racks[d.rackId]; if(!rack)return;
-  if(!rack.rows[d.li][d.ci]) rack.rows[d.li][d.ci]=emptySlot();
-  var slot=rack.rows[d.li][d.ci];
-  var data=d.side?(slot[d.side]||(slot[d.side]={})):slot;
-  // Preserve values already entered
-  if(!data.qtys) data.qtys={};
-  var existingInputs=document.querySelectorAll("[id^='mqty_']");
-  existingInputs.forEach(function(inp){
-    var type=inp.getAttribute("data-qtype");
-    if(type) data.qtys[type]=parseInt(inp.value)||0;
+  if(!rack.slots[d.slotKey]) rack.slots[d.slotKey]=emptySlot();
+  var sec=rack.slots[d.slotKey].sections[d.si]||(rack.slots[d.slotKey].sections[d.si]=emptySection());
+  if(!sec.qtys) sec.qtys={};
+  document.querySelectorAll("[id^='mqty_']").forEach(function(inp){
+    var type=inp.getAttribute("data-qtype"); if(type) sec.qtys[type]=parseInt(inp.value)||0;
   });
-  // Also save the new value
-  data.qtys[newType]=parseInt(valEl.value)||0;
-  openModal(d.rackId,d.li,d.ci,d.side);
+  sec.qtys[newType]=parseInt(valEl.value)||0;
+  openSlotModal(d.rackId,d.slotKey,d.si);
 }
 function clearSlot(){
   if(!modalData)return;
-  var d=modalData; var slot=state.racks[d.rackId].rows[d.li][d.ci]; if(!slot)return;
-  if(d.side) slot[d.side]={supply:"",cat:"",note:"",updated:"",updatedBy:"",qtys:{}};
-  else{slot.supply="";slot.cat="";slot.note="";slot.updated="";slot.updatedBy="";slot.qtys={};}
+  var d=modalData; var rack=state.racks[d.rackId]; if(!rack)return;
+  if(rack.slots[d.slotKey]&&rack.slots[d.slotKey].sections[d.si]) rack.slots[d.slotKey].sections[d.si]=emptySection();
   saveDB(); closeModal(); renderContent();
 }
 function closeModalOuter(e){if(e.target===e.currentTarget)closeModal();}
 function closeModal(){modalData=null;document.getElementById("mc").innerHTML="";}
 
+// Keep openModal as alias for backward compat
+function openModal(rackId,li,ci,side){ openSlotModal(rackId,ci+"_"+li,0); }
 // ── SETTINGS TAB ──────────────────────────────────────────────────────────
 function renderSettings(){
   var html='<div class="settings-grid">';
@@ -1259,13 +1370,7 @@ function addRack(){
   var name=prompt("Enter a name for the new rack:","New Rack");
   if(!name||!name.trim())return;
   var id=genId();
-  state.racks[id]={name:name.trim(),cols:4,levels:3,rows:[],
-    colNames:makeColNames(4), levelNames:makeLevelNames(3)};
-  for(var lv=3;lv>=1;lv--){
-    var row=[];
-    for(var c=0;c<4;c++) row.push(emptySlot());
-    state.racks[id].rows.push(row);
-  }
+  state.racks[id]=buildRackData(name.trim(),4,3);
   state.rackOrder.push(id);
   curTab=id;
   saveDB(); renderTabs(); renderContent();
@@ -1776,18 +1881,14 @@ function updateDiffCell(inp){
 }
 
 function getSystemQty(item, qt){
-  // Walk all racks and find slots with this item, sum that qty type
-  if(!state || !state.racks) return 0;
-  var total = 0;
+  if(!state||!state.racks) return 0;
+  var total=0;
   Object.values(state.racks).forEach(function(rack){
-    if(!rack.rows) return;
-    rack.rows.forEach(function(row){
-      if(!Array.isArray(row)) return;
-      row.forEach(function(slot){
-        if(!slot) return;
-        var checkSlot = function(s){ if(s && s.supply === item && s.qtys && s.qtys[qt]) total += parseInt(s.qtys[qt])||0; };
-        if(slot.lr){ checkSlot(slot.left); checkSlot(slot.right); }
-        else checkSlot(slot);
+    if(!rack.slots) return;
+    Object.values(rack.slots).forEach(function(slot){
+      if(!slot||!slot.sections) return;
+      slot.sections.forEach(function(sec){
+        if(sec&&sec.supply===item&&sec.qtys&&sec.qtys[qt]) total+=parseInt(sec.qtys[qt])||0;
       });
     });
   });
