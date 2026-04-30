@@ -1342,19 +1342,24 @@ function removeSupply(cat,idx){
 // ── OVERFLOW ──────────────────────────────────────────────────────────────
 function renderOverflow(){
   var areas = state.overflowAreas || OV_AREAS;
-  var lines  = state.overflowLines || [];   // [{id, item, cat, note, qtys:[...]}]
+  var lines  = state.overflowLines || [];
   var sups   = sharedSupplies ? sharedSupplies.supplies : DSUP;
   var cats   = sharedSupplies ? sharedSupplies.cats     : DCATS;
 
-  // Build supply dropdown options
+  // Category options for custom item prompt
+  var catOpts = Object.keys(cats).map(function(c){
+    return '<option value="'+escHtml(c)+'">'+escHtml(c)+'</option>';
+  }).join('');
+
+  // Supply dropdown — value = "item|category"
   var supOpts = '<option value="">— select item —</option>';
   Object.keys(sups).forEach(function(cat){
     var items = sups[cat]||[]; if(!items.length) return;
-    supOpts += '<optgroup label="'+cat+'">';
-    items.forEach(function(i){ supOpts += '<option value="'+i+'|'+cat+'">'+i+'</option>'; });
+    supOpts += '<optgroup label="'+escHtml(cat)+'">';
+    items.forEach(function(i){ supOpts += '<option value="'+escHtml(i)+'|'+escHtml(cat)+'">'+escHtml(i)+'</option>'; });
     supOpts += '</optgroup>';
   });
-  supOpts += '<optgroup label="Custom"><option value="__custom__|Other">+ Type custom item...</option></optgroup>';
+  supOpts += '<optgroup label="Custom"><option value="__custom__">+ Type custom item...</option></optgroup>';
 
   // ── Area config row ──
   var html = '<div class="ov-area-config"><h3>Storage Area Columns</h3>'
@@ -1385,6 +1390,9 @@ function renderOverflow(){
       +'</div>'
       +'<div class="field" id="ov-custom-f" style="display:none;flex:2"><label>Custom item name</label>'
         +'<input type="text" id="ov-custom-inp" placeholder="Enter item name">'
+      +'</div>'
+      +'<div class="field" id="ov-cat-f" style="display:none"><label>Category</label>'
+        +'<select id="ov-cat-sel">'+catOpts+'</select>'
       +'</div>'
       +'<div class="field" style="flex:2"><label>Note / Location detail</label>'
         +'<input type="text" id="ov-note-inp" placeholder="e.g. Lane A, pallet 3" onkeydown="if(event.key===\'Enter\')addOverflowLine()">'
@@ -1434,8 +1442,9 @@ function escHtml(s){
 
 function ovSupChanged(){
   var v = document.getElementById("ov-sup-sel").value;
-  var isCustom = v === "__custom__|Other";
+  var isCustom = v === "__custom__";
   document.getElementById("ov-custom-f").style.display = isCustom ? "flex" : "none";
+  document.getElementById("ov-cat-f").style.display = isCustom ? "flex" : "none";
 }
 
 function addOverflowLine(){
@@ -1443,10 +1452,10 @@ function addOverflowLine(){
   var sel = document.getElementById("ov-sup-sel").value;
   if(!sel){ alert("Please select a supply item."); return; }
   var item, cat;
-  if(sel === "__custom__|Other"){
+  if(sel === "__custom__"){
     item = (document.getElementById("ov-custom-inp").value||"").trim();
     if(!item){ alert("Please enter a custom item name."); return; }
-    cat = "Other";
+    cat = document.getElementById("ov-cat-sel").value || "Other";
   } else {
     var parts = sel.split("|");
     item = parts[0]; cat = parts[1]||"Other";
@@ -1457,6 +1466,7 @@ function addOverflowLine(){
   saveDB();
   document.getElementById("ov-sup-sel").value = "";
   document.getElementById("ov-custom-f").style.display = "none";
+  document.getElementById("ov-cat-f").style.display = "none";
   var ci = document.getElementById("ov-custom-inp"); if(ci) ci.value = "";
   document.getElementById("ov-note-inp").value = "";
   renderContent();
@@ -1842,6 +1852,21 @@ function submitDigitalCount(){
   renderContent();
 }
 
+function viewCount(k){
+  var c = state.counts&&state.counts[k];
+  if(!c){ alert('Count not found.'); return; }
+  var msg = 'Count by ' + (c.submittedBy||'Unknown') + '\n'
+    + new Date(c.submittedAt).toLocaleString() + '\n'
+    + (c.dc||currentDC) + ' · ' + (c.itemCount||0) + ' items counted\n\n'
+    + (c.variances===0 ? '✓ No variances found.' : c.variances + ' variance(s) found.\n\n' + (c.summary||''));
+  alert(msg);
+}
+function deleteCount(k){
+  if(!confirm('Delete this count record? This cannot be undone.')) return;
+  if(state.counts) delete state.counts[k];
+  saveDB(); renderContent();
+}
+
 // ── PRINT FORM ─────────────────────────────────────────────────────────────
 function renderPrintForm(){
   var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
@@ -1881,8 +1906,8 @@ function buildPrintFormHTML(sups, cats){
           + 'Col <span style="display:inline-block;width:30px;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>&nbsp;&nbsp;'
           + 'Lvl <span style="display:inline-block;width:30px;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>'
         + '</div>'
-        + '<div style="font-size:9px;color:#6b7280;margin-top:2px">Pallets <span style="display:inline-block;width:28px;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>&nbsp;'
-          + 'Cartons <span style="display:inline-block;width:28px;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>'
+        + '<div style="font-size:9px;color:#6b7280;margin-top:2px">ea. Pallets <span style="display:inline-block;width:28px;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>&nbsp;'
+          + 'ea. Cartons <span style="display:inline-block;width:28px;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>'
         + '</div>'
       + '</td>';
       html += '<tr style="background:' + bg + '">'
