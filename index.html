@@ -1223,7 +1223,7 @@ function buildSlotInner(s){
   var cats=sharedSupplies?sharedSupplies.cats:DCATS;
   var c=cats[s.cat]||cats["Other"]||{bg:"#f9fafb",text:"#374151"};
   var qtys=s.qtys||{};
-  var qtyTypes=(state&&state.qtyTypes)||["Pallets","Cartons"];
+  var qtyTypes=(state&&state.qtyTypes)||["Pallets","Each"];
   var qtyBadges='';
   var allTypes=qtyTypes.slice();
   Object.keys(qtys).forEach(function(k){ if(allTypes.indexOf(k)<0) allTypes.push(k); });
@@ -1267,7 +1267,7 @@ function openSlotModal(rackId, slotKey, si){
     supOpts+='</optgroup>';
   });
   supOpts+='<optgroup label="Custom"><option value="__custom__">+ Type custom name...</option></optgroup>';
-  var qtyTypes=(state&&state.qtyTypes)||["Pallets","Cartons"];
+  var qtyTypes=(state&&state.qtyTypes)||["Pallets","Each"];
   var qtys=sec.qtys||{};
   var qtyInputs='<div class="m-qty-section"><label>Quantities</label><div class="m-qty-grid">';
   qtyTypes.forEach(function(type,ti){
@@ -1342,7 +1342,7 @@ function addQtyType(){
   var valEl=document.getElementById("mqty-new-val");
   var newType=(typeEl.value||"").trim();
   if(!newType){typeEl.focus();return;}
-  if(!state.qtyTypes) state.qtyTypes=["Pallets","Cartons"];
+  if(!state.qtyTypes) state.qtyTypes=["Pallets","Each"];
   if(state.qtyTypes.indexOf(newType)<0){ state.qtyTypes.push(newType); saveDB(); }
   if(!modalData)return;
   var d=modalData; var rack=state.racks[d.rackId]; if(!rack)return;
@@ -1404,7 +1404,7 @@ function renderSettings(){
     +'<div class="settings-card-bd">'
       +'<p style="font-size:13px;color:var(--gray);margin-bottom:12px">These quantity types appear in every location slot. Pallets and Each are defaults for new DCs.</p>'
       +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">';
-  var qtArr=state.qtyTypes||["Pallets","Cartons"];
+  var qtArr=state.qtyTypes||["Pallets","Each"];
   qtArr.forEach(function(qt,i){
     var isDefault=(qt==="Pallets"||qt==="Each");
     html+='<div style="display:flex;align-items:center;gap:5px;background:var(--offwhite);border:1.5px solid var(--gray-lt);border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600;color:var(--dark)">'
@@ -1717,7 +1717,7 @@ function addQtyTypeFromSettings(){
   var inp=document.getElementById("new-qty-type-inp");
   var val=(inp.value||"").trim();
   if(!val){inp.focus();return;}
-  if(!state.qtyTypes) state.qtyTypes=["Pallets","Cartons"];
+  if(!state.qtyTypes) state.qtyTypes=["Pallets","Each"];
   if(state.qtyTypes.indexOf(val)>=0){alert("That type already exists.");return;}
   state.qtyTypes.push(val);
   inp.value="";
