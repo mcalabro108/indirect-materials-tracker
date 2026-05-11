@@ -163,8 +163,17 @@ body{font-family:'Inter',Arial,sans-serif;background:var(--offwhite);color:var(-
 .slot-ctrl-btn.rem-sec:hover{background:#dc2626;color:#fff;border-color:#dc2626}
 .slot-ctrl-btn.del-slot{color:#6b7280;border-color:#e5e7eb}
 .slot-ctrl-btn.del-slot:hover{background:#dc2626;color:#fff;border-color:#dc2626}
-/* Insert col strips */
-.rack-ins-col{width:22px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(79,70,229,.04);border-radius:6px;transition:background .15s;cursor:pointer}
+/* Floor bays */
+.floor-bay-col{background:#2a2020;border:2px dashed #8b5e3c;border-radius:8px;margin:4px 3px 0;padding:5px 6px;position:relative}
+.floor-bay-col::before{content:'FLOOR';position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:#8b5e3c;color:#fff;font-size:8px;font-weight:800;letter-spacing:.8px;padding:1px 6px;border-radius:3px}
+.floor-bay-between{background:#1a1510;border:2px dashed #6b4423;border-radius:8px;margin:4px 2px 0;padding:5px 4px;position:relative;align-self:flex-end;min-width:140px}
+.floor-bay-between::before{content:'FLOOR';position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:#6b4423;color:#fff;font-size:8px;font-weight:800;letter-spacing:.8px;padding:1px 6px;border-radius:3px}
+.floor-add-btn{display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(139,94,60,.15);border:1.5px dashed #8b5e3c;border-radius:6px;color:#c2956b;font-size:11px;font-weight:700;padding:5px 8px;cursor:pointer;transition:all .15s;width:100%;margin-top:3px;font-family:'Inter',sans-serif}
+.floor-add-btn:hover{background:rgba(139,94,60,.3);color:#e8b48a;border-color:#c2956b}
+.floor-slot{background:#2d1f14;border-radius:6px;padding:7px;cursor:pointer;position:relative;min-height:60px;transition:all .15s;border:2px solid rgba(139,94,60,.3)}
+.floor-slot:hover{border-color:#c2956b;background:#3a2819}
+.floor-slot.filled{border-color:rgba(194,149,107,.5)}
+.floor-slot .slot-ctrl-bar{background:rgba(45,31,20,.9)}width:22px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(79,70,229,.04);border-radius:6px;transition:background .15s;cursor:pointer}
 .rack-ins-col:hover{background:rgba(79,70,229,.12)}
 .rack-ins-col button{width:22px;height:22px;border-radius:7px;border:2px solid #c7d2fe;background:#eef2ff;cursor:pointer;font-size:14px;font-weight:800;color:#4f46e5;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0;line-height:1}
 .rack-ins-col button:hover{background:#4f46e5;border-color:#4f46e5;color:#fff;transform:scale(1.15)}
@@ -649,7 +658,7 @@ function genId(){ return "rack_"+Date.now()+"_"+Math.floor(Math.random()*1000); 
 
 function buildInitialDCState(){
   var s={racks:{},rackOrder:[],overflow:{},overflowAreas:OV_AREAS.slice(),
-         qtyTypes:["Pallets","Cartons"]};
+         qtyTypes:["Pallets","Each"]};
   DEFAULT_RACKS.forEach(function(r){
     s.rackOrder.push(r.id);
     s.racks[r.id]=buildRackData(r.name,r.cols,r.levels);
@@ -662,12 +671,11 @@ function buildRackData(name,cols,levels){
     colNames:makeColNames(cols),
     colLevels:Array.from({length:cols},function(){return levels;}),
     colLevelNames:Array.from({length:cols},function(){return makeLevelNames(levels);}),
+    colFloor:Array.from({length:cols},function(){return false;}),  // per-col floor bay
+    floorBetween:Array.from({length:cols+1},function(){return false;}), // floor bays between cols
     slots:{}};
-  // slots keyed by "ci_li"
   for(var ci=0;ci<cols;ci++){
-    for(var li=0;li<levels;li++){
-      r.slots[ci+"_"+li]=emptySlot();
-    }
+    for(var li=0;li<levels;li++) r.slots[ci+"_"+li]=emptySlot();
   }
   return r;
 }
@@ -687,7 +695,7 @@ function normaliseDCState(raw){
   if(!raw.rackOrder)    raw.rackOrder=Object.keys(raw.racks);
   if(!raw.overflow)     raw.overflow={};
   if(!raw.overflowAreas) raw.overflowAreas=OV_AREAS.slice();
-  if(!raw.qtyTypes||!Array.isArray(raw.qtyTypes)||!raw.qtyTypes.length) raw.qtyTypes=["Pallets","Cartons"];
+  if(!raw.qtyTypes||!Array.isArray(raw.qtyTypes)||!raw.qtyTypes.length) raw.qtyTypes=["Pallets","Each"];
   raw.rackOrder.forEach(function(rid){
     var r=raw.racks[rid]; if(!r) return;
     if(!r.name)   r.name=rid;
@@ -725,6 +733,12 @@ function normaliseDCState(raw){
       while(r.colLevelNames[ci].length<n) r.colLevelNames[ci].unshift("Lvl "+(n-r.colLevelNames[ci].length));
       if(r.colLevelNames[ci].length>n) r.colLevelNames[ci]=r.colLevelNames[ci].slice(0,n);
     });
+    // colFloor — boolean per column
+    if(!r.colFloor||!Array.isArray(r.colFloor)) r.colFloor=Array.from({length:r.cols},function(){return false;});
+    while(r.colFloor.length<r.cols) r.colFloor.push(false);
+    // floorBetween — boolean per gap (cols+1)
+    if(!r.floorBetween||!Array.isArray(r.floorBetween)) r.floorBetween=Array.from({length:r.cols+1},function(){return false;});
+    while(r.floorBetween.length<r.cols+1) r.floorBetween.push(false);
     // Normalise all slots
     Object.keys(r.slots).forEach(function(key){
       r.slots[key]=slotFromLegacy(r.slots[key]);
@@ -833,7 +847,10 @@ function attachFirebase(dcCode){
       state=normaliseDCState(val);
     }
     if(!curTab) curTab=(state.rackOrder&&state.rackOrder[0])||"overflow";
-    renderTabs(); renderContent(); updateSlotW();
+    // Skip re-render if this is our own write bouncing back
+    if(!_suppressRender){
+      renderTabs(); renderContent(); updateSlotW();
+    }
     if(!userName){
       document.getElementById("name-ov").style.display="flex";
       setTimeout(function(){var e=document.getElementById("ninput");if(e)e.focus();},100);
@@ -849,12 +866,15 @@ function attachFirebase(dcCode){
   });
 }
 
+var _suppressRender = false;
+
 function saveDB(){
   if(!window.fbDCRef){console.warn("No DB ref");return;}
   syncStatus("saving");
+  _suppressRender = true;
   window.fbDCRef.set(deepCopy(state))
-    .then(function(){syncStatus("live");})
-    .catch(function(e){syncStatus("error");console.error(e);});
+    .then(function(){ syncStatus("live"); setTimeout(function(){ _suppressRender=false; },1000); })
+    .catch(function(e){ syncStatus("error"); _suppressRender=false; console.error(e); });
 }
 function saveShared(){
   if(!window.fbSupRef||!sharedSupplies)return;
@@ -973,10 +993,34 @@ function renderRack(rack, rackId){
   html+='<div class="rack-wrap"><div class="rack-frame">';
 
   for(var ci=0;ci<=rack.cols;ci++){
-    // Insert column strip
-    html+='<div class="rack-ins-col" title="Insert column here" onclick="addCol(\''+rackId+'\','+ci+')">'
-      +'<button onclick="event.stopPropagation();addCol(\''+rackId+'\','+ci+')" title="Insert column here">+</button>'
+    // Between-column floor bay (shown below insert strip)
+    var hasFB=rack.floorBetween&&rack.floorBetween[ci];
+    var fbKey="fb_"+ci;
+    var fbSlot=(rack.slots&&rack.slots[fbKey])||emptySlot();
+    if(!fbSlot.sections||!fbSlot.sections.length) fbSlot.sections=[emptySection()];
+    var fbSec=fbSlot.sections.length;
+    var fbW=Math.max(120,fbSec*130);
+
+    html+='<div style="display:flex;flex-direction:column;align-items:center;gap:0">'
+      +'<div class="rack-ins-col" title="Insert column here" onclick="addCol(\''+rackId+'\','+ci+')">'
+        +'<button onclick="event.stopPropagation();addCol(\''+rackId+'\','+ci+')" title="Insert column here">+</button>'
+      +'</div>'
+      // Floor-between toggle button
+      +'<button class="floor-add-btn" style="margin-top:6px;width:auto;padding:4px 7px;font-size:10px" '
+        +'onclick="toggleFloorBetween(\''+rackId+'\','+ci+')" title="'+(hasFB?"Remove":"Add")+'floor bay here">'
+        +(hasFB?'✕ Floor':'+ Floor')
+      +'</button>'
+      +(hasFB
+        ?'<div class="floor-bay-between" style="width:'+fbW+'px"><div class="rack-slot-row">'
+          +buildFloorSections(fbSlot,rackId,fbKey,true)
+          +'<div class="slot-ctrl-bar" onclick="event.stopPropagation()" style="opacity:1;position:relative;display:flex;gap:3px;padding:3px 0">'
+            +(fbSec<5?'<button class="slot-ctrl-btn add-sec" onclick="addSection(\''+rackId+'\',\''+fbKey+'\')" title="Add section">+</button>':"")
+            +(fbSec>1?'<button class="slot-ctrl-btn rem-sec" onclick="removeSection(\''+rackId+'\',\''+fbKey+'\')" title="Remove section">−</button>':"")
+          +'</div>'
+        +'</div></div>'
+        :"")
     +'</div>';
+
     if(ci>=rack.cols) break;
 
     // Upright post
@@ -1000,7 +1044,7 @@ function renderRack(rack, rackId){
       // Column header
       +'<div class="rack-col-hd">'
         +'<input class="inline-name-input" type="text" value="'+escHtml(cName)+'"'
-          +' onchange="renameCol(\''+rackId+'\','+ci+',this.value)"'
+          +' onblur="renameCol(\''+rackId+'\','+ci+',this.value)"'
           +' onclick="event.stopPropagation()" title="Click to rename">'
         +'<div class="col-level-ctrl">'
           +'<span>Levels</span>'
@@ -1024,7 +1068,7 @@ function renderRack(rack, rackId){
       html+='<div class="rack-bay">'
         +'<div class="rack-bay-label">'
           +'<input class="inline-name-input" type="text" value="'+escHtml(lvName)+'"'
-            +' onchange="renameColLevel(\''+rackId+'\','+ci+','+li+',this.value)"'
+            +' onblur="renameColLevel(\''+rackId+'\','+ci+','+li+',this.value)"'
             +' onclick="event.stopPropagation()" title="Rename level">'
           +'<button onclick="removeColLevel(\''+rackId+'\','+ci+')" style="width:14px;height:14px;border-radius:4px;border:none;background:rgba(220,38,38,.15);color:#fca5a5;font-size:9px;cursor:pointer;flex-shrink:0;line-height:1" title="Remove this level">✕</button>'
         +'</div>'
@@ -1047,6 +1091,29 @@ function renderRack(rack, rackId){
 
       html+='</div></div>'; // close slot-row + bay
     }
+    // Per-column floor bay
+    var hasColFloor=rack.colFloor&&rack.colFloor[ci];
+    var cfKey="cf_"+ci;
+    var cfSlot=(rack.slots&&rack.slots[cfKey])||emptySlot();
+    if(!cfSlot.sections||!cfSlot.sections.length) cfSlot.sections=[emptySection()];
+    var cfSec=cfSlot.sections.length;
+    html+='<div style="display:flex;align-items:center;justify-content:center;padding:4px 0">'
+      +'<button class="floor-add-btn" onclick="toggleColFloor(\''+rackId+'\','+ci+')">'
+        +(hasColFloor?'✕ Remove Floor':'+ Add Floor')
+      +'</button>'
+    +'</div>';
+    if(hasColFloor){
+      html+='<div class="floor-bay-col">'
+        +'<div class="rack-slot-row">'
+          +buildFloorSections(cfSlot,rackId,cfKey,false)
+        +'</div>'
+        +'<div style="display:flex;gap:3px;justify-content:flex-end;margin-top:4px">'
+          +(cfSec<5?'<button class="slot-ctrl-btn add-sec" onclick="addSection(\''+rackId+'\',\''+cfKey+'\')" title="Add section">+</button>':"")
+          +(cfSec>1?'<button class="slot-ctrl-btn rem-sec" onclick="removeSection(\''+rackId+'\',\''+cfKey+'\')" title="Remove section">−</button>':"")
+        +'</div>'
+      +'</div>';
+    }
+
     html+='</div>'; // close col-tower
   }
 
@@ -1309,7 +1376,7 @@ function renderSettings(){
       +'<div class="settings-card-hd"><h3>Rack Settings</h3></div>'
       +'<div class="settings-card-bd">'
       +'<label style="font-size:11px;color:var(--gray);font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Rack Name</label>'
-      +'<input class="rack-name-input" type="text" value="'+r.name+'" onchange="renameRack(\''+rid+'\',this.value)">'
+      +'<input class="rack-name-input" type="text" value="'+r.name+'" onblur="renameRack(\''+rid+'\',this.value)">'
       +'<div class="rack-meta">'
         +'<span class="rack-meta-lbl">Columns</span>'
         +'<div class="rack-num-ctrl">'
@@ -1335,11 +1402,11 @@ function renderSettings(){
   html+='<div class="settings-card">'
     +'<div class="settings-card-hd"><h3>Quantity Types</h3></div>'
     +'<div class="settings-card-bd">'
-      +'<p style="font-size:13px;color:var(--gray);margin-bottom:12px">These quantity types appear in every location slot. Pallets and Cartons are defaults.</p>'
+      +'<p style="font-size:13px;color:var(--gray);margin-bottom:12px">These quantity types appear in every location slot. Pallets and Each are defaults for new DCs.</p>'
       +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">';
   var qtArr=state.qtyTypes||["Pallets","Cartons"];
   qtArr.forEach(function(qt,i){
-    var isDefault=(qt==="Pallets"||qt==="Cartons");
+    var isDefault=(qt==="Pallets"||qt==="Each");
     html+='<div style="display:flex;align-items:center;gap:5px;background:var(--offwhite);border:1.5px solid var(--gray-lt);border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600;color:var(--dark)">'
       +qt
       +(!isDefault?'<button onclick="removeQtyType('+i+')" style="background:none;border:none;cursor:pointer;color:var(--gray-mid);font-size:14px;line-height:1;padding:0 2px;font-family:\'Inter\',sans-serif" title="Remove">✕</button>':"")
@@ -1472,7 +1539,7 @@ function renderOverflow(){
   areas.forEach(function(a,i){
     html += '<div class="area-field">'
       +'<label>Area '+(i+1)+'</label>'
-      +'<input type="text" value="'+escHtml(a)+'" onchange="renameArea('+i+',this.value)">'
+      +'<input type="text" value="'+escHtml(a)+'" onblur="renameArea('+i+',this.value)">'
       +'</div>';
   });
   html += '<div class="area-field" style="justify-content:flex-end">'
@@ -2039,7 +2106,40 @@ function showPrintForm(){
   pf.innerHTML = header + buildPrintFormHTML(sups, cats);
 }
 
-// ── BOOT ──────────────────────────────────────────────────────────────────
+// ── FLOOR BAY HELPERS ─────────────────────────────────────────────────────
+function buildFloorSections(slot, rackId, slotKey, isBetween){
+  if(!slot||!slot.sections||!slot.sections.length) slot={sections:[emptySection()]};
+  var numSec=slot.sections.length;
+  var html='';
+  slot.sections.forEach(function(sec,si){
+    var secLabel=numSec>1?["L","C-L","C","C-R","R"].slice(0,numSec)[si]||("S"+(si+1)):null;
+    html+='<div class="floor-slot'+(sec.supply?" filled":"")+'" onclick="openSlotModal(\''+rackId+'\',\''+slotKey+'\','+si+')" style="flex:1;min-height:55px">'
+      +(secLabel?'<div style="font-size:9px;font-weight:700;color:#c2956b;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">'+secLabel+'</div>':"")
+      +buildSlotInner(sec)
+    +'</div>';
+  });
+  return html;
+}
+
+function toggleColFloor(rackId,ci){
+  var r=state.racks[rackId]; if(!r) return;
+  if(!r.colFloor) r.colFloor=Array.from({length:r.cols},function(){return false;});
+  r.colFloor[ci]=!r.colFloor[ci];
+  var key="cf_"+ci;
+  if(r.colFloor[ci]&&!r.slots[key]) r.slots[key]=emptySlot();
+  if(!r.colFloor[ci]) delete r.slots[key];
+  saveDB(); renderContent();
+}
+
+function toggleFloorBetween(rackId,ci){
+  var r=state.racks[rackId]; if(!r) return;
+  if(!r.floorBetween) r.floorBetween=Array.from({length:r.cols+1},function(){return false;});
+  r.floorBetween[ci]=!r.floorBetween[ci];
+  var key="fb_"+ci;
+  if(r.floorBetween[ci]&&!r.slots[key]) r.slots[key]=emptySlot();
+  if(!r.floorBetween[ci]) delete r.slots[key];
+  saveDB(); renderContent();
+}
 
 // ── BOOT ──────────────────────────────────────────────────────────────────
 function bootApp(){
