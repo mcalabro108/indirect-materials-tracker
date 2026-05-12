@@ -1682,7 +1682,7 @@ function renderSupplyList(){
   var sups=sharedSupplies.supplies||DSUP;
   var catKeys=Object.keys(cats);
   var catOpts=catKeys.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join("");
-  var _sl_ctx=pageCtx('supplylist')
+  var _sl_ctx=pageCtx('supply')
     +instrBox('Managing the supply list',[
       'This list is <strong>shared across all four DCs</strong> — changes here affect LAS, LSL, JAX, and GPT immediately',
       'Select a category, type the item name, then click + Add Item (or press Enter)',
@@ -2077,7 +2077,7 @@ var ocrReviewRows = [];
 
 function renderCountEntry(){
   var html = '<div class="tab-section-hd">📋 Count Entry</div>'
-    +pageCtx('countentry','Enter inventory counts directly on screen, or upload photos and scans of your filled count sheets. Both methods send results to Don automatically.');
+    +pageCtx('count','Enter inventory counts directly on screen, or upload photos and scans of your filled count sheets. Both methods send results to Don automatically.');
   if(cntMode === 'digital') return html + renderDigitalEntry();
   if(cntMode === 'ocr')     return html + renderOcrUpload();
   if(cntMode === 'review')  return html + renderOcrReview();
@@ -2215,51 +2215,148 @@ function ocrFilesChosen(e){
 
 function runOCR(){
   var key=localStorage.getItem('cpGoogleVisionKey');
-  if(!key){alert('Google Vision API key not set. Go to ⚙ Settings to add it.');return;}
+  if(!key){alert('Google Vision API key not set. Go to ⚙ Settings → Admin to add it.');return;}
   var pending=ocrFiles.filter(function(f){return f.status==='pending';});
-  if(!pending.length){
-    // All done — go to review
-    buildOcrReview(); return;
-  }
+  if(!pending.length){buildOcrReview();return;}
   renderContent();
-  var processed=0;
+
+  function sendImageToVision(b64,mimeType,f,idx,then){
+    var url='https://vision.googleapis.com/v1/images:annotate?key='+key;
+    var body={requests:[{image:{content:b64},features:[{type:'DOCUMENT_TEXT_DETECTION',maxResults:1}]}]};
+    fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){return r.json();})
+      .then(function(data){
+        var text='';
+        if(data.responses&&data.responses[0]){
+          text=data.responses[0].fullTextAnnotation?data.responses[0].fullTextAnnotation.text:'';
+          if(!text&&data.responses[0].error) text='ERROR:'+data.responses[0].error.message;
+        }
+        f.text=(f.text||'')+'\n'+text;
+        then();
+      })
+      .catch(function(){then();});
+  }
+
+  function processPDF(f,idx,done){
+    // Load PDF.js from CDN to render pages as images
+    if(typeof pdfjsLib==='undefined'){
+      var script=document.createElement('script');
+      script.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      script.onload=function(){
+        pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        processPDF(f,idx,done);
+      };
+      document.head.appendChild(script);
+      return;
+    }
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var typedArray=new Uint8Array(ev.target.result);
+      pdfjsLib.getDocument({data:typedArray}).promise.then(function(pdf){
+        var totalPages=pdf.numPages;
+        var pageTexts=[];
+        var pageIdx=0;
+        function nextPage(){
+          if(pageIdx>=totalPages){
+            f.text=pageTexts.join('\n');
+            f.status=f.text.trim()?'done':'error';
+            updateOcrFileStatus(idx,f.status,f.status==='done'?'✓ Done ('+totalPages+'p)':'✗ Failed');
+            done();
+            return;
+          }
+          pageIdx++;
+          updateOcrFileStatus(idx,'reading','Reading p'+pageIdx+'/'+totalPages+'…');
+          pdf.getPage(pageIdx).then(function(page){
+            var scale=2.0; // Higher = better quality for OCR
+            var viewport=page.getViewport({scale:scale});
+            var canvas=document.createElement('canvas');
+            canvas.width=viewport.width;
+            canvas.height=viewport.height;
+            var ctx=canvas.getContext('2d');
+            page.render({canvasContext:ctx,viewport:viewport}).promise.then(function(){
+              var b64=canvas.toDataURL('image/jpeg',0.92).split(',')[1];
+              sendImageToVision(b64,'image/jpeg',{text:''},idx,function(){
+                // Capture the text we just added
+                pageTexts.push(f.text||'');
+                f.text='';
+                nextPage();
+              });
+            });
+          });
+        }
+        // Reset text accumulation
+        f.text='';
+        // Re-use sendImageToVision but accumulate pages differently
+        var allPageTexts=[];
+        pageIdx=0;
+        function renderNextPage(){
+          if(pageIdx>=totalPages){
+            f.text=allPageTexts.join('\n');
+            f.status=f.text.trim()?'done':'error';
+            updateOcrFileStatus(idx,f.status,f.status==='done'?'✓ Done ('+totalPages+'p)':'✗ Failed');
+            done();
+            return;
+          }
+          pageIdx++;
+          updateOcrFileStatus(idx,'reading','Reading p'+pageIdx+'/'+totalPages+'…');
+          pdf.getPage(pageIdx).then(function(page){
+            var scale=2.0;
+            var viewport=page.getViewport({scale:scale});
+            var canvas=document.createElement('canvas');
+            canvas.width=viewport.width;
+            canvas.height=viewport.height;
+            var ctx=canvas.getContext('2d');
+            page.render({canvasContext:ctx,viewport:viewport}).promise.then(function(){
+              var b64=canvas.toDataURL('image/jpeg',0.92).split(',')[1];
+              var url='https://vision.googleapis.com/v1/images:annotate?key='+key;
+              var body={requests:[{image:{content:b64},features:[{type:'DOCUMENT_TEXT_DETECTION',maxResults:1}]}]};
+              fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+                .then(function(r){return r.json();})
+                .then(function(data){
+                  var text='';
+                  if(data.responses&&data.responses[0]&&data.responses[0].fullTextAnnotation){
+                    text=data.responses[0].fullTextAnnotation.text||'';
+                  }
+                  allPageTexts.push(text);
+                  renderNextPage();
+                })
+                .catch(function(){allPageTexts.push('');renderNextPage();});
+            });
+          });
+        }
+        renderNextPage();
+      }).catch(function(e){
+        f.status='error';
+        updateOcrFileStatus(idx,'error','✗ PDF Error');
+        done();
+      });
+    };
+    reader.readAsArrayBuffer(f.file);
+  }
+
   function processNext(idx){
     if(idx>=ocrFiles.length){buildOcrReview();return;}
     var f=ocrFiles[idx];
     if(f.status!=='pending'){processNext(idx+1);return;}
     f.status='reading';
+    f.text='';
     updateOcrFileStatus(idx,'reading','Reading…');
-    var reader=new FileReader();
-    reader.onload=function(ev){
-      var b64=ev.target.result.split(',')[1];
-      var mime=f.file.type||'image/jpeg';
-      // Google Vision API
-      var url='https://vision.googleapis.com/v1/images:annotate?key='+key;
-      var body={requests:[{image:{content:b64},features:[{type:'DOCUMENT_TEXT_DETECTION',maxResults:1}]}]};
-      // For PDFs, use pages if possible
-      if(mime==='application/pdf'){
-        body.requests[0].image={content:b64};
-      }
-      fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-        .then(function(r){return r.json();})
-        .then(function(data){
-          var text='';
-          if(data.responses&&data.responses[0]){
-            text=data.responses[0].fullTextAnnotation?data.responses[0].fullTextAnnotation.text:'';
-            if(!text&&data.responses[0].error) text='ERROR:'+data.responses[0].error.message;
-          }
-          f.text=text;
-          f.status=text&&!text.startsWith('ERROR:')?'done':'error';
+    var mime=f.file.type||'';
+    if(mime==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){
+      processPDF(f,idx,function(){processNext(idx+1);});
+    } else {
+      // Image file — send directly
+      var reader=new FileReader();
+      reader.onload=function(ev){
+        var b64=ev.target.result.split(',')[1];
+        sendImageToVision(b64,'image/jpeg',f,idx,function(){
+          f.status=f.text&&f.text.trim()?'done':'error';
           updateOcrFileStatus(idx,f.status,f.status==='done'?'✓ Done':'✗ Failed');
           processNext(idx+1);
-        })
-        .catch(function(err){
-          f.status='error'; f.text='';
-          updateOcrFileStatus(idx,'error','✗ Failed');
-          processNext(idx+1);
         });
-    };
-    reader.readAsDataURL(f.file);
+      };
+      reader.readAsDataURL(f.file);
+    }
   }
   processNext(0);
 }
@@ -2597,7 +2694,7 @@ function renderPrintForm(){
   var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
   var cats = sharedSupplies ? sharedSupplies.cats : DCATS;
   return '<div class="tab-section-hd">🖨️ Print Form</div>'
-    +pageCtx('printform','Generate a printable count sheet. <strong>Count Form</strong> — the standard tally sheet your team already uses. <strong>Location Form</strong> — for recording exactly where items are stored in the racks.')
+    +pageCtx('print','Generate a printable count sheet. <strong>Count Form</strong> — the standard tally sheet your team already uses. <strong>Location Form</strong> — for recording exactly where items are stored in the racks.')
     +instrBox('Which form should I use?',[
       '<strong>Count Form (default)</strong> — Use for your regular inventory count. Print it, walk the floor, write tally marks and totals. Upload the photo or scan in the Count Upload tab when done.',
       '<strong>Location Form</strong> — Use when setting up or re-mapping racks. Records Aisle, Column, and Level for up to 3 locations per item.',
@@ -3485,6 +3582,21 @@ var HELP_SECTIONS = {
         +'<div class="help-h2">Event Log</div>'
         +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">Every action logged for your DC — slot updates, count submissions, and deliveries — with exact date, time, and who made the change. No limit on history shown.</p>'
         +'<div class="help-tip"><b>Count emails are automatic:</b> Every count submission emails Don immediately. You don\'t need to do anything extra. Weekly cross-DC reports are sent manually from ⚙ Settings → Admin.</div>';
+    }
+  },
+  settings:{
+    nav:'hn-settings', title:'⚙ Settings',
+    content:function(){
+      return '<div class="help-h1">Settings Tab</div>'
+        +'<p class="help-lead">Configure your rack layout, quantity types, and DC from the Settings tab (⚙) in the tab bar. The Admin section at the top is password-protected and contains tools for supervisors only.</p>'
+        +'<div class="help-h2">Rack Settings</div>'
+        +'<ul class="help-bul"><li>Rename any rack by clicking its name field</li><li>Add or remove columns using the + and − buttons</li><li>Delete a rack entirely — all data in it will be permanently lost</li><li>Add a new rack with the Add Rack button</li></ul>'
+        +'<div class="help-h2">Quantity Types</div>'
+        +'<ul class="help-bul"><li>Add custom quantity types (e.g. Units, Cases) using the input field</li><li>Remove custom types with the ✕ button</li><li>Pallets and Each are protected defaults and cannot be removed</li></ul>'
+        +'<div class="help-h2">Distribution Center</div>'
+        +'<ul class="help-bul"><li>Shows your current DC</li><li>Click Switch to change to a different DC</li></ul>'
+        +'<div class="help-h2">Admin (password required)</div>'
+        +'<p style="font-size:13px;color:var(--gray)">The Admin section is locked behind a separate PIN. It contains the weekly cross-DC report button and the Google Vision API key for photo scanning. Contact your supervisor for the Admin PIN.</p>';
     }
   },
   guide:{
