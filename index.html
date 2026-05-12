@@ -3576,6 +3576,28 @@ function helpSearch(q){
   content.innerHTML=html;
 }
 
+function showHelp(key){
+  var el=document.getElementById('help-popup');
+  el.style.display='flex';
+  var target='overview';
+  if(key==='current'){
+    if(curTab&&state&&state.racks&&state.racks[curTab]) target='rack';
+    else if(curTab==='overflow') target='overflow';
+    else if(curTab==='delivery') target='delivery';
+    else if(curTab==='countentry') target='count';
+    else if(curTab==='printform') target='print';
+    else if(curTab==='supplylist') target='supply';
+    else if(curTab==='reports') target='reports';
+    else target='overview';
+  } else if(HELP_SECTIONS[key]){
+    target=key;
+  }
+  setTimeout(function(){helpNav(target);},10);
+}
+function closeHelp(){
+  document.getElementById('help-popup').style.display='none';
+}
+
 // ── GUIDED TOUR ────────────────────────────────────────────────────────────
 var TOUR_STEPS=[
   {icon:'👋',title:'Welcome to the Indirect Materials Tracker',body:'This quick tour walks you through every part of the app. Hit <strong>Next</strong> to go step by step, or <strong>Skip</strong> to jump straight in. You can replay this tour anytime from the <strong>? Help</strong> button in the top right.',target:null},
@@ -3640,12 +3662,14 @@ function renderTourStep(){
 }
 
 function pageCtx(key,overrideDesc){
-  var h=HELP[key]||{icon:'ℹ️',title:'',body:''};
+  var sec=HELP_SECTIONS[key];
+  var icon=sec?sec.title.match(/^(\S+)/)[1]:'ℹ️';
+  var title=sec?sec.title.replace(/^\S+\s*/,''):(key.charAt(0).toUpperCase()+key.slice(1));
   return '<div class="page-ctx">'
-    +'<span class="ctx-icon">'+h.icon+'</span>'
+    +'<span class="ctx-icon">'+icon+'</span>'
     +'<div class="ctx-body">'
-      +'<div class="ctx-title">'+h.title+'</div>'
-      +'<div class="ctx-desc">'+(overrideDesc||h.body)+'</div>'
+      +'<div class="ctx-title">'+title+'</div>'
+      +'<div class="ctx-desc">'+(overrideDesc||'Click the <strong>?</strong> button for detailed help on this section.')+'</div>'
     +'</div>'
     +'<span class="ctx-help"><button class="help-btn" onclick="showHelp(\''+key+'\')" title="Get help on this page">?</button></span>'
   +'</div>';
