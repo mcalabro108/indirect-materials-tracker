@@ -2677,7 +2677,7 @@ function showPrintForm(){
   var cats=sharedSupplies?sharedSupplies.cats:DCATS;
   var pf=document.getElementById('print-form');
   if(!pf) return;
-  var isCount=printFormMode==='''count''';
+  var isCount=printFormMode==='count';
   var header='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:3px solid #F47920;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
     +'<div>'
       +'<div style="font-size:16px;font-weight:900;color:#1a2f5e">carparts<span style="color:#F47920">.com</span></div>'
