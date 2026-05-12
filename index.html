@@ -358,9 +358,8 @@ body{font-family:'Inter',Arial,sans-serif;background:var(--offwhite);color:var(-
 .tour-highlight{position:relative;z-index:9002!important;border-radius:8px;box-shadow:0 0 0 4px var(--orange),0 0 0 8px rgba(244,121,32,.25)!important}
 
 /* OCR Upload */
-.ocr-upload-zone{border:2.5px dashed var(--gray-lt);border-radius:var(--radius-lg);padding:2rem;text-align:center;cursor:pointer;background:#fff;transition:all .2s;position:relative;margin-bottom:1rem}
-.ocr-upload-zone:hover,.ocr-upload-zone.dragover{border-color:var(--orange);background:var(--orange-lt)}
-.ocr-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ocr-upload-zone{border:2.5px dashed var(--gray-lt);border-radius:var(--radius-lg);padding:2rem;text-align:center;cursor:pointer;background:#fff;transition:all .2s;position:relative;margin-bottom:1rem;display:block}
+.ocr-upload-zone:hover{border-color:var(--orange);background:var(--orange-lt)}
 .ocr-file-list{display:grid;gap:8px;margin-bottom:1rem}
 .ocr-file-row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--gray-lt);border-radius:var(--radius);padding:8px 12px;font-size:13px}
 .ocr-file-row .ocr-file-name{flex:1;font-weight:600;color:var(--dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -568,7 +567,7 @@ body{font-family:'Inter',Arial,sans-serif;background:var(--offwhite);color:var(-
     <span class="user-lbl" id="uname"></span>
     <button class="topbar-btn" onclick="changeName()">Change Name</button>
     <button class="topbar-btn" onclick="switchDC()" title="Switch DC">⇄ DC</button>
-    <button class="topbar-btn" onclick="startTour()" style="background:var(--orange);color:#fff;font-weight:700" title="Help & guided tour">? Help</button>
+    <button class="topbar-btn" onclick="showHelp('current')" style="background:var(--orange);color:#fff;font-weight:700" title="Help">? Help</button>
   </div>
 </div>
 
@@ -610,10 +609,14 @@ body{font-family:'Inter',Arial,sans-serif;background:var(--offwhite);color:var(-
       <div id="help-title" style="font-size:16px;font-weight:800;color:var(--navy)"></div>
     </div>
     <div id="help-body" style="font-size:14px;color:#374151;line-height:1.75"></div>
-    <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--gray-lt);display:flex;gap:10px;flex-wrap:wrap">
-      <button onclick="startTour()" style="padding:7px 14px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">▶ Replay Guided Tour</button>
-      <a href="https://mcalabro108.github.io/indirect-materials-tracker/Supply_Rack_Tracker_User_Guide.docx" target="_blank" style="padding:7px 14px;border:1.5px solid var(--gray-lt);border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;color:var(--navy);text-decoration:none">📄 Download User Guide</a>
-      <button onclick="closeHelp()" style="padding:7px 14px;border:1.5px solid var(--gray-lt);border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;color:var(--gray)">Close</button>
+    <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--gray-lt)">
+      <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">More help</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="closeHelp();startTour()" style="padding:7px 14px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:Arial,sans-serif">▶ Guided Tour</button>
+        <a href="https://mcalabro108.github.io/indirect-materials-tracker/Supply_Rack_Tracker_User_Guide.docx" target="_blank" style="padding:7px 14px;border:1.5px solid var(--gray-lt);border-radius:8px;background:#fff;font-size:13px;font-weight:600;font-family:Arial,sans-serif;color:var(--navy);text-decoration:none;display:inline-flex;align-items:center">📄 User Guide</a>
+        <a href="mailto:mcalabro@carparts.com?subject=Tracker Question — '+escHtml(currentDC||'')+'&body=DC: '+escHtml(currentDC||'')+'%0AUser: '+escHtml(userName||'')+'%0A%0AQuestion / Issue:%0A" style="padding:7px 14px;border:1.5px solid var(--gray-lt);border-radius:8px;background:#fff;font-size:13px;font-weight:600;font-family:Arial,sans-serif;color:var(--navy);text-decoration:none;display:inline-flex;align-items:center">✉️ Contact Admin</a>
+        <button onclick="closeHelp()" style="padding:7px 14px;border:1.5px solid var(--gray-lt);border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:Arial,sans-serif;color:var(--gray)">Close</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1032,7 +1035,7 @@ function renderTabs(){
   if(state) html+='<button class="tab-add-btn" onclick="addRack()" title="Add new rack tab">＋</button>';
   html+='<button class="tab'+(curTab==="overflow"?" active":"")+'" onclick="switchTab(\'overflow\')">Overflow</button>';
   html+='<button class="tab'+(curTab==="delivery"?" active":"")+'" onclick="switchTab(\'delivery\')">🚚 Delivery</button>';
-  html+='<button class="tab'+(curTab==="countentry"?" active":"")+'" onclick="switchTab(\'countentry\')">📷 Count Upload</button>';
+  html+='<button class="tab'+(curTab==="countentry"?" active":"")+'" onclick="switchTab(\'countentry\')">📋 Count Entry</button>';
   html+='<button class="tab'+(curTab==="printform"?" active":"")+'" onclick="switchTab(\'printform\')">🖨️ Print Form</button>';
   html+='<button class="tab'+(curTab==="reports"?" active":"")+'" onclick="switchTab(\'reports\')">📊 Reports</button>';
   html+='<button class="tab'+(curTab==="supplylist"?" active":"")+'" onclick="switchTab(\'supplylist\')">Supply List</button>';
@@ -2030,34 +2033,39 @@ var ocrFiles = [];
 var ocrReviewRows = [];
 
 function renderCountEntry(){
-  var html = '<div class="tab-section-hd">📷 Count Upload</div>'
-    +pageCtx('countentry');
-  if(cntMode === 'ocr')    return html + renderOcrUpload();
-  if(cntMode === 'review') return html + renderOcrReview();
+  var html = '<div class="tab-section-hd">📋 Count Entry</div>'
+    +pageCtx('countentry','Enter inventory counts directly on screen, or upload photos and scans of your filled count sheets. Both methods send results to Don automatically.');
+  if(cntMode === 'digital') return html + renderDigitalEntry();
+  if(cntMode === 'ocr')     return html + renderOcrUpload();
+  if(cntMode === 'review')  return html + renderOcrReview();
 
   var gvKey = localStorage.getItem('cpGoogleVisionKey')||'';
 
-  html+=instrBox('How photo counting works',[
-    '<strong>Step 1 — Print the Count Form</strong> from the Print Form tab. Fill it in by hand while walking the floor.',
-    '<strong>Step 2 — Photograph or scan each page.</strong> Use your phone camera (straight-on, good lighting) <em>or</em> scan using a flatbed/MFP copier and save as PDF or JPG.',
-    '<strong>Step 3 — Upload the photos or scans here.</strong> The app reads the item names and totals automatically.',
-    '<strong>Step 4 — Review the results.</strong> Check that item names and totals match what you wrote. Correct any misreads.',
-    '<strong>Step 5 — Approve.</strong> Outlook opens with a summary email to Don — just hit Send.',
-    '<strong>Tips for accurate scanning:</strong> Write TOTAL numbers clearly in the Total column · Use block capitals for item names · Avoid shadows or glare · A flat, well-lit surface works best · Scanned PDFs are often cleaner than phone photos'
+  html+=instrBox('How to submit a count',[
+    '<strong>Digital Entry</strong> — type counts directly on screen while walking the floor (phone or tablet), or after filling in the paper Count Form.',
+    '<strong>Photo / Scan Upload</strong> — photograph or scan your filled Count Form and upload here. The app reads item names and totals automatically.',
+    '<strong>Either method</strong> sends results to Don by email when you approve.'
   ]);
 
-  // Intro card
-  html+='<div class="del-form-card"><h3>Upload Completed Count Sheet</h3>'
-    +'<p style="font-size:13px;color:var(--gray);margin-bottom:1rem">Take a photo of your filled count form and upload it here. Google Vision reads the item names and totals, then opens Outlook pre-filled to Don with the results.</p>';
-
-  if(!gvKey){
-    html+='<div style="background:#fff8ec;border:2px solid #fed7aa;border-radius:var(--radius);padding:10px 14px;font-size:13px;color:#92400e;margin-bottom:1rem">'
-      +'📷 Photo upload requires a Google Vision API key — add it in ⚙ Settings → Admin.'
-    +'</div>';
-  } else {
-    html+='<button class="btn b-org" onclick="cntMode=\'ocr\';ocrFiles=[];renderContent()" style="padding:10px 24px;font-size:15px">📷 Upload Count Sheet Photos</button>';
-  }
-  html+='</div>';
+  // Two mode cards
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">'
+    +'<div onclick="cntMode=\'digital\';renderContent()" style="border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.5rem;cursor:pointer;background:#fff;text-align:center;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
+      +'<div style="font-size:36px;margin-bottom:10px">⌨️</div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px">Digital Entry</div>'
+      +'<div style="font-size:12px;color:var(--gray);line-height:1.5">Type counts on screen. Shows system quantities for comparison.</div>'
+    +'</div>'
+    +(gvKey
+      ? '<div onclick="cntMode=\'ocr\';ocrFiles=[];renderContent()" style="border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.5rem;cursor:pointer;background:#fff;text-align:center;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
+          +'<div style="font-size:36px;margin-bottom:10px">📷</div>'
+          +'<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px">Photo / Scan Upload</div>'
+          +'<div style="font-size:12px;color:var(--gray);line-height:1.5">Upload photos or scans of your Count Form. Totals are read automatically.</div>'
+        +'</div>'
+      : '<div style="border:2px dashed var(--gray-lt);border-radius:var(--radius-lg);padding:1.5rem;background:var(--offwhite);text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">'
+          +'<div style="font-size:28px;opacity:.35">📷</div>'
+          +'<div style="font-size:13px;font-weight:600;color:var(--gray-mid)">Photo / Scan Upload</div>'
+          +'<div style="font-size:12px;color:var(--gray-mid)">Not configured on this device. Contact your supervisor to enable.</div>'
+        +'</div>')
+  +'</div>';
 
   // Count history
   var counts = state.counts || {};
@@ -2066,11 +2074,15 @@ function renderCountEntry(){
     html += '<div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:12px">Count History</div><div class="cnt-hist-list">';
     ckeys.forEach(function(k){
       var c = counts[k];
+      var method = c.method === 'ocr' ? '📷 Scan' : '⌨️ Digital';
+      var variances = c.variances || 0;
+      var badge = variances === 0 ? 'ok' : variances <= 3 ? 'warn' : 'bad';
+      var badgeLabel = c.method === 'ocr' ? '📷 Scan submitted' : (variances === 0 ? '✓ No variances' : variances + ' variance'+(variances>1?'s':''));
       html += '<div class="cnt-hist-card"><div class="cnt-hist-hd">'
         + '<span class="cnt-hist-title">'+new Date(c.submittedAt).toLocaleString()+' — by '+escHtml(c.submittedBy||'Unknown')+'</span>'
-        + '<span class="cnt-hist-badge ok">📷 Scan submitted</span>'
+        + '<span class="cnt-hist-badge '+badge+'">'+badgeLabel+'</span>'
         + '</div>'
-        + '<div class="cnt-hist-meta">'+escHtml(c.dc||currentDC)+' · '+(c.itemCount||0)+' items read</div>'
+        + '<div class="cnt-hist-meta">'+escHtml(c.dc||currentDC)+' · '+(c.itemCount||0)+' items · '+method+'</div>'
         + (c.summary?'<div class="cnt-hist-summary">'+escHtml(c.summary)+'</div>':'')
         + '<div style="margin-top:8px;display:flex;gap:6px">'
           + '<button class="btn b-danger" onclick="deleteCount(\''+k+'\')" style="font-size:12px;padding:6px 12px">✕</button>'
@@ -2124,12 +2136,13 @@ function renderOcrUpload(){
     +'<div style="font-size:15px;font-weight:700;color:var(--dark)">Upload Count Sheet Photos / Scans</div>'
     +'<button class="btn" onclick="cntMode=\'choose\';ocrFiles=[];renderContent()" style="font-size:13px">← Back</button>'
     +'</div>';
-  html+='<div class="ocr-upload-zone" id="ocr-zone">'
-    +'<input type="file" accept="image/*,.pdf" multiple onchange="ocrFilesChosen(event)">'
-    +'<div style="font-size:32px;margin-bottom:8px">📁</div>'
-    +'<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px">Click or drag files here</div>'
-    +'<div style="font-size:13px;color:var(--gray)">JPG, PNG, or PDF · Multiple files accepted · One photo per sheet section is fine</div>'
-    +'</div>';
+  // File input hidden, triggered by label
+  html+='<input type="file" id="ocr-file-input" accept="image/*,.pdf" multiple style="display:none" onchange="ocrFilesChosen(event)">'
+    +'<label for="ocr-file-input" class="ocr-upload-zone" id="ocr-zone">'
+      +'<div style="font-size:32px;margin-bottom:8px">📁</div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px">Click or drag files here</div>'
+      +'<div style="font-size:13px;color:var(--gray)">JPG, PNG, or PDF · Multiple files OK · One photo per page is fine</div>'
+    +'</label>';
   if(ocrFiles.length){
     html+='<div class="ocr-file-list">';
     ocrFiles.forEach(function(f,i){
@@ -2137,15 +2150,15 @@ function renderOcrUpload(){
       html+='<div class="ocr-file-row">'
         +'<span>'+icon+'</span>'
         +'<span class="ocr-file-name">'+escHtml(f.name)+'</span>'
-        +'<span class="ocr-file-status '+f.status+'">'+{pending:'Queued',reading:'Reading…',done:'✓ Done',error:'✗ Failed'}[f.status]+'</span>'
+        +'<span class="ocr-file-status '+f.status+'">'+({pending:'Queued',reading:'Reading…',done:'✓ Done',error:'✗ Failed'}[f.status]||f.status)+'</span>'
         +'<button onclick="ocrFiles.splice('+i+',1);renderContent()" style="border:none;background:none;color:var(--gray-mid);cursor:pointer;font-size:14px;padding:0 4px">✕</button>'
       +'</div>';
     });
-    html+='</div>';
-    html+='<div style="display:flex;gap:10px;flex-wrap:wrap">'
-      +'<button class="btn b-org" onclick="runOCR()" style="padding:10px 24px;font-size:15px">🔍 Process with Google Vision →</button>'
-      +'<button class="btn" onclick="ocrFiles=[];renderContent()">Clear All</button>'
-    +'</div>';
+    html+='</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap">'
+        +'<button class="btn b-org" onclick="runOCR()" style="padding:10px 24px;font-size:15px">🔍 Process with Google Vision →</button>'
+        +'<button class="btn" onclick="ocrFiles=[];renderContent()">Clear All</button>'
+      +'</div>';
   }
   return html;
 }
@@ -3269,7 +3282,19 @@ var HELP = {
 };
 
 function showHelp(key){
-  var h=HELP[key]; if(!h) return;
+  // 'current' = show help for the active tab
+  if(key==='current'){
+    if(curTab&&state&&state.racks&&state.racks[curTab]) key='rack';
+    else if(curTab==='overflow') key='overflow';
+    else if(curTab==='delivery') key='delivery';
+    else if(curTab==='countentry') key='countentry';
+    else if(curTab==='printform') key='printform';
+    else if(curTab==='supplylist') key='supplylist';
+    else if(curTab==='reports') key='reports';
+    else if(curTab==='settings') key='settings';
+    else key='rack';
+  }
+  var h=HELP[key]||{icon:'ℹ️',title:'Help',body:'Use the tabs at the top to navigate between sections.'};
   document.getElementById('help-icon').textContent=h.icon;
   document.getElementById('help-title').textContent=h.title;
   document.getElementById('help-body').innerHTML=h.body;
