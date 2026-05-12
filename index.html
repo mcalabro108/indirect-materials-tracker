@@ -2400,78 +2400,152 @@ function renderPrintForm(){
 }
 
 function buildPrintFormHTML(sups, cats, forPrint){
-  var ul='<span style="display:inline-block;border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>';
-  var ul_w=function(w){return '<span style="display:inline-block;width:'+w+';border-bottom:1px solid #9ca3af;vertical-align:bottom">&nbsp;</span>';};
+  var ul_w=function(w){return '<span style="display:inline-block;width:'+w+';border-bottom:1.5px solid #374151;vertical-align:bottom;margin:0 2px">&nbsp;</span>';};
 
-  // Instructions block
-  var instructions='<div style="background:#f0f4ff;border:2px solid #1a2f5e;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:10px;line-height:1.7;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
-    +'<div style="font-weight:800;color:#1a2f5e;font-size:11px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">📋 Instructions — Please read before counting</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px">'
-      +'<div><strong>Required:</strong> Fill in Rack/Area Name at the top of each section · Supply item name · Col and Lvl for each location found · Each, Pallets, and Cartons counts</div>'
-      +'<div><strong>Tips:</strong> Use one row per supply item · If item is in more than 3 locations use the Notes column · Write clearly in BLOCK CAPITALS for best scan accuracy · Leave blank if item is not found</div>'
+  // ── Build dynamic instructions from current DC state ──
+  var racks=state&&state.racks?state.racks:{};
+  var rackOrder=state&&state.rackOrder?state.rackOrder:[];
+
+  // Collect example names from first rack
+  var exampleRack='', exampleCols=[], exampleLevels=[];
+  if(rackOrder.length&&racks[rackOrder[0]]){
+    var er=racks[rackOrder[0]];
+    exampleRack=er.name||'Rack 1';
+    exampleCols=er.colNames&&er.colNames.length?er.colNames.slice(0,3):['Column 1','Column 2','Column 3'];
+    if(er.colLevelNames&&er.colLevelNames[0]) exampleLevels=er.colLevelNames[0].slice(0,3);
+    else exampleLevels=makeLevelNames(er.colLevels&&er.colLevels[0]?er.colLevels[0]:er.levels||3).slice(0,3);
+  }
+
+  // Build rack reference table for instructions
+  var rackRef='';
+  rackOrder.forEach(function(rid){
+    var r=racks[rid]; if(!r) return;
+    var colSample=(r.colNames||[]).slice(0,4).join(', ')+(r.cols>4?' …':'');
+    var lvlSample=[];
+    if(r.colLevelNames&&r.colLevelNames[0]) lvlSample=r.colLevelNames[0].slice(0,3);
+    else lvlSample=makeLevelNames(r.colLevels&&r.colLevels[0]?r.colLevels[0]:r.levels||3).slice(0,3);
+    rackRef+='<tr>'
+      +'<td style="padding:3px 8px;border:1px solid #d1d5db;font-weight:700;font-size:9px;color:#1a2f5e;white-space:nowrap">'+escHtml(r.name)+'</td>'
+      +'<td style="padding:3px 8px;border:1px solid #d1d5db;font-size:9px;color:#374151">'+escHtml(colSample||'—')+'</td>'
+      +'<td style="padding:3px 8px;border:1px solid #d1d5db;font-size:9px;color:#374151">'+escHtml(lvlSample.join(', ')||'—')+'</td>'
+    +'</tr>';
+  });
+
+  var instructions='<div style="background:#f0f4ff;border:2px solid #1a2f5e;border-radius:8px;padding:10px 14px;margin-bottom:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
+    +'<div style="font-weight:800;color:#1a2f5e;font-size:11px;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">📋 Count Sheet Instructions — '+(currentDC||'')+'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;font-size:9px;line-height:1.7;color:#1e2d5a">'
+      +'<div>'
+        +'<div style="font-weight:800;margin-bottom:3px;font-size:9px;text-transform:uppercase;letter-spacing:.3px">✅ Required for each item found:</div>'
+        +'<div>• The <strong>Rack / Area</strong> heading above each section matches a rack in this DC (see table →)</div>'
+        +'<div>• <strong>Column</strong> — write the exact column name (e.g. <em>'+escHtml(exampleCols[0]||'Column 1')+'</em>)</div>'
+        +'<div>• <strong>Level</strong> — write the exact level name (e.g. <em>'+escHtml(exampleLevels[0]||'Level 1')+'</em>)</div>'
+        +'<div>• At least one quantity: <strong>Each</strong>, <strong>Pallets</strong>, or <strong>Cartons</strong></div>'
+      +'</div>'
+      +'<div>'
+        +'<div style="font-weight:800;margin-bottom:3px;font-size:9px;text-transform:uppercase;letter-spacing:.3px">✏️ Tips for accurate scanning:</div>'
+        +'<div>• Write in <strong>BLOCK CAPITALS</strong> — easier to scan</div>'
+        +'<div>• Use exact names from the table below — spelling matters</div>'
+        +'<div>• If item is in more than 3 locations, use the Notes column</div>'
+        +'<div>• If an item is not present, leave the row blank</div>'
+        +'<div>• <strong>Counted By</strong> and <strong>Date</strong> must be filled on every sheet</div>'
+      +'</div>'
     +'</div>'
+    +(rackRef
+      ? '<div style="margin-top:8px"><div style="font-weight:800;font-size:9px;color:#1a2f5e;text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px">This DC\'s rack & column/level naming reference:</div>'
+        +'<table style="border-collapse:collapse;font-size:9px"><thead><tr>'
+          +'<th style="padding:3px 8px;border:1px solid #c7d2fe;background:#e0e7ff;color:#3730a3;text-align:left">Rack Name</th>'
+          +'<th style="padding:3px 8px;border:1px solid #c7d2fe;background:#e0e7ff;color:#3730a3;text-align:left">Column Names</th>'
+          +'<th style="padding:3px 8px;border:1px solid #c7d2fe;background:#e0e7ff;color:#3730a3;text-align:left">Level Names (sample)</th>'
+        +'</tr></thead><tbody>'+rackRef+'</tbody></table>'
+      +'</div>'
+      : '')
   +'</div>';
 
-  // Rack/Area header block
-  var areaHeader='<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-bottom:10px;padding:10px 14px;background:#f4f6f9;border:1px solid #d1d5db;border-radius:6px">'
-    +'<div style="font-size:10px;font-weight:700;color:#1a2f5e">'
-      +'RACK / AREA NAME<br>'
-      +'<span style="display:inline-block;width:95%;border-bottom:2px solid #1a2f5e;margin-top:8px">&nbsp;</span>'
-    +'</div>'
-    +'<div style="font-size:10px;font-weight:700;color:#1a2f5e">'
-      +'COUNTED BY<br>'
-      +'<span style="display:inline-block;width:95%;border-bottom:2px solid #1a2f5e;margin-top:8px">&nbsp;</span>'
-    +'</div>'
-    +'<div style="font-size:10px;font-weight:700;color:#1a2f5e">'
-      +'DATE<br>'
-      +'<span style="display:inline-block;width:95%;border-bottom:2px solid #1a2f5e;margin-top:8px">&nbsp;</span>'
-    +'</div>'
-    +'<div style="font-size:10px;font-weight:700;color:#1a2f5e">'
-      +'DC<br>'
-      +'<span style="display:inline-block;width:95%;border-bottom:2px solid #1a2f5e;margin-top:8px">&nbsp;</span>'
-    +'</div>'
-  +'</div>';
-
-  var locCell='<td style="padding:9px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;vertical-align:middle">'
-    +'<div style="font-size:10px;font-weight:700;color:#1a2f5e;display:block;margin-bottom:14px;line-height:1.8">'
-      +'Col '+ul_w('18%')+'&nbsp;&nbsp;Lvl '+ul_w('18%')
-    +'</div>'
-    +'<div style="font-size:9px;color:#6b7280;display:block;line-height:1.8">'
-      +'Each '+ul_w('16%')+'&nbsp;'
-      +'Pallets '+ul_w('16%')+'&nbsp;'
-      +'Cartons '+ul_w('16%')
-    +'</div>'
-  +'</td>';
+  // ── Per-rack sections ──
+  var locCell=function(bg){
+    return '<td style="background:'+bg+';padding:9px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;vertical-align:middle">'
+      +'<div style="font-size:9.5px;font-weight:700;color:#1a2f5e;display:block;margin-bottom:12px;line-height:1.9">'
+        +'Column '+ul_w('22%')+'&nbsp;&nbsp;Level '+ul_w('22%')
+      +'</div>'
+      +'<div style="font-size:9px;color:#6b7280;display:block;line-height:1.9">'
+        +'Each '+ul_w('14%')+'&nbsp;'
+        +'Pallets '+ul_w('14%')+'&nbsp;'
+        +'Cartons '+ul_w('14%')
+      +'</div>'
+    +'</td>';
+  };
 
   var html='<div style="background:#fff;'+(forPrint?'':'border:1px solid var(--gray-lt);border-radius:var(--radius-lg);overflow:hidden')+'">'
-    +instructions+areaHeader;
+    +instructions;
 
-  Object.keys(cats).forEach(function(cat){
-    var items=sups[cat]||[]; if(!items.length) return;
-    var cs=cats[cat]||{bg:'#f9fafb',text:'#374151'};
-    html+='<div style="background:'+cs.bg+';color:'+cs.text+';padding:6px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid '+cs.text+'22;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
-      +escHtml(cat)+'</div>'
-      +'<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;table-layout:fixed">'
-      +'<colgroup><col style="width:14%"><col style="width:24%"><col style="width:24%"><col style="width:24%"><col style="width:14%"></colgroup>'
-      +'<thead><tr>'
-        +'<th style="background:#f4f6f9;font-size:10px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;text-align:left">Supply Item</th>'
-        +'<th style="background:#e8ecf6;font-size:10px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;text-align:left">Location 1<br><span style="font-weight:400;font-size:8px;opacity:.7">Col / Lvl / Qty</span></th>'
-        +'<th style="background:#e8ecf6;font-size:10px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;text-align:left">Location 2<br><span style="font-weight:400;font-size:8px;opacity:.7">Col / Lvl / Qty</span></th>'
-        +'<th style="background:#e8ecf6;font-size:10px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;text-align:left">Location 3<br><span style="font-weight:400;font-size:8px;opacity:.7">Col / Lvl / Qty</span></th>'
-        +'<th style="background:#f4f6f9;font-size:10px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;text-align:left">Notes</th>'
-      +'</tr></thead><tbody>';
-    items.forEach(function(item,idx){
-      var bg=idx%2===0?'#fff':'#fafbfc';
-      html+='<tr>'
-        +'<td style="background:'+bg+';padding:8px 6px;border:1px solid #e2e6ed;font-weight:700;font-size:11px;vertical-align:middle">'+escHtml(item)+'</td>'
-        +locCell.replace(/padding:9px/g,'padding:9px').replace(/background[^;]*/,'background:'+bg)
-        +locCell.replace(/background[^;]*/,'background:'+bg)
-        +locCell.replace(/background[^;]*/,'background:'+bg)
-        +'<td style="background:'+bg+';padding:8px 6px;border:1px solid #e2e6ed"></td>'
-      +'</tr>';
+  // Counters info strip (filled per sheet)
+  html+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin:8px 0;padding:8px 10px;background:#f9fafb;border:1px solid #d1d5db;border-radius:6px">'
+    +'<div style="font-size:9px;font-weight:700;color:#374151">COUNTED BY<br><span style="display:inline-block;width:90%;border-bottom:1.5px solid #374151;margin-top:8px">&nbsp;</span></div>'
+    +'<div style="font-size:9px;font-weight:700;color:#374151">DATE<br><span style="display:inline-block;width:90%;border-bottom:1.5px solid #374151;margin-top:8px">&nbsp;</span></div>'
+    +'<div style="font-size:9px;font-weight:700;color:#374151">PAGE ___ OF ___</div>'
+  +'</div>';
+
+  // One section per rack
+  if(rackOrder.length){
+    rackOrder.forEach(function(rid){
+      var rack=racks[rid]; if(!rack) return;
+
+      // Rack name as bold section heading
+      html+='<div style="background:#1a2f5e;color:#fff;padding:8px 14px;font-size:13px;font-weight:800;letter-spacing:.3px;margin-top:6px;display:flex;align-items:center;justify-content:space-between;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
+        +'<span>'+escHtml(rack.name)+'</span>'
+        +'<span style="font-size:10px;font-weight:400;opacity:.6">'+rack.cols+' columns · '+
+          (rack.colLevels?rack.colLevels.join('/'):rack.levels)+' levels</span>'
+      +'</div>';
+
+      // Table for all supply items under this rack
+      html+='<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;table-layout:fixed">'
+        +'<colgroup><col style="width:14%"><col style="width:24%"><col style="width:24%"><col style="width:24%"><col style="width:14%"></colgroup>'
+        +'<thead><tr>'
+          +'<th style="background:#f4f6f9;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;text-align:left">Supply Item</th>'
+          +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e">Location 1<br><span style="font-weight:400;opacity:.65;font-size:8px">Column / Level / Qty</span></th>'
+          +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e">Location 2<br><span style="font-weight:400;opacity:.65;font-size:8px">Column / Level / Qty</span></th>'
+          +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e">Location 3<br><span style="font-weight:400;opacity:.65;font-size:8px">Column / Level / Qty</span></th>'
+          +'<th style="background:#f4f6f9;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed">Notes</th>'
+        +'</tr></thead><tbody>';
+
+      var allItems=Object.values(sups).flat();
+      allItems.forEach(function(item,idx){
+        var bg=idx%2===0?'#fff':'#fafbfc';
+        html+='<tr>'
+          +'<td style="background:'+bg+';padding:7px 6px;border:1px solid #e2e6ed;font-weight:700;font-size:10px;vertical-align:middle">'+escHtml(item)+'</td>'
+          +locCell(bg)+locCell(bg)+locCell(bg)
+          +'<td style="background:'+bg+';padding:7px 6px;border:1px solid #e2e6ed"></td>'
+        +'</tr>';
+      });
+      html+='</tbody></table></div>';
     });
-    html+='</tbody></table></div>';
-  });
+  } else {
+    // No racks configured — fall back to category grouping
+    Object.keys(cats).forEach(function(cat){
+      var items=sups[cat]||[]; if(!items.length) return;
+      var cs=cats[cat]||{bg:'#f9fafb',text:'#374151'};
+      html+='<div style="background:'+cs.bg+';color:'+cs.text+';padding:6px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid '+cs.text+'22;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+escHtml(cat)+'</div>'
+        +'<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;table-layout:fixed">'
+        +'<colgroup><col style="width:14%"><col style="width:24%"><col style="width:24%"><col style="width:24%"><col style="width:14%"></colgroup>'
+        +'<thead><tr>'
+          +'<th style="background:#f4f6f9;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;text-align:left">Supply Item</th>'
+          +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e">Location 1</th>'
+          +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e">Location 2</th>'
+          +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e">Location 3</th>'
+          +'<th style="background:#f4f6f9;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed">Notes</th>'
+        +'</tr></thead><tbody>';
+      items.forEach(function(item,idx){
+        var bg=idx%2===0?'#fff':'#fafbfc';
+        html+='<tr>'
+          +'<td style="background:'+bg+';padding:7px 6px;border:1px solid #e2e6ed;font-weight:700;font-size:10px;vertical-align:middle">'+escHtml(item)+'</td>'
+          +locCell(bg)+locCell(bg)+locCell(bg)
+          +'<td style="background:'+bg+';padding:7px 6px;border:1px solid #e2e6ed"></td>'
+        +'</tr>';
+      });
+      html+='</tbody></table></div>';
+    });
+  }
+
   return html+'</div>';
 }
 
@@ -2480,12 +2554,14 @@ function showPrintForm(){
   var cats=sharedSupplies?sharedSupplies.cats:DCATS;
   var pf=document.getElementById('print-form');
   if(!pf) return;
-  var header='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:3px solid #F47920">'
+  var header='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:3px solid #F47920;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
     +'<div>'
       +'<div style="font-size:16px;font-weight:900;color:#1a2f5e">carparts<span style="color:#F47920">.com</span></div>'
-      +'<div style="font-size:10px;color:#6b7280;margin-top:2px">Indirect Materials Count Sheet · '+escHtml(currentDC)+' · '+new Date().toLocaleDateString()+'</div>'
+      +'<div style="font-size:10px;color:#6b7280;margin-top:2px">Indirect Materials Count Sheet · '+escHtml(currentDC||'')+'</div>'
     +'</div>'
-    +'<div style="font-size:11px;font-weight:700;color:#1a2f5e;text-align:right">Page ___ of ___</div>'
+    +'<div style="font-size:11px;color:#6b7280;text-align:right">Printed: '+new Date().toLocaleDateString()+'<br>'
+      +'<strong style="color:#1a2f5e">Use exact rack, column, and level names as shown in instructions</strong>'
+    +'</div>'
   +'</div>';
   pf.innerHTML=header+buildPrintFormHTML(sups,cats,true);
 }
