@@ -975,7 +975,7 @@ function attachFirebase(dcCode){
   // DC-specific data path
   fbDCRef=db.ref("dc/"+dcCode);
   // Shared supply list path
-  fbSupRef=db.ref("dc/"+currentDC+"/supplyList");
+  fbSupRef=db.ref("shared/supplies");
   window.fbDCRef=fbDCRef;
   window.fbSupRef=fbSupRef;
 
@@ -1684,11 +1684,11 @@ function renderSupplyList(){
   var catOpts=catKeys.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join("");
   var _sl_ctx=pageCtx('supplylist')
     +instrBox('Managing the supply list',[
-      'This list belongs to <strong>'+escHtml(currentDC)+'</strong> only — changes here do not affect other DCs',
+      'This list is <strong>shared across all four DCs</strong> — changes here affect LAS, LSL, JAX, and GPT immediately',
       'Select a category, type the item name, then click + Add Item (or press Enter)',
       'To create a new category, choose &ldquo;+ New category&hellip;&rdquo; from the dropdown',
-      'Remove an item by clicking ✕ on its badge',
-      'Items added here appear in rack slots, overflow, and count sheets for this DC'
+      'Remove an item by clicking ✕ on its badge — only remove items that no longer apply company-wide',
+      'Items added here appear in rack slots, overflow, and count sheets for all DCs'
     ]);
   var html='<div class="tab-section-hd">📋 Supply List</div>'+_sl_ctx
     +'<div class="card"><div class="card-title">Add New Supply Item</div>'
@@ -3456,7 +3456,7 @@ var HELP_SECTIONS = {
     nav:'hn-supply', title:'📋 Supply List',
     content:function(){
       return '<div class="help-h1">Supply List Tab</div>'
-        +'<p class="help-lead">The master list of supply items for this DC. Items added here appear in rack slots, overflow, count sheets, and all dropdowns throughout the tracker. Each DC manages its own list independently.</p>'
+        +'<p class="help-lead">The master list of supply items shared across all four DCs. Items added here appear in rack slots, overflow, count sheets, and all dropdowns throughout the tracker at every location.</p>'
         +'<div class="help-h2">Adding items</div>'
         +hs([['1','Select a category','Choose from the dropdown (e.g. Boxes, Labels, Film).'],
              ['2','Type the item name','Use the exact name that will appear on count sheets.'],
