@@ -357,6 +357,30 @@ body{font-family:'Inter',Arial,sans-serif;background:var(--offwhite);color:var(-
 .instr-box ul li{margin:0}
 .tour-highlight{position:relative;z-index:9002!important;border-radius:8px;box-shadow:0 0 0 4px var(--orange),0 0 0 8px rgba(244,121,32,.25)!important}
 
+/* Help center nav */
+.hn{padding:7px 16px;font-size:13px;color:var(--gray);cursor:pointer;border-left:3px solid transparent;transition:all .12s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hn:hover{background:var(--offwhite);color:var(--dark)}
+.hn.active{background:#fff;color:var(--navy);border-left-color:var(--orange);font-weight:700}
+.help-h1{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:6px}
+.help-h2{font-size:14px;font-weight:700;color:var(--navy);margin:18px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--gray-lt)}
+.help-lead{font-size:13px;color:var(--gray);line-height:1.65;margin-bottom:16px}
+.help-step{display:flex;gap:11px;margin-bottom:11px}
+.help-step-n{width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.help-step-title{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:1px}
+.help-step-desc{font-size:12px;color:var(--gray);line-height:1.5}
+.help-tip{background:#fff8ec;border-left:3px solid var(--orange);padding:9px 13px;border-radius:0 var(--radius) var(--radius) 0;margin:12px 0;font-size:12px;color:#92400e;line-height:1.6}
+.help-warn{background:#fff1f2;border-left:3px solid #dc2626;padding:9px 13px;border-radius:0 var(--radius) var(--radius) 0;margin:12px 0;font-size:12px;color:#991b1b;line-height:1.6}
+.help-bul{margin:4px 0 4px 14px;font-size:12px;color:var(--gray);line-height:1.7;padding-left:4px}
+.help-bul li{margin-bottom:2px}
+.help-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px;padding-top:14px;border-top:1px solid var(--gray-lt)}
+.help-btn-p{padding:8px 16px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:Arial,sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.help-btn-s{padding:8px 14px;border:1.5px solid var(--gray-lt);border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:Arial,sans-serif;color:var(--navy);text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.sr-card{padding:10px 12px;border-radius:var(--radius);border:1px solid var(--gray-lt);margin-bottom:8px;cursor:pointer;transition:all .12s}
+.sr-card:hover{border-color:var(--orange);background:var(--orange-lt)}
+.sr-section{font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.sr-title{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:2px}
+.sr-snip{font-size:12px;color:var(--gray);line-height:1.4}
+mark{background:#fff3cd;color:var(--dark);border-radius:2px;padding:0 2px}
 /* OCR Upload */
 .ocr-upload-zone{border:2.5px dashed var(--gray-lt);border-radius:var(--radius-lg);padding:2rem;text-align:center;cursor:pointer;background:#fff;transition:all .2s;position:relative;margin-bottom:1rem;display:block}
 .ocr-upload-zone:hover{border-color:var(--orange);background:var(--orange-lt)}
@@ -601,22 +625,41 @@ body{font-family:'Inter',Arial,sans-serif;background:var(--offwhite);color:var(-
 </div>
 
 <!-- HELP POPUP -->
-<div id="help-popup" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:14px;padding:1.5rem 1.75rem;max-width:420px;width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative">
-    <button onclick="closeHelp()" style="position:absolute;top:12px;right:14px;border:none;background:none;font-size:20px;cursor:pointer;color:var(--gray);line-height:1">✕</button>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.75rem">
-      <span id="help-icon" style="font-size:24px"></span>
-      <div id="help-title" style="font-size:16px;font-weight:800;color:var(--navy)"></div>
-    </div>
-    <div id="help-body" style="font-size:14px;color:#374151;line-height:1.75"></div>
-    <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--gray-lt)">
-      <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">More help</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button onclick="closeHelp();startTour()" style="padding:7px 14px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:Arial,sans-serif">▶ Guided Tour</button>
-        <a href="https://mcalabro108.github.io/indirect-materials-tracker/Supply_Rack_Tracker_User_Guide.docx" target="_blank" style="padding:7px 14px;border:1.5px solid var(--gray-lt);border-radius:8px;background:#fff;font-size:13px;font-weight:600;font-family:Arial,sans-serif;color:var(--navy);text-decoration:none;display:inline-flex;align-items:center">📄 User Guide</a>
-        <a href="mailto:mcalabro@carparts.com?subject=Tracker Question — '+escHtml(currentDC||'')+'&body=DC: '+escHtml(currentDC||'')+'%0AUser: '+escHtml(userName||'')+'%0A%0AQuestion / Issue:%0A" style="padding:7px 14px;border:1.5px solid var(--gray-lt);border-radius:8px;background:#fff;font-size:13px;font-weight:600;font-family:Arial,sans-serif;color:var(--navy);text-decoration:none;display:inline-flex;align-items:center">✉️ Contact Admin</a>
-        <button onclick="closeHelp()" style="padding:7px 14px;border:1.5px solid var(--gray-lt);border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:Arial,sans-serif;color:var(--gray)">Close</button>
+<div id="help-popup" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.55);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:min(880px,96vw);height:min(600px,90vh);box-shadow:0 24px 80px rgba(0,0,0,.35);position:relative;display:flex;flex-direction:column;overflow:hidden">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--gray-lt);flex-shrink:0;background:#fff">
+      <div style="display:flex;align-items:center;gap:16px;flex:1">
+        <div style="font-size:15px;font-weight:800;color:var(--navy)">carparts<span style="color:var(--orange)">.com</span> <span style="font-weight:400;color:var(--gray);font-size:13px">Help Center</span></div>
+        <div style="flex:1;max-width:320px;position:relative">
+          <input id="help-search" type="text" placeholder="Search help..." oninput="helpSearch(this.value)"
+            style="width:100%;font-size:13px;padding:7px 12px 7px 32px;border-radius:20px;border:1.5px solid var(--gray-lt);font-family:Arial,sans-serif;color:var(--dark);background:var(--offwhite);outline:none">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--gray-mid)">🔍</span>
+        </div>
       </div>
+      <button onclick="closeHelp()" style="border:none;background:var(--offwhite);border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer;color:var(--gray);display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
+    </div>
+    <!-- Body -->
+    <div style="display:flex;flex:1;overflow:hidden">
+      <!-- Sidebar -->
+      <div id="help-sidebar" style="width:200px;flex-shrink:0;border-right:1px solid var(--gray-lt);overflow-y:auto;padding:8px 0;background:#fafbfc">
+        <div style="font-size:10px;font-weight:700;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.5px;padding:8px 16px 4px">Getting Started</div>
+        <div class="hn" onclick="helpNav('overview')" id="hn-overview">📋 Overview</div>
+        <div class="hn" onclick="helpNav('tour')" id="hn-tour">▶ Guided Tour</div>
+        <div style="font-size:10px;font-weight:700;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.5px;padding:12px 16px 4px">Using the Tracker</div>
+        <div class="hn" onclick="helpNav('rack')" id="hn-rack">🏭 Rack View</div>
+        <div class="hn" onclick="helpNav('overflow')" id="hn-overflow">📦 Overflow</div>
+        <div class="hn" onclick="helpNav('delivery')" id="hn-delivery">🚚 Delivery</div>
+        <div class="hn" onclick="helpNav('count')" id="hn-count">📋 Count Entry</div>
+        <div class="hn" onclick="helpNav('print')" id="hn-print">🖨️ Print Form</div>
+        <div class="hn" onclick="helpNav('supply')" id="hn-supply">📋 Supply List</div>
+        <div class="hn" onclick="helpNav('reports')" id="hn-reports">📊 Reports</div>
+        <div style="font-size:10px;font-weight:700;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.5px;padding:12px 16px 4px">Resources</div>
+        <div class="hn" onclick="helpNav('guide')" id="hn-guide">📄 User Guide</div>
+        <div class="hn" onclick="helpNav('contact')" id="hn-contact">✉️ Contact Admin</div>
+      </div>
+      <!-- Content -->
+      <div id="help-content" style="flex:1;overflow-y:auto;padding:24px 28px;font-size:13px;color:var(--dark);line-height:1.7"></div>
     </div>
   </div>
 </div>
@@ -2575,12 +2618,12 @@ function renderPrintForm(){
       : buildPrintFormHTML(sups, cats));
 }
 
-function buildCountFormHTML(sups, cats){
+function buildCountFormHTML(sups, cats, forPrint){
   var allItems=[];
   Object.keys(cats).forEach(function(cat){
     (sups[cat]||[]).forEach(function(item){ allItems.push({item:item,cat:cat}); });
   });
-  var html='<div style="background:#fff;border:1px solid var(--gray-lt);border-radius:var(--radius-lg);overflow:hidden">';
+  var html='<div style="background:#fff;'+(forPrint?'':'border:1px solid var(--gray-lt);border-radius:var(--radius-lg);overflow:hidden')+'">';
   // Header
   html+='<div style="background:#1a2f5e;color:#fff;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
     +'<div style="font-size:14px;font-weight:900">carparts<span style="color:#F47920">.com</span> <span style="font-weight:400;font-size:12px;opacity:.7">Indirect Materials Count Sheet</span></div>'
@@ -2634,9 +2677,21 @@ function showPrintForm(){
   var cats=sharedSupplies?sharedSupplies.cats:DCATS;
   var pf=document.getElementById('print-form');
   if(!pf) return;
-  var header='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:3px solid #F47920;-webkit-print-color-adjust:exact;print-color-adjust:exact">'    +'<div>'      +'<div style="font-size:16px;font-weight:900;color:#1a2f5e">carparts<span style="color:#F47920">.com</span></div>'      +'<div style="font-size:10px;color:#6b7280;margin-top:2px">Indirect Materials Count Sheet &middot; '+escHtml(currentDC||'')+'</div>'    +'</div>'    +'<div style="font-size:11px;color:#1a2f5e;text-align:right;font-weight:700">'      +'Counted by: <span style="display:inline-block;width:160px;border-bottom:1.5px solid #1a2f5e;vertical-align:bottom">&nbsp;</span>'      +'&nbsp;&nbsp;Date: <span style="display:inline-block;width:90px;border-bottom:1.5px solid #1a2f5e;vertical-align:bottom">&nbsp;</span>'    +'</div>'  +'</div>';
-  pf.innerHTML=header+buildPrintFormHTML(sups,cats,true);
+  var isCount=printFormMode==='''count''';
+  var header='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:3px solid #F47920;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
+    +'<div>'
+      +'<div style="font-size:16px;font-weight:900;color:#1a2f5e">carparts<span style="color:#F47920">.com</span></div>'
+      +'<div style="font-size:10px;color:#6b7280;margin-top:2px">Indirect Materials '+(isCount?'Count':'Location')+' Sheet &middot; '+escHtml(currentDC||'')+'</div>'
+    +'</div>'
+    +'<div style="font-size:11px;color:#1a2f5e;text-align:right;font-weight:700">'
+      +(isCount
+        ?'Counted by: <span style="display:inline-block;width:160px;border-bottom:1.5px solid #1a2f5e;vertical-align:bottom">&nbsp;</span>&nbsp;&nbsp;Date: <span style="display:inline-block;width:90px;border-bottom:1.5px solid #1a2f5e;vertical-align:bottom">&nbsp;</span>'
+        :'Page ___ of ___')
+    +'</div>'
+  +'</div>';
+  pf.innerHTML=header+(isCount?buildCountFormHTML(sups,cats,true):buildPrintFormHTML(sups,cats,true));
 }
+
 
 // ── EVENT LOGGING ─────────────────────────────────────────────────────────
 function logEvent(type, data){
@@ -3269,40 +3324,256 @@ function toggleFloorBetween(rackId,ci){
   saveDB(); renderContent();
 }
 
-// ── HELP SYSTEM ───────────────────────────────────────────────────────────
-var HELP = {
-  rack:{icon:'🏭',title:'Rack View',body:'A visual map of your physical storage racks. Each column is a rack bay; each row is a shelf level. <strong>Click any white card</strong> to assign an item and enter quantities. Orange bars are shelf beams. Use "+ Add Floor" to add floor-level storage below a column.'},
-  overflow:{icon:'📦',title:'Overflow',body:'Track items stored outside the main racks — floor lanes, staging areas, or pallets under the mezzanine. Add a line for each location. Quantities can be entered per storage area column.'},
-  delivery:{icon:'🚚',title:'Delivery Verification',body:'Log every incoming delivery here. Upload the BOL or PO document, note any discrepancies (wrong items, short shipment, damage), and click Submit. An email is automatically sent to Don Homiller with your notes.'},
-  countentry:{icon:'📷',title:'Count Upload',body:'Upload photos of your filled count sheets here. Google Vision reads the item names and totals automatically. You review, correct any misreads, then approve — Don receives the full count by email. No manual re-typing needed.'},
-  printform:{icon:'🖨️',title:'Print Form',body:'Generates printable count sheets. <strong>Location Form</strong> — use when recording exactly where items are (rack, column, level). <strong>Count Form</strong> — a simple tally sheet matching the paper form your team already uses. Print, fill in, then upload here.'},
-  supplylist:{icon:'📋',title:'Supply List',body:'The list of supply items for this DC. Add items here to make them available in rack slots, overflow, and count sheets. Each DC has its own supply list — changes here only affect this location.'},
-  reports:{icon:'📊',title:'Reports',body:'View inventory totals, count history, variances, and anomalies for your DC. The Inventory view shows total quantities across all racks. Variance view compares your latest count to the previous one. Anomalies are auto-flagged if counts change by more than 10%.'},
-  settings:{icon:'⚙',title:'Settings',body:'Configure your rack layout, quantity types (Pallets, Each, etc.), and DC. The Admin section at the top has the weekly report button (sends all 4 DCs to Don) and the Google Vision API key for photo scanning.'}
+// ── HELP CENTER ────────────────────────────────────────────────────────────
+var HELP_SECTIONS = {
+  overview:{
+    nav:'hn-overview', title:'📋 Overview',
+    content:function(){
+      return '<div class="help-h1">Welcome to the Indirect Materials Tracker</div>'
+        +'<p class="help-lead">A live, browser-based inventory system for packaging and indirect supplies across all four CarParts.com distribution centers — LAS, LSL, JAX, and GPT. Every change syncs instantly to your whole team. No app to install, works on any device.</p>'
+        +'<div class="help-h2">How to get started</div>'
+        +hs([['1','Enter the password','Type CarParts2024! and press Enter to access the tracker.'],
+             ['2','Select your DC','Click your distribution center (LAS, LSL, JAX, or GPT) from the tile grid.'],
+             ['3','Enter your name','Your name appears on every change you make. Only required once per device.'],
+             ['4','Start using it','Click a rack tab at the top → click any white slot card → assign an item and quantities.']])
+        +'<div class="help-h2">The four DCs</div>'
+        +'<ul class="help-bul"><li><b>LAS</b> — Las Vegas, NV</li><li><b>LSL</b> — LaSalle, IL</li><li><b>JAX</b> — Jacksonville, FL</li><li><b>GPT</b> — Grand Prairie, TX</li></ul>'
+        +'<div class="help-tip"><b>Tip:</b> Each DC has a direct link (e.g. ending in ?dc=LAS). Bookmark yours for instant access — no picker screen needed.</div>'
+        +ha();
+    }
+  },
+  tour:{
+    nav:'hn-tour', title:'▶ Guided Tour',
+    content:function(){
+      return '<div class="help-h1">Guided Tour</div>'
+        +'<p class="help-lead">The guided tour walks you through every section of the tracker step by step, with an orange glow highlighting each part of the screen as it\'s explained.</p>'
+        +'<div class="help-h2">How it works</div>'
+        +'<ul class="help-bul"><li>The tour starts automatically the first time you open a DC</li><li>Click <b>Next</b> to advance through each step, or <b>Skip</b> to jump straight in</li><li>The tour covers: racks, slots, delivery, count entry, print forms, reports, and settings</li><li>9 steps total — takes about 2 minutes to complete</li></ul>'
+        +'<div class="help-h2">Replay the tour</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:12px">You can replay the tour at any time from the button below or from the <b>? Help</b> button in the top navigation bar.</p>'
+        +'<div class="help-actions"><button class="help-btn-p" onclick="closeHelp();startTour()">▶ Start Guided Tour</button></div>';
+    }
+  },
+  rack:{
+    nav:'hn-rack', title:'🏭 Rack View',
+    content:function(){
+      return '<div class="help-h1">Rack View</div>'
+        +'<p class="help-lead">The rack view is a visual map of your physical storage racks. Click any rack tab at the top of the screen to switch between racks. This is where most day-to-day work happens.</p>'
+        +'<div class="help-h2">Reading the rack</div>'
+        +'<ul class="help-bul"><li>Each <b>vertical column</b> = a physical bay or rack column</li><li>Each <b>row within a column</b> = a shelf level (top to bottom)</li><li><b>Orange horizontal bars</b> = steel beams between levels</li><li><b>White cards</b> inside bays = individual storage slots — click them to assign items</li><li>A <b>colored badge</b> on a card means that slot has an item assigned</li></ul>'
+        +'<div class="help-h2">Assigning an item to a slot</div>'
+        +hs([['1','Click any white slot card','The slot edit window opens.'],
+             ['2','Select a Category','Choose from the dropdown (Boxes, Labels, Film, etc.)'],
+             ['3','Select a Supply Item','Choose from items listed under that category.'],
+             ['4','Enter quantities','Fill in Pallets, Each, Cartons, or any custom types.'],
+             ['5','Add a note (optional)','Use for low stock alerts, special handling, etc.'],
+             ['6','Click Save','Updates instantly for everyone at your DC.']])
+        +'<div class="help-h2">Splitting a slot into sections</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">A single bay can hold up to 5 items side by side — useful when multiple supplies share one rack location.</p>'
+        +'<ul class="help-bul"><li>Hover over any slot → a <b>+</b> button appears in the bottom-right corner</li><li>Click <b>+</b> to add a section (bay splits into Left, Center, Right, etc.)</li><li>Click <b>−</b> to remove the last section</li><li>Click any section to edit it independently</li><li>Maximum 5 sections per slot</li></ul>'
+        +'<div class="help-h2">Adjusting columns and levels</div>'
+        +'<ul class="help-bul"><li>Each column has its own <b>Levels − / + control</b> at the top — fully independent</li><li>Click any <b>column name</b> to rename it (e.g. "Bay A")</li><li>Click any <b>level label</b> inside a bay to rename it (e.g. "Top Shelf")</li><li>Add a column: click the indigo <b>+</b> strip between columns</li><li>Remove a column: click <b>✕</b> in the column header — all data in it is permanently deleted</li></ul>'
+        +'<div class="help-h2">Floor bays</div>'
+        +'<ul class="help-bul"><li>Click <b>+ Add Floor</b> at the bottom of a column to add a floor-level storage bay</li><li>Click <b>+ Floor</b> between columns to add a bay in the aisle gap between two racks</li><li>Floor bays show in brown/earth tones to distinguish them from shelf bays</li><li>Floor bays support up to 5 sections just like regular bays</li></ul>'
+        +'<div class="help-tip"><b>Tip:</b> Rename columns and levels to match physical labels like "Bay A" or "Floor Pallet" — far more useful than Col 1 / Lvl 1 when someone is standing in front of the rack.</div>';
+    }
+  },
+  overflow:{
+    nav:'hn-overflow', title:'📦 Overflow',
+    content:function(){
+      return '<div class="help-h1">Overflow Tab</div>'
+        +'<p class="help-lead">Track materials stored outside the main racks — floor lanes, staging areas, pallets under the mezzanine, or anywhere that doesn\'t fit on a standard rack.</p>'
+        +'<div class="help-h2">Setting up area columns</div>'
+        +'<ul class="help-bul"><li>Click any area column name at the top to rename it (e.g. "Lane A", "Staging")</li><li>Use the <b>+</b> and <b>−</b> buttons to add or remove area columns</li><li>Each column represents a distinct overflow storage zone</li></ul>'
+        +'<div class="help-h2">Adding an overflow item</div>'
+        +hs([['1','Select a supply item','Choose from the dropdown, or type a custom item name and select its category.'],
+             ['2','Add a note','Describe the location (e.g. "Lane A, back pallet").'],
+             ['3','Click + Add Line','The item appears in the overflow table.'],
+             ['4','Enter quantities','Click directly in the table to enter quantities per area.']])
+        +'<ul class="help-bul"><li>Edit notes inline by clicking them</li><li>Remove a line with the <b>✕</b> button</li></ul>'
+        +'<div class="help-tip"><b>Tip:</b> Keep overflow up to date — items stored outside racks are easy to lose track of and often missed in counts.</div>';
+    }
+  },
+  delivery:{
+    nav:'hn-delivery', title:'🚚 Delivery Verification',
+    content:function(){
+      return '<div class="help-h1">Delivery Verification Tab</div>'
+        +'<p class="help-lead">Log every incoming delivery here. An email is sent to Don Homiller automatically every time you submit a delivery record.</p>'
+        +'<div class="help-h2">How to log a delivery</div>'
+        +hs([['1','Upload the BOL or PO','Click the upload zone or drag a file. Accepts PDF, JPG, PNG.'],
+             ['2','Add discrepancy notes','Describe anything wrong — missing items, wrong quantities, damage. Leave blank if the delivery was correct.'],
+             ['3','Click Submit','Saves the record and opens Outlook pre-filled to Don with your notes.'],
+             ['4','Attach the file in Outlook','The uploaded file is in your Downloads folder. Attach it before hitting Send.']])
+        +'<div class="help-h2">Viewing past submissions</div>'
+        +'<p style="font-size:13px;color:var(--gray)">Past deliveries are listed below the form with date, submitter, and notes. Every submission is also logged in the Reports → Event Log.</p>'
+        +'<div class="help-tip"><b>Good notes matter:</b> Be specific — "Short 2 pallets of 10 Box" or "Received 38 Box instead of 9B Box" helps Don track supplier issues accurately.</div>'
+        +'<div class="help-warn"><b>Important:</b> You must manually attach the BOL/PO file in Outlook before hitting Send — the email opens pre-filled but the attachment is not added automatically.</div>';
+    }
+  },
+  count:{
+    nav:'hn-count', title:'📋 Count Entry',
+    content:function(){
+      return '<div class="help-h1">Count Entry Tab</div>'
+        +'<p class="help-lead">Submit inventory counts two ways: type them directly on screen (Digital Entry), or upload photos and scans of your filled count sheet (Photo/Scan Upload). Both methods email Don automatically when you approve.</p>'
+        +'<div class="help-h2">Option 1 — Digital Entry</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">Use a phone or tablet while walking the floor, or sit at a desk after filling in the paper Count Form.</p>'
+        +hs([['1','Click Digital Entry','Opens a table of all supply items.'],
+             ['2','Type your counts','Enter the actual quantity you counted for each item and quantity type.'],
+             ['3','Review the Diff column','Green = matches system, Yellow = 10–25% variance, Red = over 25% variance.'],
+             ['4','Click Submit','Opens Outlook to Don with the full results. Hit Send.']])
+        +'<div class="help-h2">Option 2 — Photo / Scan Upload</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">Google Vision reads item names and totals from your filled Count Form automatically.</p>'
+        +hs([['1','Print the Count Form','Go to the Print Form tab → select Count Form → Print.'],
+             ['2','Fill it in by hand','Walk the floor. Write tally marks and totals clearly.'],
+             ['3','Photograph or scan','Phone camera (straight-on, good lighting) or flatbed/MFP scanner saved as PDF or JPG.'],
+             ['4','Upload the files','Click Photo/Scan Upload → drag files or click to select. Multiple files OK.'],
+             ['5','Process','Google Vision reads every file and extracts item names and totals.'],
+             ['6','Review & approve','Check for misreads, correct any errors, then click Approve & Email Don.']])
+        +'<div class="help-h2">Photo tips for accurate scanning</div>'
+        +'<ul class="help-bul"><li><b>Write totals clearly and large</b> in the Total column — that\'s what the app reads</li><li><b>Block capitals</b> for item names — easier to scan than cursive</li><li><b>Flat surface</b> — sheet on a table, not held in hand</li><li><b>Good lighting</b> — avoid shadows falling across the text</li><li><b>Straight-on angle</b> — fill the frame, not at a diagonal</li><li>Scanned PDFs are often cleaner than phone photos</li></ul>'
+        +'<div class="help-tip"><b>Photo upload not available?</b> This feature requires configuration by your supervisor. Contact admin to enable it on your device.</div>';
+    }
+  },
+  print:{
+    nav:'hn-print', title:'🖨️ Print Form',
+    content:function(){
+      return '<div class="help-h1">Print Form Tab</div>'
+        +'<p class="help-lead">Generate printable count sheets. Choose between the Count Form (for inventory counting) and the Location Form (for rack mapping). Both print in landscape orientation.</p>'
+        +'<div class="help-h2">Count Form</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">The standard tally sheet — matches the paper form your team already uses. Three columns: Item | Tally space | Total. Print it, walk the floor, write your counts, then upload the photo in Count Entry.</p>'
+        +'<div class="help-h2">Location Form</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">Use when setting up or re-mapping racks. Records Aisle, Column, and Level for up to 3 locations per item, plus Each / Pallets / Cartons fill-in lines.</p>'
+        +'<div class="help-h2">How to print</div>'
+        +hs([['1','Select the form type','Click Count Form or Location Form in the toggle at the top.'],
+             ['2','Click Print','The browser print dialog opens.'],
+             ['3','Set landscape orientation','In the print dialog, change Orientation to Landscape.'],
+             ['4','Set margins to minimum','Select "None" or "Minimum" for the best fit on one page.'],
+             ['5','Print','The navigation bar hides automatically — only the form prints.']])
+        +'<div class="help-tip"><b>After counting:</b> Upload photos or scans of the filled Count Form in the Count Entry tab to send results to Don automatically.</div>';
+    }
+  },
+  supply:{
+    nav:'hn-supply', title:'📋 Supply List',
+    content:function(){
+      return '<div class="help-h1">Supply List Tab</div>'
+        +'<p class="help-lead">The master list of supply items for this DC. Items added here appear in rack slots, overflow, count sheets, and all dropdowns throughout the tracker. Each DC manages its own list independently.</p>'
+        +'<div class="help-h2">Adding items</div>'
+        +hs([['1','Select a category','Choose from the dropdown (e.g. Boxes, Labels, Film).'],
+             ['2','Type the item name','Use the exact name that will appear on count sheets.'],
+             ['3','Click + Add Item','Or press Enter. The item is added immediately.']])
+        +'<div class="help-h2">Adding a new category</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">Select <b>"+ New category…"</b> from the category dropdown, then type the new category name.</p>'
+        +'<div class="help-h2">Removing items</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">Click the <b>✕</b> on any item badge to remove it from the list. This removes it from all dropdowns but does not clear it from slots where it was already assigned.</p>'
+        +'<div class="help-tip"><b>Naming matters for OCR:</b> Item names on the Count Form are read by Google Vision and matched against this list. The closer your handwriting matches the item name here, the more accurate the scan result.</div>';
+    }
+  },
+  reports:{
+    nav:'hn-reports', title:'📊 Reports',
+    content:function(){
+      return '<div class="help-h1">Reports Tab</div>'
+        +'<p class="help-lead">View live data for your DC — inventory totals, count history, variances, and anomalies. Reports are DC-isolated: each DC only sees its own data. Use the sub-tabs at the top to switch between views.</p>'
+        +'<div class="help-h2">Summary</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">Stat cards showing items tracked, count submissions, deliveries logged, and anomaly count. A status card shows the last count date and current health of your DC.</p>'
+        +'<div class="help-h2">Inventory</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">Total quantities per item across your whole DC — all rack slots, floor bays, and overflow combined into one table. Grouped by category. Items with no quantities show "—". Export to CSV using the button in the top right.</p>'
+        +'<div class="help-h2">Variance</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">Compares your latest count submission to the previous one. Color coded:</p>'
+        +'<ul class="help-bul"><li><span style="color:#16a34a;font-weight:700">Green</span> — counts match</li><li><span style="color:#ca8a04;font-weight:700">Yellow</span> — 10–25% difference</li><li><span style="color:#dc2626;font-weight:700">Red</span> — over 25% difference</li></ul>'
+        +'<div class="help-h2">Anomalies</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">Items flagged automatically when counts change significantly between submissions. Detects items dropping to zero, quantities tripling unexpectedly, and consistent growing variances. Anything over 25% change is flagged as critical.</p>'
+        +'<div class="help-h2">Event Log</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">Every action logged for your DC — slot updates, count submissions, and deliveries — with exact date, time, and who made the change. No limit on history shown.</p>'
+        +'<div class="help-tip"><b>Count emails are automatic:</b> Every count submission emails Don immediately. You don\'t need to do anything extra. Weekly cross-DC reports are sent manually from ⚙ Settings → Admin.</div>';
+    }
+  },
+  guide:{
+    nav:'hn-guide', title:'📄 User Guide',
+    content:function(){
+      return '<div class="help-h1">User Guide</div>'
+        +'<p class="help-lead">The full user guide is a Word document covering every feature of the tracker in detail. It includes a regular user section and a separate admin/settings section at the end.</p>'
+        +'<div class="help-h2">What\'s in the guide</div>'
+        +'<ul class="help-bul"><li>Getting started — password, DC selection, name setup</li><li>Rack view — slots, sections, columns, levels, floor bays</li><li>Overflow, Delivery, Count Entry, Print Form, Supply List</li><li>Reports — all five sub-views explained</li><li>Getting help — in-app help, instruction boxes</li><li><b>Admin section</b> — password management, weekly report, Google Vision API key, DC URLs, Firebase rules</li></ul>'
+        +'<div class="help-actions"><a class="help-btn-p" href="https://mcalabro108.github.io/indirect-materials-tracker/Supply_Rack_Tracker_User_Guide.docx" target="_blank">📄 Download User Guide</a></div>';
+    }
+  },
+  contact:{
+    nav:'hn-contact', title:'✉️ Contact Admin',
+    content:function(){
+      var dc=currentDC||'Unknown';
+      var user=userName||'Unknown';
+      return '<div class="help-h1">Contact Admin</div>'
+        +'<p class="help-lead">Have a question about the tracker, found something that doesn\'t work, or need a feature changed? Send a message directly to the system administrator.</p>'
+        +'<div class="help-h2">Send a message</div>'
+        +'<p style="font-size:13px;color:var(--gray);margin-bottom:16px">Click the button below to open Outlook pre-filled with your DC and name. Describe your question or issue in the body and hit Send.</p>'
+        +'<div class="help-actions"><a class="help-btn-p" href="mailto:mcalabro@carparts.com?subject='+encodeURIComponent('[Tracker] Question from '+user+' — '+dc)+'&body='+encodeURIComponent('DC: '+dc+'\nUser: '+user+'\n\nQuestion / Issue:\n\n')+'">✉️ Email Admin</a></div>'
+        +'<div class="help-h2">What to include</div>'
+        +'<ul class="help-bul"><li>Your DC and name (pre-filled automatically)</li><li>What you were trying to do</li><li>What happened instead</li><li>A screenshot if possible</li></ul>'
+        +'<div class="help-tip"><b>For urgent issues</b> affecting your whole team, contact your supervisor directly and mention the Indirect Materials Tracker.</div>';
+    }
+  }
 };
 
-function showHelp(key){
-  // 'current' = show help for the active tab
-  if(key==='current'){
-    if(curTab&&state&&state.racks&&state.racks[curTab]) key='rack';
-    else if(curTab==='overflow') key='overflow';
-    else if(curTab==='delivery') key='delivery';
-    else if(curTab==='countentry') key='countentry';
-    else if(curTab==='printform') key='printform';
-    else if(curTab==='supplylist') key='supplylist';
-    else if(curTab==='reports') key='reports';
-    else if(curTab==='settings') key='settings';
-    else key='rack';
-  }
-  var h=HELP[key]||{icon:'ℹ️',title:'Help',body:'Use the tabs at the top to navigate between sections.'};
-  document.getElementById('help-icon').textContent=h.icon;
-  document.getElementById('help-title').textContent=h.title;
-  document.getElementById('help-body').innerHTML=h.body;
-  var el=document.getElementById('help-popup');
-  el.style.display='flex';
+var helpCurrentSection='overview';
+
+function hs(steps){
+  return steps.map(function(s){
+    return '<div class="help-step"><div class="help-step-n">'+s[0]+'</div><div><div class="help-step-title">'+s[1]+'</div><div class="help-step-desc">'+s[2]+'</div></div></div>';
+  }).join('');
 }
-function closeHelp(){
-  document.getElementById('help-popup').style.display='none';
+function ha(){
+  return '<div class="help-actions">'
+    +'<button class="help-btn-p" onclick="closeHelp();startTour()">▶ Guided Tour</button>'
+    +'<a class="help-btn-s" href="https://mcalabro108.github.io/indirect-materials-tracker/Supply_Rack_Tracker_User_Guide.docx" target="_blank">📄 User Guide</a>'
+    +'<a class="help-btn-s" href="mailto:mcalabro@carparts.com?subject='+encodeURIComponent('[Tracker] Question from '+(userName||'Unknown')+' — '+(currentDC||'Unknown'))+'&body='+encodeURIComponent('DC: '+(currentDC||'')+'\\nUser: '+(userName||'')+'\\n\\nQuestion:\\n')+'">✉️ Contact Admin</a>'
+  +'</div>';
+}
+
+function helpNav(key){
+  helpCurrentSection=key;
+  // Update sidebar active state
+  Object.keys(HELP_SECTIONS).forEach(function(k){
+    var el=document.getElementById(HELP_SECTIONS[k].nav);
+    if(el) el.className='hn'+(k===key?' active':'');
+  });
+  // Render content
+  var sec=HELP_SECTIONS[key];
+  if(!sec) return;
+  var el=document.getElementById('help-content');
+  if(el) el.innerHTML=sec.content();
+  // Clear search
+  var si=document.getElementById('help-search');
+  if(si) si.value='';
+}
+
+function helpSearch(q){
+  q=(q||'').toLowerCase().trim();
+  var content=document.getElementById('help-content');
+  if(!q){helpNav(helpCurrentSection);return;}
+  // Collect all searchable text from all sections
+  var results=[];
+  Object.keys(HELP_SECTIONS).forEach(function(k){
+    var sec=HELP_SECTIONS[k];
+    var raw=sec.content().replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
+    if(raw.toLowerCase().indexOf(q)>=0){
+      var idx=raw.toLowerCase().indexOf(q);
+      var snip=raw.substring(Math.max(0,idx-60),idx+120).trim();
+      var hi=snip.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>');
+      results.push({key:k,title:sec.title,snip:hi});
+    }
+  });
+  if(!results.length){
+    content.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray-mid);font-size:14px">No results found for "<b>'+escHtml(q)+'</b>"<br><span style="font-size:12px;margin-top:6px;display:block">Try different keywords or browse the sections in the sidebar</span></div>';
+    return;
+  }
+  var html='<div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:14px">'+results.length+' result'+(results.length>1?'s':'')+' for "'+escHtml(q)+'"</div>';
+  results.forEach(function(r){
+    html+='<div class="sr-card" onclick="helpNav(\''+r.key+'\')">'
+      +'<div class="sr-section">'+r.title+'</div>'
+      +'<div class="sr-snip">…'+r.snip+'…</div>'
+    +'</div>';
+  });
+  content.innerHTML=html;
 }
 
 // ── GUIDED TOUR ────────────────────────────────────────────────────────────
