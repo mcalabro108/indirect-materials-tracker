@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CarParts.com — Indirect Materials Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root{
   --navy:#1a2f5e;--navy2:#152654;--orange:#F47920;--orange-dk:#d4641a;
@@ -2070,7 +2071,7 @@ function deleteDelivery(k){
 }
 
 // ── COUNT ENTRY ────────────────────────────────────────────────────────────
-var cntMode = 'choose'; // choose | digital | ocr | review
+var cntMode = 'choose'; // choose | digital | ocr | review | preview
 var cntEntries = {};
 var ocrFiles = [];
 var ocrReviewRows = [];
@@ -2081,13 +2082,13 @@ function renderCountEntry(){
   if(cntMode === 'digital') return html + renderDigitalEntry();
   if(cntMode === 'ocr')     return html + renderOcrUpload();
   if(cntMode === 'review')  return html + renderOcrReview();
+  if(cntMode === 'preview') return html + renderOcrPreview();
 
   var gvKey = localStorage.getItem('cpGoogleVisionKey')||'';
 
   html+=instrBox('How to submit a count',[
-    '<strong>Digital Entry</strong> — type counts directly on screen while walking the floor (phone or tablet), or after filling in the paper Count Form.',
-    '<strong>Photo / Scan Upload</strong> — photograph or scan your filled Count Form and upload here. The app reads item names and totals automatically.',
-    '<strong>Either method</strong> sends results to Don by email when you approve.'
+    '<strong>Digital Entry</strong> — type counts on screen while walking the floor, or at your desk after counting.',
+    '<strong>Photo / Scan Upload</strong> — photograph or scan your filled Count Form and upload here. The app reads totals automatically, shows you a preview, then sends to Don.'
   ]);
 
   // Two mode cards
@@ -2238,76 +2239,40 @@ function runOCR(){
   }
 
   function processPDF(f,idx,done){
-    // Load PDF.js from CDN to render pages as images
+    f.text='';
+    var workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     if(typeof pdfjsLib==='undefined'){
-      var script=document.createElement('script');
-      script.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-      script.onload=function(){
-        pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        processPDF(f,idx,done);
-      };
-      document.head.appendChild(script);
-      return;
+      f.status='error';
+      f.text='ERROR: PDF.js library not loaded. Try refreshing the page.';
+      updateOcrFileStatus(idx,'error','✗ PDF.js missing');
+      done(); return;
     }
+    pdfjsLib.GlobalWorkerOptions.workerSrc=workerSrc;
     var reader=new FileReader();
     reader.onload=function(ev){
       var typedArray=new Uint8Array(ev.target.result);
       pdfjsLib.getDocument({data:typedArray}).promise.then(function(pdf){
         var totalPages=pdf.numPages;
-        var pageTexts=[];
-        var pageIdx=0;
-        function nextPage(){
-          if(pageIdx>=totalPages){
-            f.text=pageTexts.join('\n');
-            f.status=f.text.trim()?'done':'error';
-            updateOcrFileStatus(idx,f.status,f.status==='done'?'✓ Done ('+totalPages+'p)':'✗ Failed');
-            done();
-            return;
-          }
-          pageIdx++;
-          updateOcrFileStatus(idx,'reading','Reading p'+pageIdx+'/'+totalPages+'…');
-          pdf.getPage(pageIdx).then(function(page){
-            var scale=2.0; // Higher = better quality for OCR
-            var viewport=page.getViewport({scale:scale});
-            var canvas=document.createElement('canvas');
-            canvas.width=viewport.width;
-            canvas.height=viewport.height;
-            var ctx=canvas.getContext('2d');
-            page.render({canvasContext:ctx,viewport:viewport}).promise.then(function(){
-              var b64=canvas.toDataURL('image/jpeg',0.92).split(',')[1];
-              sendImageToVision(b64,'image/jpeg',{text:''},idx,function(){
-                // Capture the text we just added
-                pageTexts.push(f.text||'');
-                f.text='';
-                nextPage();
-              });
-            });
-          });
-        }
-        // Reset text accumulation
-        f.text='';
-        // Re-use sendImageToVision but accumulate pages differently
         var allPageTexts=[];
-        pageIdx=0;
+        var pageIdx=0;
         function renderNextPage(){
           if(pageIdx>=totalPages){
             f.text=allPageTexts.join('\n');
             f.status=f.text.trim()?'done':'error';
-            updateOcrFileStatus(idx,f.status,f.status==='done'?'✓ Done ('+totalPages+'p)':'✗ Failed');
-            done();
-            return;
+            updateOcrFileStatus(idx,f.status,f.status==='done'?'✓ Done ('+totalPages+'p)':'✗ No text found');
+            done(); return;
           }
           pageIdx++;
           updateOcrFileStatus(idx,'reading','Reading p'+pageIdx+'/'+totalPages+'…');
           pdf.getPage(pageIdx).then(function(page){
-            var scale=2.0;
+            var scale=2.5;
             var viewport=page.getViewport({scale:scale});
             var canvas=document.createElement('canvas');
             canvas.width=viewport.width;
             canvas.height=viewport.height;
             var ctx=canvas.getContext('2d');
             page.render({canvasContext:ctx,viewport:viewport}).promise.then(function(){
-              var b64=canvas.toDataURL('image/jpeg',0.92).split(',')[1];
+              var b64=canvas.toDataURL('image/jpeg',0.95).split(',')[1];
               var url='https://vision.googleapis.com/v1/images:annotate?key='+key;
               var body={requests:[{image:{content:b64},features:[{type:'DOCUMENT_TEXT_DETECTION',maxResults:1}]}]};
               fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
@@ -2321,13 +2286,14 @@ function runOCR(){
                   renderNextPage();
                 })
                 .catch(function(){allPageTexts.push('');renderNextPage();});
-            });
-          });
+            }).catch(function(){allPageTexts.push('');renderNextPage();});
+          }).catch(function(){allPageTexts.push('');renderNextPage();});
         }
         renderNextPage();
       }).catch(function(e){
         f.status='error';
-        updateOcrFileStatus(idx,'error','✗ PDF Error');
+        f.text='ERROR: Could not parse PDF — '+e.message;
+        updateOcrFileStatus(idx,'error','✗ PDF parse error');
         done();
       });
     };
@@ -2456,7 +2422,7 @@ function renderOcrReview(){
   html+='</tbody></table></div>';
 
   html+='<div style="display:flex;gap:10px;flex-wrap:wrap">'
-    +'<button class="btn b-org" onclick="approveOcrCount()" style="padding:10px 24px;font-size:15px">✓ Approve & Email Don →</button>'
+    +'<button class="btn b-org" onclick="approveOcrCount()" style="padding:10px 24px;font-size:15px">👁 Preview & Send →</button>'
     +'<button class="btn" onclick="cntMode=\'choose\';ocrFiles=[];ocrReviewRows=[];renderContent()">Cancel</button>'
   +'</div>';
   return html;
@@ -2473,9 +2439,15 @@ function ocrEditQty(inp){
 }
 function approveOcrCount(){
   if(!ocrReviewRows.length){alert('Nothing to submit.');return;}
-  var qtyTypes=state.qtyTypes||['Pallets','Each'];
+  // Go to preview screen instead of emailing directly
+  cntMode='preview';
+  renderContent();
+}
+
+function renderOcrPreview(){
   var itemCount=ocrReviewRows.length;
-  var lines=['COUNT SHEET SUBMISSION — '+currentDC];
+  var qtyTypes=state.qtyTypes||['Pallets','Each'];
+  var lines=['COUNT SHEET SUBMISSION — '+(currentDC||'')];
   lines.push('Submitted by: '+(userName||'Unknown'));
   lines.push('Date: '+new Date().toLocaleString());
   lines.push('Items read: '+itemCount);
@@ -2484,16 +2456,59 @@ function approveOcrCount(){
   lines.push('─────────────────────────────────────');
   ocrReviewRows.forEach(function(row){
     if(!row.item) return;
-    var qtySummary=qtyTypes.map(function(qt){
-      var v=row.qtys&&row.qtys[qt]!==undefined?row.qtys[qt]:0;
-      return v>0?qt+': '+v:'';
-    }).filter(Boolean).join(' · ');
-    lines.push(escHtml(row.item)+(qtySummary?' — '+qtySummary:''));
+    lines.push(row.item+' — Total: '+(row.total||0));
   });
   lines.push('');
   lines.push('Source files: '+ocrFiles.map(function(f){return f.name;}).join(', '));
 
-  // Save to history (no system update)
+  var subject='['+currentDC+'] Count Sheet Submitted — '+new Date().toLocaleDateString()+' — '+itemCount+' items';
+
+  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'
+    +'<div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--dark)">Preview — Email to Don</div>'
+      +'<div style="font-size:12px;color:var(--gray);margin-top:2px">Review what will be sent before confirming</div>'
+    +'</div>'
+    +'<button class="btn" onclick="cntMode=\'review\';renderContent()" style="font-size:13px">← Edit</button>'
+  +'</div>';
+
+  // Email preview card
+  html+='<div style="background:#fff;border:1.5px solid var(--gray-lt);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.25rem">'
+    +'<div style="background:var(--navy);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px">'
+      +'<span style="font-size:16px">📧</span>'
+      +'<div>'
+        +'<div style="font-size:13px;font-weight:700">To: Don Homiller (Dhomiller@carparts.com)</div>'
+        +'<div style="font-size:11px;opacity:.7;margin-top:1px">Subject: '+escHtml(subject)+'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div style="padding:14px 16px;font-family:monospace;font-size:12px;color:var(--dark);line-height:1.8;white-space:pre-wrap;background:#fafbfc;max-height:320px;overflow-y:auto">'+escHtml(lines.join('\n'))+'</div>'
+  +'</div>';
+
+  html+='<div style="display:flex;gap:10px;flex-wrap:wrap">'
+    +'<button class="btn b-org" onclick="confirmSendOcrCount()" style="padding:10px 24px;font-size:15px">✓ Send to Don →</button>'
+    +'<button class="btn" onclick="cntMode=\'choose\';ocrFiles=[];ocrReviewRows=[];renderContent()">Cancel</button>'
+  +'</div>';
+  return html;
+}
+
+function confirmSendOcrCount(){
+  if(!ocrReviewRows.length){alert('Nothing to submit.');return;}
+  var qtyTypes=state.qtyTypes||['Pallets','Each'];
+  var itemCount=ocrReviewRows.length;
+  var lines=['COUNT SHEET SUBMISSION — '+(currentDC||'')];
+  lines.push('Submitted by: '+(userName||'Unknown'));
+  lines.push('Date: '+new Date().toLocaleString());
+  lines.push('Items read: '+itemCount);
+  lines.push('');
+  lines.push('ITEM TOTALS:');
+  lines.push('─────────────────────────────────────');
+  ocrReviewRows.forEach(function(row){
+    if(!row.item) return;
+    lines.push(row.item+' — Total: '+(row.total||0));
+  });
+  lines.push('');
+  lines.push('Source files: '+ocrFiles.map(function(f){return f.name;}).join(', '));
+
+  // Save to history
   if(!state.counts) state.counts={};
   var id='cnt_'+Date.now();
   var summary=ocrReviewRows.slice(0,5).map(function(r){return r.item;}).join(', ')+(itemCount>5?' +more':'');
@@ -2505,7 +2520,6 @@ function approveOcrCount(){
   logEvent('count_submission',{dc:currentDC,submittedBy:userName||'Unknown',itemCount:itemCount,method:'ocr'});
   saveDB();
 
-  // Email Don
   var subject='['+currentDC+'] Count Sheet Submitted — '+new Date().toLocaleDateString()+' — '+itemCount+' items';
   window.location.href='mailto:Dhomiller@carparts.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(lines.join('\n'));
 
