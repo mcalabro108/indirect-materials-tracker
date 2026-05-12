@@ -1489,19 +1489,28 @@ function renderSettings(){
       +'<p style="font-size:12px;color:var(--gray-mid);margin-top:10px">Each DC has its own isolated rack data. The supply list is shared across all DCs.</p>'
     +'</div></div>';
 
-  // Google Vision API key
+  // Admin section — weekly report + API key
   var gvKey=localStorage.getItem('cpGoogleVisionKey')||'';
   html+='<div class="settings-card">'
-    +'<div class="settings-card-hd"><h3>📷 Google Cloud Vision API Key</h3></div>'
+    +'<div class="settings-card-hd"><h3>🔐 Admin</h3></div>'
     +'<div class="settings-card-bd">'
-      +'<p style="font-size:13px;color:var(--gray);margin-bottom:10px">Required for photo/scan upload on the Count Entry tab. Stored in your browser only — never saved to Firebase.</p>'
-      +'<div style="display:flex;gap:8px;align-items:center">'
-        +'<input type="password" id="gv-key-inp" value="'+escHtml(gvKey)+'" placeholder="AIzaSy..." '
-          +'style="flex:1;font-size:14px;padding:9px 12px;border-radius:var(--radius);border:2px solid var(--gray-lt);font-family:\'Inter\',sans-serif;letter-spacing:1px">'
-        +'<button class="btn b-org" onclick="saveGVKey()">Save Key</button>'
-        +(gvKey?'<button class="btn b-danger" onclick="clearGVKey()" style="font-size:12px">Clear</button>':"")
+      +'<p style="font-size:13px;color:var(--gray);margin-bottom:16px">Admin controls — cross-DC reporting and API credentials.</p>'
+      +'<div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:6px">Weekly Report to Don Homiller</div>'
+      +'<p style="font-size:12px;color:var(--gray);margin-bottom:10px">Combines all four DCs and opens Outlook pre-filled to Don. Individual count submissions also auto-email Don.</p>'
+      +'<button class="btn b-org" onclick="sendWeeklyReport()" style="padding:10px 22px;font-size:14px;margin-bottom:1.25rem">📧 Send Weekly Report — All DCs</button>'
+      +'<div style="border-top:1px solid var(--gray-lt);padding-top:1.25rem">'
+        +'<div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:6px">📷 Google Cloud Vision API Key</div>'
+        +'<p style="font-size:12px;color:var(--gray);margin-bottom:10px">Enables photo/scan upload on Count Entry. Stored in your browser only.</p>'
+        +'<div style="display:flex;gap:8px;align-items:center">'
+          +'<input type="password" id="gv-key-inp" value="'+escHtml(gvKey)+'" placeholder="AIzaSy..." '
+            +'style="flex:1;font-size:14px;padding:9px 12px;border-radius:var(--radius);border:2px solid var(--gray-lt);font-family:\'Inter\',sans-serif;letter-spacing:1px">'
+          +'<button class="btn b-org" onclick="saveGVKey()">Save Key</button>'
+          +(gvKey?'<button class="btn b-danger" onclick="clearGVKey()" style="font-size:12px">Clear</button>':"")
+        +'</div>'
+        +(gvKey
+          ?'<p style="font-size:12px;color:#16a34a;margin-top:8px;font-weight:600">✓ API key saved — photo upload enabled.</p>'
+          :'<p style="font-size:12px;color:var(--gray-mid);margin-top:8px">Get your key at console.cloud.google.com → APIs &amp; Services → Credentials.</p>')
       +'</div>'
-      +(gvKey?'<p style="font-size:12px;color:#16a34a;margin-top:8px;font-weight:600">✓ API key saved — photo upload enabled on Count Entry tab.</p>':'<p style="font-size:12px;color:var(--gray-mid);margin-top:8px">Get your key from console.cloud.google.com → APIs & Services → Credentials.</p>')
     +'</div></div>';
 
   html+='</div>';
@@ -2511,16 +2520,6 @@ function renderReports(){
 
   var html='<div class="tab-section-hd">📊 Reports — '+escHtml(currentDC)+'</div>';
 
-  if(showBanner){
-    html+='<div style="background:#fff8ec;border:2px solid #F47920;border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">'
-      +'<div>'
-        +'<div style="font-size:14px;font-weight:700;color:#92400e">📅 '+(isFriday&&daysSince>=7?'It\'s Friday and it\'s been '+daysSince+' days':isFriday?'It\'s Friday':'It\'s been '+daysSince+' days')+' since the last weekly report was sent to Don.</div>'
-        +'<div style="font-size:12px;color:#a16207;margin-top:3px">Weekly reports include all four DCs — inventory status, count results, and any anomalies.</div>'
-      +'</div>'
-      +'<button class="btn b-org" onclick="sendWeeklyReport()" style="white-space:nowrap">📧 Send Weekly Report to Don</button>'
-    +'</div>';
-  }
-
   // Sub-nav
   html+='<div class="rpt-subnav">'
     +['summary','inventory','variance','anomalies','events'].map(function(v){
@@ -2543,17 +2542,15 @@ function getActiveDCs(){
 
 // ── SUMMARY VIEW ──────────────────────────────────────────────────────────
 function renderRptSummary(){
-  var dcs=getActiveDCs();
+  var d=rptAllData[currentDC];
   var totalItems=0,totalSlots=0,totalCounts=0,totalAnomalies=0,totalDeliveries=0;
   var critAnomalies=0,warnAnomalies=0;
-  dcs.forEach(function(dc){
-    var d=rptAllData[dc]; if(!d) return;
-    // Count filled slots
+  if(d){
     if(d.racks) Object.values(d.racks).forEach(function(r){
       if(!r.slots) return;
       Object.values(r.slots).forEach(function(slot){
         if(!slot||!slot.sections) return;
-        slot.sections.forEach(function(sec){ totalSlots++; if(sec.supply) totalItems++; });
+        slot.sections.forEach(function(sec){totalSlots++;if(sec.supply)totalItems++;});
       });
     });
     if(d.counts) Object.values(d.counts).forEach(function(c){
@@ -2564,49 +2561,39 @@ function renderRptSummary(){
       });
     });
     if(d.deliveries) totalDeliveries+=Object.keys(d.deliveries).length;
-  });
+  }
+
+  var lastCountDate='—';
+  if(d&&d.counts){
+    var ckeys=Object.keys(d.counts).sort();
+    if(ckeys.length) lastCountDate=new Date(d.counts[ckeys[ckeys.length-1]].submittedAt).toLocaleString();
+  }
+
   var html='<div class="rpt-stat-grid">'
     +'<div class="rpt-stat"><div class="sv">'+totalItems+'</div><div class="sl">Items Tracked</div><div class="sd">across '+totalSlots+' slot sections</div></div>'
-    +'<div class="rpt-stat"><div class="sv">'+totalCounts+'</div><div class="sl">Count Submissions</div><div class="sd">all time</div></div>'
+    +'<div class="rpt-stat"><div class="sv">'+totalCounts+'</div><div class="sl">Count Submissions</div><div class="sd">last: '+lastCountDate+'</div></div>'
     +'<div class="rpt-stat"><div class="sv">'+totalDeliveries+'</div><div class="sl">Deliveries Logged</div></div>'
-    +'<div class="rpt-stat '+(critAnomalies>0?'crit':warnAnomalies>0?'warn':'ok')+'"><div class="sv">'+totalAnomalies+'</div><div class="sl">Anomalies Detected</div><div class="sd">'+critAnomalies+' critical · '+warnAnomalies+' warnings</div></div>'
+    +'<div class="rpt-stat '+(critAnomalies>0?'crit':warnAnomalies>0?'warn':'ok')+'"><div class="sv">'+totalAnomalies+'</div><div class="sl">Anomalies</div><div class="sd">'+critAnomalies+' critical · '+warnAnomalies+' warnings</div></div>'
   +'</div>';
-  // Per-DC summary table
-  html+='<div class="rpt-card"><div class="rpt-card-hd"><h3>DC Status Overview</h3>'
-    +'<button class="btn b-org" onclick="sendWeeklyReport()" style="font-size:13px">📧 Email Weekly Report to Don</button>'
-    +'</div><div style="overflow-x:auto"><table class="rpt-tbl"><thead><tr>'
-    +'<th>DC</th><th>Items Tracked</th><th>Last Count</th><th>Count Submissions</th><th>Deliveries</th><th>Open Anomalies</th><th>Status</th>'
-    +'</tr></thead><tbody>';
-  ['LAS','LSL','JAX','GPT'].forEach(function(dc){
-    var d=rptAllData[dc];
-    if(!d){html+='<tr><td class="rpt-dc">'+dc+'</td><td colspan="6" style="color:var(--gray-mid);font-style:italic">No data</td></tr>';return;}
-    var items=0,slots=0,counts=0,anom=0,crit=0,delivs=0,lastCnt='—';
-    if(d.racks) Object.values(d.racks).forEach(function(r){
-      if(!r.slots) return;
-      Object.values(r.slots).forEach(function(slot){
-        if(!slot||!slot.sections) return;
-        slot.sections.forEach(function(sec){slots++;if(sec.supply)items++;});
-      });
-    });
-    if(d.counts){
-      var ckeys=Object.keys(d.counts).sort();
-      counts=ckeys.length;
-      if(ckeys.length) lastCnt=new Date(d.counts[ckeys[ckeys.length-1]].submittedAt).toLocaleDateString();
-      Object.values(d.counts).forEach(function(c){ if(c.anomalies) c.anomalies.forEach(function(a){anom++;if(a.severity==='critical')crit++;}); });
-    }
-    if(d.deliveries) delivs=Object.keys(d.deliveries).length;
-    var status=crit>0?'<span class="anomaly-badge crit">⚠ '+crit+' Critical</span>':anom>0?'<span class="anomaly-badge warn">⚡ '+anom+' Warn</span>':'<span class="anomaly-badge ok">✓ OK</span>';
-    html+='<tr'+(crit>0?' class="anomaly-row"':'')+'>'
-      +'<td class="rpt-dc">'+dc+'</td>'
-      +'<td class="rpt-num">'+items+'</td>'
-      +'<td style="font-size:12px">'+lastCnt+'</td>'
-      +'<td class="rpt-num">'+counts+'</td>'
-      +'<td class="rpt-num">'+delivs+'</td>'
-      +'<td class="rpt-num">'+anom+'</td>'
-      +'<td>'+status+'</td>'
-    +'</tr>';
-  });
-  html+='</tbody></table></div></div>';
+
+  // Current DC detail card
+  var status=critAnomalies>0
+    ?'<span class="anomaly-badge crit">⚠ '+critAnomalies+' Critical</span>'
+    :warnAnomalies>0
+      ?'<span class="anomaly-badge warn">⚡ '+warnAnomalies+' Warnings</span>'
+      :'<span class="anomaly-badge ok">✓ All Clear</span>';
+
+  html+='<div class="rpt-card"><div class="rpt-card-hd"><h3>'+escHtml(currentDC)+' Status</h3>'+status+'</div>'
+    +'<div style="padding:1rem 1.25rem;font-size:13px;color:var(--gray);line-height:2">'
+      +'<div><strong style="color:var(--dark)">Items tracked:</strong> '+totalItems+' items in '+totalSlots+' slot sections</div>'
+      +'<div><strong style="color:var(--dark)">Count submissions:</strong> '+totalCounts+' total · last on '+lastCountDate+'</div>'
+      +'<div><strong style="color:var(--dark)">Deliveries logged:</strong> '+totalDeliveries+'</div>'
+      +'<div><strong style="color:var(--dark)">Open anomalies:</strong> '+totalAnomalies+' ('+critAnomalies+' critical · '+warnAnomalies+' warnings)</div>'
+    +'</div>'
+    +'<div style="padding:0 1.25rem 1rem;font-size:12px;color:var(--gray-mid);border-top:1px solid var(--gray-lt);padding-top:10px;margin-top:0">'
+      +'Count submission emails go to Don automatically. Weekly cross-DC reports are sent from the Admin section.'
+    +'</div>'
+  +'</div>';
   return html;
 }
 
