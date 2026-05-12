@@ -2353,17 +2353,19 @@ function submitDigitalCount(){
   if(anomalies.length) state.counts[id].anomalies=anomalies;
   saveDB();
 
-  // Build email to Don
-  var subject = encodeURIComponent('[' + currentDC + '] Weekly Count Results – ' + new Date().toLocaleDateString());
-  var body = 'Weekly Count Report — ' + currentDC + '\n'
-    + 'Submitted by: ' + (userName||'Unknown') + '\n'
-    + 'Date: ' + new Date().toLocaleString() + '\n\n'
-    + 'ITEMS COUNTED: ' + itemCount + '\n'
-    + 'VARIANCES: ' + variances + '\n\n'
-    + (summaryLines.length ? 'VARIANCE DETAILS:\n' + summaryLines.join('\n') + '\n\n' : 'No variances found.\n\n')
-    + (lastSummary ? 'PREVIOUS COUNT SUMMARY:\n' + lastSummary + '\n\n' : '')
-    + 'Sent from Indirect Materials Tracker.';
-  window.location.href = 'mailto:Dhomiller@carparts.com?subject=' + encodeURIComponent(decodeURIComponent(subject)) + '&body=' + encodeURIComponent(body);
+  // Build per-count email to Don (fires automatically on every submission)
+  var subject='['+currentDC+'] Count Submitted — '+new Date().toLocaleDateString()+' — '+(variances>0?variances+' variance(s)':'No variances');
+  var body='COUNT SUBMISSION — '+currentDC+'\n'
+    +'Submitted by: '+(userName||'Unknown')+'\n'
+    +'Date: '+new Date().toLocaleString()+'\n'
+    +'Method: '+(_ocrMethod?'Photo/Scan':'Digital Entry')+'\n\n'
+    +'RESULTS\n'
+    +'Items counted: '+itemCount+'\n'
+    +'Variances found: '+variances+'\n\n'
+    +(summaryLines.length?'VARIANCE DETAILS:\n'+summaryLines.join('\n')+'\n\n':'All counts match system quantities.\n\n')
+    +(lastCount?'PREVIOUS COUNT SUMMARY:\n'+(lastCount.summary||'No summary')+'\n\n':'No previous count to compare.\n\n')
+    +'View full report: https://mcalabro108.github.io/indirect-materials-tracker\n';
+  window.location.href='mailto:Dhomiller@carparts.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
 
   cntMode = 'choose'; cntEntries = {};
   renderContent();
@@ -2400,152 +2402,21 @@ function renderPrintForm(){
 }
 
 function buildPrintFormHTML(sups, cats, forPrint){
-  var ul_w=function(w){return '<span style="display:inline-block;width:'+w+';border-bottom:1.5px solid #374151;vertical-align:bottom;margin:0 2px">&nbsp;</span>';};
-
-  // ── Build dynamic instructions from current DC state ──
-  var racks=state&&state.racks?state.racks:{};
-  var rackOrder=state&&state.rackOrder?state.rackOrder:[];
-
-  // Collect example names from first rack
-  var exampleRack='', exampleCols=[], exampleLevels=[];
-  if(rackOrder.length&&racks[rackOrder[0]]){
-    var er=racks[rackOrder[0]];
-    exampleRack=er.name||'Rack 1';
-    exampleCols=er.colNames&&er.colNames.length?er.colNames.slice(0,3):['Column 1','Column 2','Column 3'];
-    if(er.colLevelNames&&er.colLevelNames[0]) exampleLevels=er.colLevelNames[0].slice(0,3);
-    else exampleLevels=makeLevelNames(er.colLevels&&er.colLevels[0]?er.colLevels[0]:er.levels||3).slice(0,3);
-  }
-
-  // Build rack reference table for instructions
-  var rackRef='';
-  rackOrder.forEach(function(rid){
-    var r=racks[rid]; if(!r) return;
-    var colSample=(r.colNames||[]).slice(0,4).join(', ')+(r.cols>4?' …':'');
-    var lvlSample=[];
-    if(r.colLevelNames&&r.colLevelNames[0]) lvlSample=r.colLevelNames[0].slice(0,3);
-    else lvlSample=makeLevelNames(r.colLevels&&r.colLevels[0]?r.colLevels[0]:r.levels||3).slice(0,3);
-    rackRef+='<tr>'
-      +'<td style="padding:3px 8px;border:1px solid #d1d5db;font-weight:700;font-size:9px;color:#1a2f5e;white-space:nowrap">'+escHtml(r.name)+'</td>'
-      +'<td style="padding:3px 8px;border:1px solid #d1d5db;font-size:9px;color:#374151">'+escHtml(colSample||'—')+'</td>'
-      +'<td style="padding:3px 8px;border:1px solid #d1d5db;font-size:9px;color:#374151">'+escHtml(lvlSample.join(', ')||'—')+'</td>'
-    +'</tr>';
-  });
-
-  var instructions='<div style="background:#f0f4ff;border:2px solid #1a2f5e;border-radius:8px;padding:10px 14px;margin-bottom:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
-    +'<div style="font-weight:800;color:#1a2f5e;font-size:11px;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">📋 Count Sheet Instructions — '+(currentDC||'')+'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;font-size:9px;line-height:1.7;color:#1e2d5a">'
-      +'<div>'
-        +'<div style="font-weight:800;margin-bottom:3px;font-size:9px;text-transform:uppercase;letter-spacing:.3px">✅ Required for each item found:</div>'
-        +'<div>• The <strong>Rack / Area</strong> heading above each section matches a rack in this DC (see table →)</div>'
-        +'<div>• <strong>Column</strong> — write the exact column name (e.g. <em>'+escHtml(exampleCols[0]||'Column 1')+'</em>)</div>'
-        +'<div>• <strong>Level</strong> — write the exact level name (e.g. <em>'+escHtml(exampleLevels[0]||'Level 1')+'</em>)</div>'
-        +'<div>• At least one quantity: <strong>Each</strong>, <strong>Pallets</strong>, or <strong>Cartons</strong></div>'
-      +'</div>'
-      +'<div>'
-        +'<div style="font-weight:800;margin-bottom:3px;font-size:9px;text-transform:uppercase;letter-spacing:.3px">✏️ Tips for accurate scanning:</div>'
-        +'<div>• Write in <strong>BLOCK CAPITALS</strong> — easier to scan</div>'
-        +'<div>• Use exact names from the table below — spelling matters</div>'
-        +'<div>• If item is in more than 3 locations, use the Notes column</div>'
-        +'<div>• If an item is not present, leave the row blank</div>'
-        +'<div>• <strong>Counted By</strong> and <strong>Date</strong> must be filled on every sheet</div>'
-      +'</div>'
-    +'</div>'
-    +(rackRef
-      ? '<div style="margin-top:8px"><div style="font-weight:800;font-size:9px;color:#1a2f5e;text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px">This DC\'s rack & column/level naming reference:</div>'
-        +'<table style="border-collapse:collapse;font-size:9px"><thead><tr>'
-          +'<th style="padding:3px 8px;border:1px solid #c7d2fe;background:#e0e7ff;color:#3730a3;text-align:left">Rack Name</th>'
-          +'<th style="padding:3px 8px;border:1px solid #c7d2fe;background:#e0e7ff;color:#3730a3;text-align:left">Column Names</th>'
-          +'<th style="padding:3px 8px;border:1px solid #c7d2fe;background:#e0e7ff;color:#3730a3;text-align:left">Level Names (sample)</th>'
-        +'</tr></thead><tbody>'+rackRef+'</tbody></table>'
-      +'</div>'
-      : '')
-  +'</div>';
-
-  // ── Per-rack sections ──
+  var ul=function(w){return '<span style="display:inline-block;width:'+w+';border-bottom:1.5px solid #9ca3af;vertical-align:bottom">&nbsp;</span>';};
   var locCell=function(bg){
-    return '<td style="background:'+bg+';padding:9px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;vertical-align:middle">'
-      +'<div style="font-size:9.5px;font-weight:700;color:#1a2f5e;display:block;margin-bottom:12px;line-height:1.9">'
-        +'Column '+ul_w('22%')+'&nbsp;&nbsp;Level '+ul_w('22%')
-      +'</div>'
-      +'<div style="font-size:9px;color:#6b7280;display:block;line-height:1.9">'
-        +'Each '+ul_w('14%')+'&nbsp;'
-        +'Pallets '+ul_w('14%')+'&nbsp;'
-        +'Cartons '+ul_w('14%')
-      +'</div>'
-    +'</td>';
+    return '<td style="background:'+bg+';padding:9px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;vertical-align:middle">'      +'<div style="font-size:10px;font-weight:700;color:#1a2f5e;display:block;margin-bottom:14px;line-height:1.9">'        +'Aisle '+ul('18%')+'&nbsp;&nbsp;Col '+ul('16%')+'&nbsp;&nbsp;Lvl '+ul('16%')      +'</div>'      +'<div style="font-size:9px;color:#6b7280;display:block;line-height:1.9">'        +'Each '+ul('15%')+'&nbsp;Pallets '+ul('15%')+'&nbsp;Cartons '+ul('15%')      +'</div>'    +'</td>';
   };
-
-  var html='<div style="background:#fff;'+(forPrint?'':'border:1px solid var(--gray-lt);border-radius:var(--radius-lg);overflow:hidden')+'">'
-    +instructions;
-
-  // Counters info strip (filled per sheet)
-  html+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin:8px 0;padding:8px 10px;background:#f9fafb;border:1px solid #d1d5db;border-radius:6px">'
-    +'<div style="font-size:9px;font-weight:700;color:#374151">COUNTED BY<br><span style="display:inline-block;width:90%;border-bottom:1.5px solid #374151;margin-top:8px">&nbsp;</span></div>'
-    +'<div style="font-size:9px;font-weight:700;color:#374151">DATE<br><span style="display:inline-block;width:90%;border-bottom:1.5px solid #374151;margin-top:8px">&nbsp;</span></div>'
-    +'<div style="font-size:9px;font-weight:700;color:#374151">PAGE ___ OF ___</div>'
-  +'</div>';
-
-  // One section per rack
-  if(rackOrder.length){
-    rackOrder.forEach(function(rid){
-      var rack=racks[rid]; if(!rack) return;
-
-      // Rack name as bold section heading
-      html+='<div style="background:#1a2f5e;color:#fff;padding:8px 14px;font-size:13px;font-weight:800;letter-spacing:.3px;margin-top:6px;display:flex;align-items:center;justify-content:space-between;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
-        +'<span>'+escHtml(rack.name)+'</span>'
-        +'<span style="font-size:10px;font-weight:400;opacity:.6">'+rack.cols+' columns · '+
-          (rack.colLevels?rack.colLevels.join('/'):rack.levels)+' levels</span>'
-      +'</div>';
-
-      // Table for all supply items under this rack
-      html+='<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;table-layout:fixed">'
-        +'<colgroup><col style="width:14%"><col style="width:24%"><col style="width:24%"><col style="width:24%"><col style="width:14%"></colgroup>'
-        +'<thead><tr>'
-          +'<th style="background:#f4f6f9;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;text-align:left">Supply Item</th>'
-          +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e">Location 1<br><span style="font-weight:400;opacity:.65;font-size:8px">Column / Level / Qty</span></th>'
-          +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e">Location 2<br><span style="font-weight:400;opacity:.65;font-size:8px">Column / Level / Qty</span></th>'
-          +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e">Location 3<br><span style="font-weight:400;opacity:.65;font-size:8px">Column / Level / Qty</span></th>'
-          +'<th style="background:#f4f6f9;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed">Notes</th>'
-        +'</tr></thead><tbody>';
-
-      var allItems=Object.values(sups).flat();
-      allItems.forEach(function(item,idx){
-        var bg=idx%2===0?'#fff':'#fafbfc';
-        html+='<tr>'
-          +'<td style="background:'+bg+';padding:7px 6px;border:1px solid #e2e6ed;font-weight:700;font-size:10px;vertical-align:middle">'+escHtml(item)+'</td>'
-          +locCell(bg)+locCell(bg)+locCell(bg)
-          +'<td style="background:'+bg+';padding:7px 6px;border:1px solid #e2e6ed"></td>'
-        +'</tr>';
-      });
-      html+='</tbody></table></div>';
+  var html='<div style="background:#fff;'+(forPrint?'':'border:1px solid var(--gray-lt);border-radius:var(--radius-lg);overflow:hidden')+'">';
+  Object.keys(cats).forEach(function(cat){
+    var items=sups[cat]||[]; if(!items.length) return;
+    var cs=cats[cat]||{bg:'#f9fafb',text:'#374151'};
+    html+='<div style="background:'+cs.bg+';color:'+cs.text+';padding:6px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid '+cs.text+'22;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+escHtml(cat)+'</div>'      +'<table style="border-collapse:collapse;width:100%;table-layout:fixed">'      +'<colgroup><col style="width:14%"><col style="width:24%"><col style="width:24%"><col style="width:24%"><col style="width:14%"></colgroup>'      +'<thead><tr>'        +'<th style="background:#f4f6f9;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;text-align:left">Supply Item</th>'        +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;text-align:left">Location 1</th>'        +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;text-align:left">Location 2</th>'        +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e;text-align:left">Location 3</th>'        +'<th style="background:#f4f6f9;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;text-align:left">Notes</th>'      +'</tr></thead><tbody>';
+    items.forEach(function(item,idx){
+      var bg=idx%2===0?'#fff':'#fafbfc';
+      html+='<tr>'        +'<td style="background:'+bg+';padding:8px 6px;border:1px solid #e2e6ed;font-weight:700;font-size:10px;vertical-align:middle">'+escHtml(item)+'</td>'        +locCell(bg)+locCell(bg)+locCell(bg)        +'<td style="background:'+bg+';padding:8px 6px;border:1px solid #e2e6ed"></td>'      +'</tr>';
     });
-  } else {
-    // No racks configured — fall back to category grouping
-    Object.keys(cats).forEach(function(cat){
-      var items=sups[cat]||[]; if(!items.length) return;
-      var cs=cats[cat]||{bg:'#f9fafb',text:'#374151'};
-      html+='<div style="background:'+cs.bg+';color:'+cs.text+';padding:6px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid '+cs.text+'22;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+escHtml(cat)+'</div>'
-        +'<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;table-layout:fixed">'
-        +'<colgroup><col style="width:14%"><col style="width:24%"><col style="width:24%"><col style="width:24%"><col style="width:14%"></colgroup>'
-        +'<thead><tr>'
-          +'<th style="background:#f4f6f9;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;text-align:left">Supply Item</th>'
-          +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e">Location 1</th>'
-          +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e">Location 2</th>'
-          +'<th style="background:#e8ecf6;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed;border-left:3px solid #1a2f5e">Location 3</th>'
-          +'<th style="background:#f4f6f9;font-size:9px;font-weight:700;padding:5px 6px;border:1px solid #e2e6ed">Notes</th>'
-        +'</tr></thead><tbody>';
-      items.forEach(function(item,idx){
-        var bg=idx%2===0?'#fff':'#fafbfc';
-        html+='<tr>'
-          +'<td style="background:'+bg+';padding:7px 6px;border:1px solid #e2e6ed;font-weight:700;font-size:10px;vertical-align:middle">'+escHtml(item)+'</td>'
-          +locCell(bg)+locCell(bg)+locCell(bg)
-          +'<td style="background:'+bg+';padding:7px 6px;border:1px solid #e2e6ed"></td>'
-        +'</tr>';
-      });
-      html+='</tbody></table></div>';
-    });
-  }
-
+    html+='</tbody></table>';
+  });
   return html+'</div>';
 }
 
@@ -2554,15 +2425,7 @@ function showPrintForm(){
   var cats=sharedSupplies?sharedSupplies.cats:DCATS;
   var pf=document.getElementById('print-form');
   if(!pf) return;
-  var header='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:3px solid #F47920;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
-    +'<div>'
-      +'<div style="font-size:16px;font-weight:900;color:#1a2f5e">carparts<span style="color:#F47920">.com</span></div>'
-      +'<div style="font-size:10px;color:#6b7280;margin-top:2px">Indirect Materials Count Sheet · '+escHtml(currentDC||'')+'</div>'
-    +'</div>'
-    +'<div style="font-size:11px;color:#6b7280;text-align:right">Printed: '+new Date().toLocaleDateString()+'<br>'
-      +'<strong style="color:#1a2f5e">Use exact rack, column, and level names as shown in instructions</strong>'
-    +'</div>'
-  +'</div>';
+  var header='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:3px solid #F47920;-webkit-print-color-adjust:exact;print-color-adjust:exact">'    +'<div>'      +'<div style="font-size:16px;font-weight:900;color:#1a2f5e">carparts<span style="color:#F47920">.com</span></div>'      +'<div style="font-size:10px;color:#6b7280;margin-top:2px">Indirect Materials Count Sheet &middot; '+escHtml(currentDC||'')+'</div>'    +'</div>'    +'<div style="font-size:11px;color:#1a2f5e;text-align:right;font-weight:700">'      +'Counted by: <span style="display:inline-block;width:160px;border-bottom:1.5px solid #1a2f5e;vertical-align:bottom">&nbsp;</span>'      +'&nbsp;&nbsp;Date: <span style="display:inline-block;width:90px;border-bottom:1.5px solid #1a2f5e;vertical-align:bottom">&nbsp;</span>'    +'</div>'  +'</div>';
   pf.innerHTML=header+buildPrintFormHTML(sups,cats,true);
 }
 
@@ -2603,20 +2466,31 @@ function detectAnomalies(currCount, prevCount){
 
 // ── REPORT DATA LOADER ─────────────────────────────────────────────────────
 var rptView='summary';
-var rptDCFilter='ALL';
 var rptAllData={};  // keyed by DC code
+var rptEventsData=[]; // full event log for current DC from Firebase
 
 function loadReportData(){
   var db=firebase.database();
   var dcs=['LAS','LSL','JAX','GPT'];
   var loaded=0;
   rptAllData={};
+  rptEventsData=[];
+  // Load all DCs (for weekly report) but only render current DC
   dcs.forEach(function(dc){
     db.ref('dc/'+dc).once('value',function(snap){
       var val=snap.val();
       rptAllData[dc]=val?normaliseDCState(val):null;
       loaded++;
-      if(loaded===dcs.length) renderReportPage();
+      if(loaded===dcs.length){
+        // Also load full event log for current DC
+        db.ref('events/'+currentDC).once('value',function(evSnap){
+          var evVal=evSnap.val()||{};
+          rptEventsData=Object.values(evVal).sort(function(a,b){
+            return (b.ts||'').localeCompare(a.ts||'');
+          });
+          renderReportPage();
+        });
+      }
     });
   });
 }
@@ -2628,20 +2502,33 @@ function renderReportPage(){
 }
 
 function renderReports(){
-  var html='<div class="tab-section-hd">📊 Reports</div>';
+  // ── Weekly reminder banner ──
+  var lastWeeklyKey='cpLastWeeklyReport_'+currentDC;
+  var lastSent=localStorage.getItem(lastWeeklyKey);
+  var daysSince=lastSent?Math.floor((Date.now()-parseInt(lastSent))/(1000*60*60*24)):999;
+  var isFriday=new Date().getDay()===5;
+  var showBanner=(daysSince>=7||isFriday);
+
+  var html='<div class="tab-section-hd">📊 Reports — '+escHtml(currentDC)+'</div>';
+
+  if(showBanner){
+    html+='<div style="background:#fff8ec;border:2px solid #F47920;border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">'
+      +'<div>'
+        +'<div style="font-size:14px;font-weight:700;color:#92400e">📅 '+(isFriday&&daysSince>=7?'It\'s Friday and it\'s been '+daysSince+' days':isFriday?'It\'s Friday':'It\'s been '+daysSince+' days')+' since the last weekly report was sent to Don.</div>'
+        +'<div style="font-size:12px;color:#a16207;margin-top:3px">Weekly reports include all four DCs — inventory status, count results, and any anomalies.</div>'
+      +'</div>'
+      +'<button class="btn b-org" onclick="sendWeeklyReport()" style="white-space:nowrap">📧 Send Weekly Report to Don</button>'
+    +'</div>';
+  }
+
   // Sub-nav
   html+='<div class="rpt-subnav">'
     +['summary','inventory','variance','anomalies','events'].map(function(v){
       var labels={summary:'📋 Summary',inventory:'📦 Inventory',variance:'📐 Variance',anomalies:'⚠️ Anomalies',events:'📜 Event Log'};
       return '<button class="rpt-subnav-btn'+(rptView===v?' active':'')+'" onclick="rptView=\''+v+'\';renderReportPage()">'+labels[v]+'</button>';
     }).join('')
-    +'</div>';
-  // DC filter
-  html+='<div class="rpt-dc-filter" style="margin-bottom:1.25rem">';
-  ['ALL','LAS','LSL','JAX','GPT'].forEach(function(dc){
-    html+='<button class="rpt-dc-btn'+(rptDCFilter===dc?' active':'')+'" onclick="rptDCFilter=\''+dc+'\';renderReportPage()">'+dc+'</button>';
-  });
-  html+='</div>';
+  +'</div>';
+
   if(rptView==='summary')   html+=renderRptSummary();
   if(rptView==='inventory') html+=renderRptInventory();
   if(rptView==='variance')  html+=renderRptVariance();
@@ -2651,8 +2538,7 @@ function renderReports(){
 }
 
 function getActiveDCs(){
-  if(rptDCFilter!=='ALL') return [rptDCFilter];
-  return ['LAS','LSL','JAX','GPT'];
+  return [currentDC];
 }
 
 // ── SUMMARY VIEW ──────────────────────────────────────────────────────────
@@ -2880,35 +2766,60 @@ function renderRptAnomalies(){
 
 // ── EVENT LOG VIEW ─────────────────────────────────────────────────────────
 function renderRptEvents(){
-  var dcs=getActiveDCs();
-  var allEvs=[];
-  dcs.forEach(function(dc){
-    var d=rptAllData[dc]; if(!d) return;
-    // Pull events from counts, deliveries (events ref loaded separately)
-    if(d.counts) Object.values(d.counts).forEach(function(c){
-      allEvs.push({dc:dc,type:'count_submission',ts:c.submittedAt,by:c.submittedBy,detail:(c.itemCount||0)+' items · '+(c.variances||0)+' variances'});
+  var d=rptAllData[currentDC];
+  // Merge Firebase events with counts/deliveries from state
+  var allEvs=rptEventsData.slice(); // from Firebase /events/DC
+
+  // Also pull counts and deliveries if not already in events
+  if(d){
+    if(d.counts) Object.entries(d.counts).forEach(function(entry){
+      var k=entry[0],c=entry[1];
+      // Only add if not already in Firebase events
+      var alreadyHave=allEvs.some(function(e){return e.type==='count_submission'&&Math.abs(new Date(e.ts)-new Date(c.submittedAt))<5000;});
+      if(!alreadyHave) allEvs.push({
+        type:'count_submission',ts:c.submittedAt,dc:currentDC,
+        by:c.submittedBy||'Unknown',
+        detail:(c.itemCount||0)+' items counted · '+(c.variances||0)+' variances'+(c.method==='ocr'?' · 📷 Scan':'')
+      });
     });
     if(d.deliveries) Object.values(d.deliveries).forEach(function(del){
-      allEvs.push({dc:dc,type:'delivery',ts:del.submittedAt,by:del.submittedBy,detail:escHtml(del.fileName||'')+(del.notes?' — '+del.notes.substring(0,60):'')});
+      var alreadyHave=allEvs.some(function(e){return e.type==='delivery'&&Math.abs(new Date(e.ts)-new Date(del.submittedAt))<5000;});
+      if(!alreadyHave) allEvs.push({
+        type:'delivery',ts:del.submittedAt,dc:currentDC,
+        by:del.submittedBy||'Unknown',
+        detail:escHtml(del.fileName||'BOL/PO')+(del.notes?' — '+del.notes.substring(0,80):'')
+      });
     });
-  });
+  }
+
   allEvs.sort(function(a,b){return (b.ts||'').localeCompare(a.ts||'');});
-  var typeIcon={count_submission:'📋',delivery:'🚚',slot_update:'📦'};
-  var typeLabel={count_submission:'Count',delivery:'Delivery',slot_update:'Slot Update'};
-  var html='<div class="rpt-card"><div class="rpt-card-hd"><h3>Event Log</h3>'
-    +'<span style="font-size:12px;color:var(--gray)">'+allEvs.length+' events</span>'
+
+  var typeIcon={count_submission:'📋',delivery:'🚚',slot_update:'📦',unknown:'•'};
+  var typeLabel={count_submission:'Count Submitted',delivery:'Delivery',slot_update:'Slot Updated'};
+  var typeColor={count_submission:'#4f46e5',delivery:'#16a34a',slot_update:'var(--orange)'};
+
+  var html='<div class="rpt-card"><div class="rpt-card-hd">'
+    +'<h3>Event Log — '+escHtml(currentDC)+'</h3>'
+    +'<span style="font-size:12px;color:var(--gray)">'+allEvs.length+' total events · all activity logged</span>'
     +'</div>';
-  if(!allEvs.length){return html+'<div class="rpt-empty">No events recorded yet.</div></div>';}
+  if(!allEvs.length){return html+'<div class="rpt-empty">No events recorded yet. Events are logged as the team uses the tracker.</div></div>';}
   html+='<div style="overflow-x:auto"><table class="rpt-tbl"><thead><tr>'
-    +'<th>DC</th><th>Type</th><th>Date / Time</th><th>By</th><th>Detail</th>'
+    +'<th>Type</th><th>Date / Time</th><th>By</th><th>Detail</th>'
     +'</tr></thead><tbody>';
-  allEvs.slice(0,200).forEach(function(ev){
+  allEvs.forEach(function(ev){
+    var icon=typeIcon[ev.type]||'•';
+    var label=typeLabel[ev.type]||ev.type.replace(/_/g,' ');
+    var color=typeColor[ev.type]||'var(--gray)';
+    var detail=ev.detail||'';
+    // For slot updates, show item and location
+    if(ev.type==='slot_update'){
+      detail=(ev.item?escHtml(ev.item):'(cleared)')+(ev.slotKey?' · slot '+ev.slotKey:'')+(ev.dc&&ev.dc!==currentDC?' · '+ev.dc:'');
+    }
     html+='<tr>'
-      +'<td class="rpt-dc">'+ev.dc+'</td>'
-      +'<td><span style="font-size:12px">'+(typeIcon[ev.type]||'•')+' '+(typeLabel[ev.type]||ev.type)+'</span></td>'
+      +'<td style="white-space:nowrap"><span style="font-size:12px;font-weight:700;color:'+color+'">'+icon+' '+label+'</span></td>'
       +'<td style="font-size:12px;white-space:nowrap;color:var(--gray)">'+new Date(ev.ts).toLocaleString()+'</td>'
-      +'<td style="font-size:12px;color:var(--orange)">'+escHtml(ev.by||'')+'</td>'
-      +'<td style="font-size:12px">'+ev.detail+'</td>'
+      +'<td style="font-size:12px;color:var(--orange);font-weight:600">'+escHtml(ev.by||ev.updatedBy||'')+'</td>'
+      +'<td style="font-size:12px">'+detail+'</td>'
     +'</tr>';
   });
   html+='</tbody></table></div></div>';
@@ -2917,14 +2828,38 @@ function renderRptEvents(){
 
 // ── WEEKLY REPORT EMAIL ────────────────────────────────────────────────────
 function sendWeeklyReport(){
+  // Save timestamp so reminder banner knows when last sent
+  localStorage.setItem('cpLastWeeklyReport_'+currentDC, Date.now().toString());
+
+  // If we have all DC data use it, otherwise load fresh
+  var dcs=['LAS','LSL','JAX','GPT'];
+  var allLoaded=dcs.every(function(dc){return rptAllData[dc]!==undefined;});
+  if(!allLoaded){
+    var db=firebase.database();
+    var toLoad=dcs.filter(function(dc){return !rptAllData[dc];});
+    var loaded=0;
+    toLoad.forEach(function(dc){
+      db.ref('dc/'+dc).once('value',function(snap){
+        var val=snap.val();
+        rptAllData[dc]=val?normaliseDCState(val):null;
+        loaded++;
+        if(loaded===toLoad.length) buildAndSendWeeklyEmail();
+      });
+    });
+  } else {
+    buildAndSendWeeklyEmail();
+  }
+}
+
+function buildAndSendWeeklyEmail(){
   var dcs=['LAS','LSL','JAX','GPT'];
   var lines=['INDIRECT MATERIALS TRACKER — WEEKLY REPORT'];
   lines.push('Generated: '+new Date().toLocaleString());
-  lines.push('Prepared by: '+(userName||'Unknown'));
+  lines.push('Prepared by: '+(userName||'Unknown')+' ('+currentDC+')');
   lines.push('');
-  lines.push('═══════════════════════════════════════');
-  lines.push('DC SUMMARY');
-  lines.push('═══════════════════════════════════════');
+  lines.push('══════════════════════════════════════');
+  lines.push('DC-BY-DC SUMMARY');
+  lines.push('══════════════════════════════════════');
   var totalAnom=0;
   dcs.forEach(function(dc){
     var d=rptAllData[dc];
@@ -2942,14 +2877,15 @@ function sendWeeklyReport(){
     if(d.counts){
       var ckeys=Object.keys(d.counts).sort(); counts=ckeys.length;
       if(ckeys.length) lastCnt=new Date(d.counts[ckeys[ckeys.length-1]].submittedAt).toLocaleDateString();
-      Object.values(d.counts).forEach(function(c){ if(c.anomalies) c.anomalies.forEach(function(a){anom++;totalAnom++;if(a.severity==='critical')crit++;}); });
+      Object.values(d.counts).forEach(function(c){
+        if(c.anomalies) c.anomalies.forEach(function(a){anom++;totalAnom++;if(a.severity==='critical')crit++;});
+      });
     }
     if(d.deliveries) delivs=Object.keys(d.deliveries).length;
     lines.push('  Items tracked: '+items);
     lines.push('  Count submissions: '+counts+' (last: '+lastCnt+')');
     lines.push('  Deliveries logged: '+delivs);
     lines.push('  Anomalies: '+anom+' ('+crit+' critical)');
-    // List critical anomalies
     if(crit>0&&d.counts){
       lines.push('  ⚠ Critical anomalies:');
       Object.values(d.counts).forEach(function(c){
@@ -2961,16 +2897,14 @@ function sendWeeklyReport(){
     }
   });
   lines.push('');
-  lines.push('═══════════════════════════════════════');
-  lines.push('TOTAL ANOMALIES ACROSS ALL DCS: '+totalAnom);
-  lines.push('═══════════════════════════════════════');
+  lines.push('══════════════════════════════════════');
+  lines.push('TOTAL ANOMALIES ALL DCS: '+totalAnom);
+  lines.push('══════════════════════════════════════');
   lines.push('');
-  lines.push('Please review the Reports tab for full details:');
-  lines.push('https://mcalabro108.github.io/indirect-materials-tracker');
+  lines.push('View full details: https://mcalabro108.github.io/indirect-materials-tracker');
   var subject='[Indirect Materials] Weekly Report — '+new Date().toLocaleDateString();
   window.location.href='mailto:Dhomiller@carparts.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(lines.join('\n'));
 }
-
 // ── CSV EXPORTS ───────────────────────────────────────────────────────────
 function exportInventoryCSV(){
   var dcs=getActiveDCs();
