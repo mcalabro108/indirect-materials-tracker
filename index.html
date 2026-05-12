@@ -342,6 +342,21 @@ body{font-family:'Inter',Arial,sans-serif;background:var(--offwhite);color:var(-
 .area-field input:focus{outline:none;border-color:var(--orange)}
 .shared-note{background:#f0f9ff;border:1px solid #bae6fd;border-radius:var(--radius);padding:10px 14px;font-size:13px;color:#0369a1;font-weight:500;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
 
+/* ── HELP & TOUR ──────────────────────────────────────────────────────── */
+.page-ctx{background:linear-gradient(135deg,#f0f4ff 0%,#e8f0fe 100%);border:1px solid #c7d2fe;border-radius:var(--radius-lg);padding:.75rem 1.1rem;margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:12px}
+.page-ctx .ctx-icon{font-size:22px;flex-shrink:0;margin-top:2px}
+.page-ctx .ctx-body{flex:1}
+.page-ctx .ctx-title{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.page-ctx .ctx-desc{font-size:12px;color:#4b5563;line-height:1.6}
+.page-ctx .ctx-help{flex-shrink:0}
+.help-btn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid var(--navy);background:#fff;color:var(--navy);font-size:11px;font-weight:800;cursor:pointer;flex-shrink:0;transition:all .15s;font-family:'Inter',sans-serif;line-height:1}
+.help-btn:hover{background:var(--navy);color:#fff}
+.instr-box{background:#fffbeb;border:1.5px solid #fcd34d;border-radius:var(--radius-lg);padding:.875rem 1.1rem;margin-bottom:1.25rem}
+.instr-box .ib-title{font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.instr-box ul{margin:0;padding-left:1.25rem;font-size:12px;color:#78350f;line-height:1.9}
+.instr-box ul li{margin:0}
+.tour-highlight{position:relative;z-index:9002!important;border-radius:8px;box-shadow:0 0 0 4px var(--orange),0 0 0 8px rgba(244,121,32,.25)!important}
+
 /* OCR Upload */
 .ocr-upload-zone{border:2.5px dashed var(--gray-lt);border-radius:var(--radius-lg);padding:2rem;text-align:center;cursor:pointer;background:#fff;transition:all .2s;position:relative;margin-bottom:1rem}
 .ocr-upload-zone:hover,.ocr-upload-zone.dragover{border-color:var(--orange);background:var(--orange-lt)}
@@ -553,6 +568,7 @@ body{font-family:'Inter',Arial,sans-serif;background:var(--offwhite);color:var(-
     <span class="user-lbl" id="uname"></span>
     <button class="topbar-btn" onclick="changeName()">Change Name</button>
     <button class="topbar-btn" onclick="switchDC()" title="Switch DC">⇄ DC</button>
+    <button class="topbar-btn" onclick="startTour()" style="background:var(--orange);color:#fff;font-weight:700" title="Help & guided tour">? Help</button>
   </div>
 </div>
 
@@ -562,6 +578,45 @@ body{font-family:'Inter',Arial,sans-serif;background:var(--offwhite);color:var(-
 <!-- CONTENT -->
 <div class="page" id="content"></div>
 <div id="mc"></div>
+
+<!-- TOUR OVERLAY -->
+<div id="tour-overlay" style="display:none;position:fixed;inset:0;z-index:9000;pointer-events:none">
+  <div id="tour-backdrop" style="position:absolute;inset:0;background:rgba(10,15,30,.78);transition:all .3s"></div>
+  <div id="tour-card" style="position:absolute;background:#fff;border-radius:14px;padding:1.5rem 1.75rem;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.4);pointer-events:all;z-index:9001;transition:all .3s">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.75rem">
+      <span id="tour-icon" style="font-size:28px"></span>
+      <div>
+        <div id="tour-step-lbl" style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px"></div>
+        <div id="tour-title" style="font-size:17px;font-weight:800;color:var(--navy)"></div>
+      </div>
+    </div>
+    <div id="tour-body" style="font-size:14px;color:#374151;line-height:1.7;margin-bottom:1.25rem"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div id="tour-dots" style="display:flex;gap:6px"></div>
+      <div style="display:flex;gap:8px">
+        <button onclick="endTour()" style="padding:7px 14px;border:1.5px solid var(--gray-lt);border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;color:var(--gray)">Skip</button>
+        <button id="tour-next-btn" onclick="tourNext()" style="padding:7px 18px;border:none;border-radius:8px;background:var(--orange);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HELP POPUP -->
+<div id="help-popup" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:1.5rem 1.75rem;max-width:420px;width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative">
+    <button onclick="closeHelp()" style="position:absolute;top:12px;right:14px;border:none;background:none;font-size:20px;cursor:pointer;color:var(--gray);line-height:1">✕</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.75rem">
+      <span id="help-icon" style="font-size:24px"></span>
+      <div id="help-title" style="font-size:16px;font-weight:800;color:var(--navy)"></div>
+    </div>
+    <div id="help-body" style="font-size:14px;color:#374151;line-height:1.75"></div>
+    <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--gray-lt);display:flex;gap:10px;flex-wrap:wrap">
+      <button onclick="startTour()" style="padding:7px 14px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">▶ Replay Guided Tour</button>
+      <a href="https://mcalabro108.github.io/indirect-materials-tracker/Supply_Rack_Tracker_User_Guide.docx" target="_blank" style="padding:7px 14px;border:1.5px solid var(--gray-lt);border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;color:var(--navy);text-decoration:none">📄 Download User Guide</a>
+      <button onclick="closeHelp()" style="padding:7px 14px;border:1.5px solid var(--gray-lt);border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;color:var(--gray)">Close</button>
+    </div>
+  </div>
+</div>
 
 <!-- NAME OVERLAY -->
 <div class="name-ov" id="name-ov" style="display:none">
@@ -1450,7 +1505,8 @@ function closeModal(){modalData=null;document.getElementById("mc").innerHTML="";
 function openModal(rackId,li,ci,side){ openSlotModal(rackId,ci+"_"+li,0); }
 // ── SETTINGS TAB ──────────────────────────────────────────────────────────
 function renderSettings(){
-  var html='<div class="settings-grid">';
+  var html_ctx=pageCtx('settings');
+  var html='<div class="tab-section-hd">⚙ Settings</div>'+html_ctx+'<div class="settings-grid">';
   // Per-rack settings
   state.rackOrder.forEach(function(rid){
     var r=state.racks[rid]; if(!r)return;
@@ -1564,7 +1620,15 @@ function renderSupplyList(){
   var sups=sharedSupplies.supplies||DSUP;
   var catKeys=Object.keys(cats);
   var catOpts=catKeys.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join("");
-  var html='<div class="shared-note">ℹ️ The supply list is shared across all DCs. Changes here affect everyone.</div>'
+  var _sl_ctx=pageCtx('supplylist')
+    +instrBox('Managing the supply list',[
+      'This list is shared across <strong>all four DCs</strong> — any change affects everyone immediately',
+      'Select a category, type the item name, then click + Add Item',
+      'To create a new category, choose &ldquo;+ New category&hellip;&rdquo; from the dropdown',
+      'Remove an item by clicking ✕ on its badge — only remove items that no longer apply company-wide'
+    ]);
+  var html='<div class="tab-section-hd">📋 Supply List</div>'+_sl_ctx
+    +'<div class="shared-note">ℹ️ The supply list is shared across all DCs. Changes here affect everyone.</div>'
     +'<div class="card"><div class="card-title">Add New Supply Item</div>'
     +'<div class="add-form">'
     +'<div class="field"><label>Category</label>'
@@ -1620,6 +1684,7 @@ function removeSupply(cat,idx){
 
 // ── OVERFLOW ──────────────────────────────────────────────────────────────
 function renderOverflow(){
+  var _ovctx=pageCtx('overflow');
   var areas = state.overflowAreas || OV_AREAS;
   var lines  = state.overflowLines || [];
   var sups   = sharedSupplies ? sharedSupplies.supplies : DSUP;
@@ -1641,7 +1706,7 @@ function renderOverflow(){
   supOpts += '<optgroup label="Custom"><option value="__custom__">+ Type custom item...</option></optgroup>';
 
   // ── Area config row ──
-  var html = '<div class="ov-area-config"><h3>Storage Area Columns</h3>'
+  var html = '<div class="tab-section-hd">📦 Overflow Storage</div>'+_ovctx+'<div class="ov-area-config"><h3>Storage Area Columns</h3>'
     +'<div style="display:flex;flex-wrap:wrap;gap:12px">';
   areas.forEach(function(a,i){
     html += '<div class="area-field">'
@@ -1838,7 +1903,15 @@ var deliveryFileName = '';
 function renderDelivery(){
   var history = state.deliveries || {};
   var keys = Object.keys(history).sort().reverse();
-  var html = '<div class="tab-section-hd">🚚 Delivery Verification</div>';
+  var html = '<div class="tab-section-hd">🚚 Delivery Verification</div>'
+    +pageCtx('delivery')
+    +instrBox('How to log a delivery',[
+      'Upload the BOL or PO document for the delivery (PDF, JPG, or PNG)',
+      'In the Notes box, describe any issues — wrong item, short shipment, damage',
+      'Click Submit — saves the record and opens Outlook pre-filled to Don',
+      'Attach the file manually in Outlook before hitting Send',
+      'Past submissions are listed below for your records'
+    ]);
 
   // Upload card
   html += '<div class="del-form-card"><h3>Upload BOL / PO</h3>'
@@ -1941,11 +2014,21 @@ var ocrFiles = [];
 var ocrReviewRows = [];
 
 function renderCountEntry(){
-  var html = '<div class="tab-section-hd">📷 Count Upload</div>';
+  var html = '<div class="tab-section-hd">📷 Count Upload</div>'
+    +pageCtx('countentry');
   if(cntMode === 'ocr')    return html + renderOcrUpload();
   if(cntMode === 'review') return html + renderOcrReview();
 
   var gvKey = localStorage.getItem('cpGoogleVisionKey')||'';
+
+  html+=instrBox('How photo counting works',[
+    '<strong>Step 1 — Print the Count Form</strong> from the Print Form tab. Fill it in by hand while walking the floor.',
+    '<strong>Step 2 — Photograph each page</strong> with your phone. Take the photo straight-on (not at an angle), in good lighting.',
+    '<strong>Step 3 — Upload the photos here.</strong> The app reads the item names and totals automatically.',
+    '<strong>Step 4 — Review the results.</strong> Check that item names and totals match what you wrote. Correct any misreads.',
+    '<strong>Step 5 — Approve.</strong> Outlook opens with a summary email to Don — just hit Send.',
+    '<strong>Tips for accurate scanning:</strong> Write TOTAL numbers clearly in the Total column · Use block capitals for item names · Avoid shadows or glare · A flat, well-lit surface works best'
+  ]);
 
   // Intro card
   html+='<div class="del-form-card"><h3>Upload Completed Count Sheet</h3>'
@@ -2419,6 +2502,13 @@ function renderPrintForm(){
   var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
   var cats = sharedSupplies ? sharedSupplies.cats : DCATS;
   return '<div class="tab-section-hd">🖨️ Print Form</div>'
+    +pageCtx('printform','Generate a printable count sheet. <strong>Location Form</strong> — records exactly where each item is (rack, column, level). <strong>Count Form</strong> — a simple tally sheet matching your existing paper form, used for physical inventory counts.')
+    +instrBox('Which form should I use?',[
+      '<strong>Count Form</strong> — Use this for your regular inventory count. Print it, walk the floor, write tally marks and totals, then upload the photo in the Count Upload tab.',
+      '<strong>Location Form</strong> — Use this when you\'re setting up or re-mapping the racks. Records the exact rack, column, and level where each item is stored.',
+      'Both forms print in <strong>landscape orientation</strong>. In Chrome\'s print dialog, set Margins to &ldquo;None&rdquo; or &ldquo;Minimum&rdquo; for best results.',
+      'After printing the Count Form and filling it in, upload photos in the <strong>Count Upload</strong> tab to send results to Don automatically.'
+    ])
     +'<div style="display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center">'
       // Mode toggle
       +'<div style="display:flex;background:#fff;border:1px solid var(--gray-lt);border-radius:var(--radius-lg);padding:4px;box-shadow:0 1px 3px rgba(0,0,0,.05)">'
@@ -2576,7 +2666,8 @@ function renderReports(){
   var isFriday=new Date().getDay()===5;
   var showBanner=(daysSince>=7||isFriday);
 
-  var html='<div class="tab-section-hd">📊 Reports — '+escHtml(currentDC)+'</div>';
+  var html='<div class="tab-section-hd">📊 Reports — '+escHtml(currentDC)+'</div>'
+    +pageCtx('reports','View live inventory totals, count history, and anomaly alerts for '+escHtml(currentDC)+'. Use the sub-tabs below to navigate between views.');
 
   // Sub-nav
   html+='<div class="rpt-subnav">'
@@ -3091,7 +3182,7 @@ function exportVarianceCSV(){
   a.download='indirect_materials_variance_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
 }
 
-// ── BOOT ──────────────────────────────────────────────────────────────────
+// ── FLOOR BAY HELPERS ─────────────────────────────────────────────────────
 function buildFloorSections(slot, rackId, slotKey, isBetween){
   if(!slot||!slot.sections||!slot.sections.length) slot={sections:[emptySection()]};
   var numSec=slot.sections.length;
@@ -3126,6 +3217,111 @@ function toggleFloorBetween(rackId,ci){
   saveDB(); renderContent();
 }
 
+// ── HELP SYSTEM ───────────────────────────────────────────────────────────
+var HELP = {
+  rack:{icon:'🏭',title:'Rack View',body:'A visual map of your physical storage racks. Each column is a rack bay; each row is a shelf level. <strong>Click any white card</strong> to assign an item and enter quantities. Orange bars are shelf beams. Use "+ Add Floor" to add floor-level storage below a column.'},
+  overflow:{icon:'📦',title:'Overflow',body:'Track items stored outside the main racks — floor lanes, staging areas, or pallets under the mezzanine. Add a line for each location. Quantities can be entered per storage area column.'},
+  delivery:{icon:'🚚',title:'Delivery Verification',body:'Log every incoming delivery here. Upload the BOL or PO document, note any discrepancies (wrong items, short shipment, damage), and click Submit. An email is automatically sent to Don Homiller with your notes.'},
+  countentry:{icon:'📷',title:'Count Upload',body:'Upload photos of your filled count sheets here. Google Vision reads the item names and totals automatically. You review, correct any misreads, then approve — Don receives the full count by email. No manual re-typing needed.'},
+  printform:{icon:'🖨️',title:'Print Form',body:'Generates printable count sheets. <strong>Location Form</strong> — use when recording exactly where items are (rack, column, level). <strong>Count Form</strong> — a simple tally sheet matching the paper form your team already uses. Print, fill in, then upload here.'},
+  supplylist:{icon:'📋',title:'Supply List',body:'The master list of all supply items, shared across all four DCs. Add items here to make them available in rack slots and count sheets. Changes here affect everyone at all locations immediately.'},
+  reports:{icon:'📊',title:'Reports',body:'View inventory totals, count history, variances, and anomalies for your DC. The Inventory view shows total quantities across all racks. Variance view compares your latest count to the previous one. Anomalies are auto-flagged if counts change by more than 10%.'},
+  settings:{icon:'⚙',title:'Settings',body:'Configure your rack layout, quantity types (Pallets, Each, etc.), and DC. The Admin section at the top has the weekly report button (sends all 4 DCs to Don) and the Google Vision API key for photo scanning.'}
+};
+
+function showHelp(key){
+  var h=HELP[key]; if(!h) return;
+  document.getElementById('help-icon').textContent=h.icon;
+  document.getElementById('help-title').textContent=h.title;
+  document.getElementById('help-body').innerHTML=h.body;
+  var el=document.getElementById('help-popup');
+  el.style.display='flex';
+}
+function closeHelp(){
+  document.getElementById('help-popup').style.display='none';
+}
+
+// ── GUIDED TOUR ────────────────────────────────────────────────────────────
+var TOUR_STEPS=[
+  {icon:'👋',title:'Welcome to the Indirect Materials Tracker',body:'This quick tour walks you through every part of the app. Hit <strong>Next</strong> to go step by step, or <strong>Skip</strong> to jump straight in. You can replay this tour anytime from the <strong>? Help</strong> button in the top right.',target:null},
+  {icon:'🏭',title:'Rack Tabs',body:'The tabs across the top represent your physical storage racks. Click any tab to switch racks. Each rack shows your actual shelf layout — columns side by side, levels top to bottom.',target:'tabs'},
+  {icon:'📦',title:'Slot Cards',body:'Each white card inside a rack bay is a storage slot. <strong>Click any card</strong> to assign a supply item, enter quantities (Pallets, Each, Cartons), and add notes. Your changes sync instantly for everyone at your DC.',target:'content'},
+  {icon:'🚚',title:'Delivery Tab',body:'When a delivery arrives, go to the Delivery tab. Upload the BOL or PO, note any discrepancies, and submit. An email goes straight to Don with your notes.',target:'tabs'},
+  {icon:'📷',title:'Count Upload Tab',body:'Take photos of your filled count sheet and upload them here. The app reads item names and totals automatically. You review the results, correct any misreads, then approve — Don gets the count by email.',target:'tabs'},
+  {icon:'🖨️',title:'Print Form Tab',body:'Need a paper count sheet? Choose the Location Form (for rack mapping) or the Count Form (simple tally sheet matching your existing paper form). Print and go.',target:'tabs'},
+  {icon:'📊',title:'Reports Tab',body:'See your DC\'s inventory totals, count history, and any anomalies. Counts that change by more than 10% from the previous submission are automatically flagged for review.',target:'tabs'},
+  {icon:'⚙',title:'Settings & Admin',body:'Adjust rack layout, quantity types, and your DC here. The Admin section at the top has the weekly report to Don and the Google Vision API key for photo scanning.',target:'tabs'},
+  {icon:'✅',title:'You\'re all set!',body:'That covers everything. Every change you make syncs instantly to your whole team. Click <strong>? Help</strong> in the top right anytime to replay this tour or get help on the current page.',target:null}
+];
+var tourStep=0;
+
+function startTour(){
+  closeHelp();
+  tourStep=0;
+  var ov=document.getElementById('tour-overlay');
+  ov.style.display='block';
+  renderTourStep();
+}
+function endTour(){
+  document.getElementById('tour-overlay').style.display='none';
+  document.querySelectorAll('.tour-highlight').forEach(function(el){el.classList.remove('tour-highlight');});
+  localStorage.setItem('cpTourDone','1');
+}
+function tourNext(){
+  document.querySelectorAll('.tour-highlight').forEach(function(el){el.classList.remove('tour-highlight');});
+  tourStep++;
+  if(tourStep>=TOUR_STEPS.length){endTour();return;}
+  renderTourStep();
+}
+function renderTourStep(){
+  var step=TOUR_STEPS[tourStep];
+  document.getElementById('tour-icon').textContent=step.icon;
+  document.getElementById('tour-step-lbl').textContent='Step '+(tourStep+1)+' of '+TOUR_STEPS.length;
+  document.getElementById('tour-title').textContent=step.title;
+  document.getElementById('tour-body').innerHTML=step.body;
+  document.getElementById('tour-next-btn').textContent=tourStep===TOUR_STEPS.length-1?'Finish ✓':'Next →';
+  var dots='';
+  for(var i=0;i<TOUR_STEPS.length;i++){
+    dots+='<div style="width:7px;height:7px;border-radius:50%;background:'+(i===tourStep?'var(--orange)':'#e5e7eb')+'"></div>';
+  }
+  document.getElementById('tour-dots').innerHTML=dots;
+  if(step.target){
+    var el=document.getElementById(step.target);
+    if(el){
+      el.classList.add('tour-highlight');
+      var rect=el.getBoundingClientRect();
+      var card=document.getElementById('tour-card');
+      card.style.transform='';
+      card.style.top=Math.min(rect.bottom+16,window.innerHeight-320)+'px';
+      card.style.left=Math.max(16,Math.min(rect.left,window.innerWidth-392))+'px';
+      card.style.bottom='auto'; card.style.right='auto';
+    }
+  } else {
+    var card2=document.getElementById('tour-card');
+    card2.style.top='50%'; card2.style.left='50%';
+    card2.style.transform='translate(-50%,-50%)';
+    card2.style.bottom='auto'; card2.style.right='auto';
+  }
+}
+
+function pageCtx(key,overrideDesc){
+  var h=HELP[key]||{icon:'ℹ️',title:'',body:''};
+  return '<div class="page-ctx">'
+    +'<span class="ctx-icon">'+h.icon+'</span>'
+    +'<div class="ctx-body">'
+      +'<div class="ctx-title">'+h.title+'</div>'
+      +'<div class="ctx-desc">'+(overrideDesc||h.body)+'</div>'
+    +'</div>'
+    +'<span class="ctx-help"><button class="help-btn" onclick="showHelp(\''+key+'\')" title="Get help on this page">?</button></span>'
+  +'</div>';
+}
+
+function instrBox(title,items){
+  return '<div class="instr-box"><div class="ib-title">💡 '+title+'</div><ul>'
+    +items.map(function(i){return '<li>'+i+'</li>';}).join('')
+  +'</ul></div>';
+}
+
 // ── BOOT ──────────────────────────────────────────────────────────────────
 function bootApp(){
   renderTabs();
@@ -3138,6 +3334,9 @@ function bootApp(){
   if(sessionStorage.getItem(PW_SESSION_KEY) === "1"){
     document.getElementById("pw-screen").classList.add("hidden");
     bootApp();
+    setTimeout(function(){
+      if(!localStorage.getItem('cpTourDone')) startTour();
+    },1200);
   } else {
     setTimeout(function(){ var el=document.getElementById("pw-input"); if(el) el.focus(); }, 100);
   }
