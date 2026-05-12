@@ -977,7 +977,7 @@ function renderTabs(){
   if(state) html+='<button class="tab-add-btn" onclick="addRack()" title="Add new rack tab">＋</button>';
   html+='<button class="tab'+(curTab==="overflow"?" active":"")+'" onclick="switchTab(\'overflow\')">Overflow</button>';
   html+='<button class="tab'+(curTab==="delivery"?" active":"")+'" onclick="switchTab(\'delivery\')">🚚 Delivery</button>';
-  html+='<button class="tab'+(curTab==="countentry"?" active":"")+'" onclick="switchTab(\'countentry\')">📋 Count Entry</button>';
+  html+='<button class="tab'+(curTab==="countentry"?" active":"")+'" onclick="switchTab(\'countentry\')">📷 Count Upload</button>';
   html+='<button class="tab'+(curTab==="printform"?" active":"")+'" onclick="switchTab(\'printform\')">🖨️ Print Form</button>';
   html+='<button class="tab'+(curTab==="reports"?" active":"")+'" onclick="switchTab(\'reports\')">📊 Reports</button>';
   html+='<button class="tab'+(curTab==="supplylist"?" active":"")+'" onclick="switchTab(\'supplylist\')">Supply List</button>';
@@ -1941,56 +1941,45 @@ var ocrFiles = [];
 var ocrReviewRows = [];
 
 function renderCountEntry(){
-  var html = '<div class="tab-section-hd">📋 Count Entry</div>';
-  if(cntMode === 'digital') return html + renderDigitalEntry();
-  if(cntMode === 'ocr')     return html + renderOcrUpload();
-  if(cntMode === 'review')  return html + renderOcrReview();
+  var html = '<div class="tab-section-hd">📷 Count Upload</div>';
+  if(cntMode === 'ocr')    return html + renderOcrUpload();
+  if(cntMode === 'review') return html + renderOcrReview();
 
   var gvKey = localStorage.getItem('cpGoogleVisionKey')||'';
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">'
-    + '<div onclick="cntMode=\'digital\';renderContent()" style="border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.5rem;cursor:pointer;background:#fff;text-align:center;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
-      + '<div style="font-size:36px;margin-bottom:10px">⌨️</div>'
-      + '<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px">Digital Entry</div>'
-      + '<div style="font-size:12px;color:var(--gray);line-height:1.5">Type counts directly on screen. Shows system qty for reference.</div>'
-    + '</div>'
-    + (gvKey
-      ? '<div onclick="cntMode=\'ocr\';ocrFiles=[];renderContent()" style="border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.5rem;cursor:pointer;background:#fff;text-align:center;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
-          + '<div style="font-size:36px;margin-bottom:10px">📷</div>'
-          + '<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px">Photo / Scan Upload</div>'
-          + '<div style="font-size:12px;color:var(--gray);line-height:1.5">Upload photos or scanned PDFs. Google Vision reads the handwriting automatically.</div>'
-        + '</div>'
-      : '<div style="border:2px dashed var(--gray-lt);border-radius:var(--radius-lg);padding:1.5rem;background:var(--offwhite);text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">'
-          + '<div style="font-size:28px;opacity:.35">📷</div>'
-          + '<div style="font-size:13px;font-weight:600;color:var(--gray-mid)">Photo Upload</div>'
-          + '<div style="font-size:12px;color:var(--gray-mid)">Add Google Vision API key in ⚙ Settings to enable</div>'
-        + '</div>')
-  + '</div>';
 
+  // Intro card
+  html+='<div class="del-form-card"><h3>Upload Completed Count Sheet</h3>'
+    +'<p style="font-size:13px;color:var(--gray);margin-bottom:1rem">Take a photo of your filled count form and upload it here. Google Vision reads the item names and totals, then opens Outlook pre-filled to Don with the results.</p>';
+
+  if(!gvKey){
+    html+='<div style="background:#fff8ec;border:2px solid #fed7aa;border-radius:var(--radius);padding:10px 14px;font-size:13px;color:#92400e;margin-bottom:1rem">'
+      +'📷 Photo upload requires a Google Vision API key — add it in ⚙ Settings → Admin.'
+    +'</div>';
+  } else {
+    html+='<button class="btn b-org" onclick="cntMode=\'ocr\';ocrFiles=[];renderContent()" style="padding:10px 24px;font-size:15px">📷 Upload Count Sheet Photos</button>';
+  }
+  html+='</div>';
+
+  // Count history
   var counts = state.counts || {};
   var ckeys = Object.keys(counts).sort().reverse();
   if(ckeys.length){
     html += '<div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:12px">Count History</div><div class="cnt-hist-list">';
     ckeys.forEach(function(k){
       var c = counts[k];
-      var variances = c.variances || 0;
-      var anomalies = c.anomalies ? c.anomalies.length : 0;
-      var badge = anomalies > 0 ? 'bad' : variances === 0 ? 'ok' : variances <= 3 ? 'warn' : 'bad';
-      var badgeLabel = anomalies > 0 ? '⚠ '+anomalies+' anomal'+(anomalies>1?'ies':'y') : variances === 0 ? '✓ No variances' : variances + ' variance'+(variances>1?'s':'');
-      var method = c.method === 'ocr' ? ' · 📷 Scan' : ' · ⌨️ Digital';
       html += '<div class="cnt-hist-card"><div class="cnt-hist-hd">'
-        + '<span class="cnt-hist-title">'+new Date(c.submittedAt).toLocaleString()+' — by '+escHtml(c.submittedBy)+'</span>'
-        + '<span class="cnt-hist-badge '+badge+'">'+badgeLabel+'</span>'
+        + '<span class="cnt-hist-title">'+new Date(c.submittedAt).toLocaleString()+' — by '+escHtml(c.submittedBy||'Unknown')+'</span>'
+        + '<span class="cnt-hist-badge ok">📷 Scan submitted</span>'
         + '</div>'
-        + '<div class="cnt-hist-meta">'+escHtml(c.dc)+' · '+(c.itemCount||0)+' items counted'+method+'</div>'
+        + '<div class="cnt-hist-meta">'+escHtml(c.dc||currentDC)+' · '+(c.itemCount||0)+' items read</div>'
         + (c.summary?'<div class="cnt-hist-summary">'+escHtml(c.summary)+'</div>':'')
         + '<div style="margin-top:8px;display:flex;gap:6px">'
-          + '<button class="btn" onclick="viewCount(\''+k+'\')" style="font-size:12px;padding:6px 12px">View</button>'
           + '<button class="btn b-danger" onclick="deleteCount(\''+k+'\')" style="font-size:12px;padding:6px 12px">✕</button>'
         + '</div></div>';
     });
     html += '</div>';
   } else {
-    html += '<div style="text-align:center;padding:3rem;color:var(--gray-mid);font-size:14px;font-style:italic">No count history yet. Start a new count above.</div>';
+    html += '<div style="text-align:center;padding:3rem;color:var(--gray-mid);font-size:14px;font-style:italic">No count submissions yet.</div>';
   }
   return html;
 }
@@ -2106,45 +2095,34 @@ function updateOcrFileStatus(idx,status,label){
 }
 
 function buildOcrReview(){
-  // Parse all extracted text into structured rows
   var sups=sharedSupplies?sharedSupplies.supplies:DSUP;
-  var allItems=Object.values(sups).flat().map(function(i){return i.toLowerCase();});
   var allItemsOrig=Object.values(sups).flat();
-  var qtyTypes=state.qtyTypes||['Pallets','Each'];
   var rows=[];
 
   ocrFiles.forEach(function(f){
     if(!f.text||f.status!=='done') return;
     var lines=f.text.split('\n').map(function(l){return l.trim();}).filter(Boolean);
-    lines.forEach(function(line,li){
-      // Try to match a supply item
+    lines.forEach(function(line){
+      // Try to match a supply item name
       var matchedItem=null;
-      allItemsOrig.forEach(function(item,ii){
+      allItemsOrig.forEach(function(item){
         if(line.toLowerCase().indexOf(item.toLowerCase())>=0) matchedItem=item;
       });
       if(!matchedItem) return;
-      // Extract numbers from this line and nearby lines
-      var combined=lines.slice(Math.max(0,li),li+3).join(' ');
-      var nums=combined.match(/\b\d+\b/g)||[];
-      var row={item:matchedItem,source:f.name,rawLine:line,nums:nums,qtys:{}};
-      // Map numbers to qty types in order
-      qtyTypes.forEach(function(qt,qi){
-        row.qtys[qt]=nums[qi]?parseInt(nums[qi]):0;
-      });
-      rows.push(row);
+      // Get the LAST number on the line — that's the Total column
+      var nums=line.match(/\b\d+\b/g)||[];
+      var total=nums.length>0?parseInt(nums[nums.length-1]):0;
+      rows.push({item:matchedItem,total:total,source:f.name,confidence:total>0?1:0});
     });
   });
 
-  // Deduplicate — if same item appears multiple times, merge quantities
+  // Deduplicate — sum totals if same item on multiple lines/pages
   var merged={};
   rows.forEach(function(r){
-    if(!merged[r.item]) merged[r.item]={item:r.item,qtys:{},sources:[],confidence:0};
-    var m=merged[r.item];
-    m.sources.push(r.source);
-    Object.keys(r.qtys).forEach(function(qt){
-      m.qtys[qt]=(m.qtys[qt]||0)+r.qtys[qt];
-    });
-    m.confidence++;
+    if(!merged[r.item]) merged[r.item]={item:r.item,total:0,sources:[],confidence:0};
+    merged[r.item].total+=r.total;
+    merged[r.item].sources.push(r.source);
+    merged[r.item].confidence++;
   });
 
   ocrReviewRows=Object.values(merged);
@@ -2183,31 +2161,27 @@ function renderOcrReview(){
   }
 
   html+='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius);padding:10px 14px;font-size:13px;font-weight:600;color:#15803d;margin-bottom:1rem">'
-    +'✓ Review the table below. Edit any values that look wrong, then click Approve & Submit.'
+    +'✓ '+total+' items read. Review and correct any misreads, then click Approve & Email Don.'
   +'</div>';
 
   html+='<div style="overflow-x:auto;margin-bottom:1rem"><table class="ocr-review-tbl"><thead><tr>'
-    +'<th>Item</th>';
-  qtyTypes.forEach(function(qt){ html+='<th>'+escHtml(qt)+'</th>'; });
-  html+='<th>Confidence</th><th>Source File</th><th></th></tr></thead><tbody>';
+    +'<th>Item</th><th>Total Count</th><th>Source</th><th></th>'
+    +'</tr></thead><tbody>';
 
   ocrReviewRows.forEach(function(row,i){
-    var conf=row.confidence>=2?'high':row.confidence===1?'med':'low';
-    var confLabel=row.confidence>=2?'✓ High':'⚡ Medium';
+    var conf=row.confidence>=2?'high':'med';
+    var confLabel=row.confidence>=2?'✓':'⚡';
     html+='<tr>'
-      +'<td><input type="text" value="'+escHtml(row.item)+'" data-i="'+i+'" data-f="item" onchange="ocrEditRow(this)"></td>';
-    qtyTypes.forEach(function(qt){
-      html+='<td><input type="number" min="0" value="'+(row.qtys[qt]||0)+'" data-i="'+i+'" data-qt="'+escHtml(qt)+'" onchange="ocrEditQty(this)"></td>';
-    });
-    html+='<td><span class="ocr-conf-'+conf+'">'+confLabel+'</span></td>'
-      +'<td style="font-size:11px;color:var(--gray-mid)">'+escHtml((row.sources||[]).join(', '))+'</td>'
-      +'<td><button onclick="ocrReviewRows.splice('+i+',1);renderContent()" style="border:none;background:none;color:var(--gray-mid);cursor:pointer;font-size:15px" title="Remove row">✕</button></td>'
+      +'<td><input type="text" value="'+escHtml(row.item)+'" data-i="'+i+'" data-f="item" onchange="ocrEditRow(this)" style="min-width:180px"></td>'
+      +'<td><input type="number" min="0" value="'+(row.total||0)+'" data-i="'+i+'" data-f="total" onchange="ocrEditRow(this)" style="width:80px;font-size:15px;font-weight:700;text-align:center"></td>'
+      +'<td style="font-size:11px;color:var(--gray-mid)"><span class="ocr-conf-'+conf+'">'+confLabel+'</span> '+escHtml((row.sources||[]).join(', '))+'</td>'
+      +'<td><button onclick="ocrReviewRows.splice('+i+',1);renderContent()" style="border:none;background:none;color:var(--gray-mid);cursor:pointer;font-size:15px">✕</button></td>'
     +'</tr>';
   });
   html+='</tbody></table></div>';
 
   html+='<div style="display:flex;gap:10px;flex-wrap:wrap">'
-    +'<button class="btn b-org" onclick="approveOcrCount()" style="padding:10px 24px;font-size:15px">✓ Approve & Submit →</button>'
+    +'<button class="btn b-org" onclick="approveOcrCount()" style="padding:10px 24px;font-size:15px">✓ Approve & Email Don →</button>'
     +'<button class="btn" onclick="cntMode=\'choose\';ocrFiles=[];ocrReviewRows=[];renderContent()">Cancel</button>'
   +'</div>';
   return html;
@@ -2215,30 +2189,55 @@ function renderOcrReview(){
 
 function ocrEditRow(inp){
   var i=parseInt(inp.dataset.i);
-  if(ocrReviewRows[i]) ocrReviewRows[i][inp.dataset.f]=inp.value;
+  var f=inp.dataset.f;
+  if(ocrReviewRows[i]) ocrReviewRows[i][f]=f==='total'?parseInt(inp.value)||0:inp.value;
 }
 function ocrEditQty(inp){
   var i=parseInt(inp.dataset.i);
-  var qt=inp.dataset.qt;
-  if(ocrReviewRows[i]) ocrReviewRows[i].qtys[qt]=parseInt(inp.value)||0;
+  if(ocrReviewRows[i]) ocrReviewRows[i].total=parseInt(inp.value)||0;
 }
 function approveOcrCount(){
   if(!ocrReviewRows.length){alert('Nothing to submit.');return;}
   var qtyTypes=state.qtyTypes||['Pallets','Each'];
-  cntEntries={};
+  var itemCount=ocrReviewRows.length;
+  var lines=['COUNT SHEET SUBMISSION — '+currentDC];
+  lines.push('Submitted by: '+(userName||'Unknown'));
+  lines.push('Date: '+new Date().toLocaleString());
+  lines.push('Items read: '+itemCount);
+  lines.push('');
+  lines.push('ITEM TOTALS:');
+  lines.push('─────────────────────────────────────');
   ocrReviewRows.forEach(function(row){
     if(!row.item) return;
-    qtyTypes.forEach(function(qt){
-      if(row.qtys&&row.qtys[qt]!==undefined) cntEntries[row.item+'||'+qt]=row.qtys[qt];
-    });
+    var qtySummary=qtyTypes.map(function(qt){
+      var v=row.qtys&&row.qtys[qt]!==undefined?row.qtys[qt]:0;
+      return v>0?qt+': '+v:'';
+    }).filter(Boolean).join(' · ');
+    lines.push(escHtml(row.item)+(qtySummary?' — '+qtySummary:''));
   });
-  // Tag as OCR method
-  var origSubmit=submitDigitalCount;
-  _ocrMethod=true;
-  submitDigitalCount();
-  _ocrMethod=false;
+  lines.push('');
+  lines.push('Source files: '+ocrFiles.map(function(f){return f.name;}).join(', '));
+
+  // Save to history (no system update)
+  if(!state.counts) state.counts={};
+  var id='cnt_'+Date.now();
+  var summary=ocrReviewRows.slice(0,5).map(function(r){return r.item;}).join(', ')+(itemCount>5?' +more':'');
+  state.counts[id]={
+    dc:currentDC,submittedBy:userName||'Unknown',
+    submittedAt:new Date().toISOString(),
+    itemCount:itemCount,method:'ocr',summary:summary
+  };
+  logEvent('count_submission',{dc:currentDC,submittedBy:userName||'Unknown',itemCount:itemCount,method:'ocr'});
+  saveDB();
+
+  // Email Don
+  var subject='['+currentDC+'] Count Sheet Submitted — '+new Date().toLocaleDateString()+' — '+itemCount+' items';
+  window.location.href='mailto:Dhomiller@carparts.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(lines.join('\n'));
+
   ocrFiles=[];
   ocrReviewRows=[];
+  cntMode='choose';
+  renderContent();
 }
 var _ocrMethod=false;
 
@@ -2414,18 +2413,59 @@ function deleteCount(k){
 }
 
 // ── PRINT FORM ─────────────────────────────────────────────────────────────
+var printFormMode='location'; // location | count
+
 function renderPrintForm(){
   var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
   var cats = sharedSupplies ? sharedSupplies.cats : DCATS;
-  return '<div class="tab-section-hd">🖨️ Count Sheet — Print Form</div>'
-    + '<div style="display:flex;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center">'
-      + '<button class="btn b-navy" onclick="window.print()" style="padding:10px 22px;font-size:15px">🖨️ Print</button>'
-      + '<div style="font-size:13px;color:var(--gray)">Opens browser print dialog · Prints landscape · Hides navigation automatically</div>'
-    + '</div>'
-    + '<div style="background:#fff;border:1px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1rem 1.25rem;font-size:13px;color:var(--gray);margin-bottom:1rem">'
-      + 'Preview below is approximate. The printed version will be full-width landscape with tighter spacing.'
-    + '</div>'
-    + buildPrintFormHTML(sups, cats);
+  return '<div class="tab-section-hd">🖨️ Print Form</div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center">'
+      // Mode toggle
+      +'<div style="display:flex;background:#fff;border:1px solid var(--gray-lt);border-radius:var(--radius-lg);padding:4px;box-shadow:0 1px 3px rgba(0,0,0,.05)">'
+        +'<button onclick="printFormMode=\'location\';renderContent()" style="padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;font-family:\'Inter\',sans-serif;cursor:pointer;transition:all .15s;background:'+(printFormMode==='location'?'var(--navy)':'transparent')+';color:'+(printFormMode==='location'?'#fff':'var(--gray)')+'" >📍 Location Form</button>'
+        +'<button onclick="printFormMode=\'count\';renderContent()" style="padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;font-family:\'Inter\',sans-serif;cursor:pointer;transition:all .15s;background:'+(printFormMode==='count'?'var(--navy)':'transparent')+';color:'+(printFormMode==='count'?'#fff':'var(--gray)')+'" >📋 Count Form</button>'
+      +'</div>'
+      +'<button class="btn b-navy" onclick="window.print()" style="padding:10px 22px;font-size:15px">🖨️ Print</button>'
+      +'<div style="font-size:13px;color:var(--gray)">Prints landscape · navigation hidden automatically</div>'
+    +'</div>'
+    +(printFormMode==='location'
+      ? buildPrintFormHTML(sups, cats)
+      : buildCountFormHTML(sups, cats));
+}
+
+function buildCountFormHTML(sups, cats){
+  var allItems=[];
+  Object.keys(cats).forEach(function(cat){
+    (sups[cat]||[]).forEach(function(item){ allItems.push({item:item,cat:cat}); });
+  });
+  var html='<div style="background:#fff;border:1px solid var(--gray-lt);border-radius:var(--radius-lg);overflow:hidden">';
+  // Header
+  html+='<div style="background:#1a2f5e;color:#fff;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
+    +'<div style="font-size:14px;font-weight:900">carparts<span style="color:#F47920">.com</span> <span style="font-weight:400;font-size:12px;opacity:.7">Indirect Materials Count Sheet</span></div>'
+    +'<div style="font-size:11px;opacity:.7">'+escHtml(currentDC||'')+'</div>'
+  +'</div>';
+  // Counted by / date strip
+  html+='<div style="display:flex;gap:24px;padding:8px 14px;background:#f4f6f9;border-bottom:1px solid #e2e6ed;font-size:10px;font-weight:700;color:#1a2f5e">'
+    +'<span>Counted by: <span style="display:inline-block;width:140px;border-bottom:1.5px solid #374151;vertical-align:bottom">&nbsp;</span></span>'
+    +'<span>Date: <span style="display:inline-block;width:90px;border-bottom:1.5px solid #374151;vertical-align:bottom">&nbsp;</span></span>'
+  +'</div>';
+  // Table
+  html+='<table style="border-collapse:collapse;width:100%">'
+    +'<thead><tr>'
+      +'<th style="background:#f4f6f9;font-size:10px;font-weight:700;padding:6px 10px;border:1px solid #e2e6ed;text-align:left;width:40%">Indirect Materials</th>'
+      +'<th style="background:#f4f6f9;font-size:10px;font-weight:700;padding:6px 10px;border:1px solid #e2e6ed;text-align:center;width:40%">Quantity <span style="font-weight:400;opacity:.65">(Verify: Eaches, Pallet, or Case)</span></th>'
+      +'<th style="background:#f4f6f9;font-size:10px;font-weight:700;padding:6px 10px;border:1px solid #e2e6ed;text-align:center;width:20%">Total</th>'
+    +'</tr></thead><tbody>';
+  allItems.forEach(function(row,idx){
+    var bg=idx%2===0?'#fff':'#fafbfc';
+    html+='<tr>'
+      +'<td style="background:'+bg+';padding:7px 10px;border:1px solid #e2e6ed;font-size:11px;font-weight:600">'+escHtml(row.item)+'</td>'
+      +'<td style="background:'+bg+';padding:7px 10px;border:1px solid #e2e6ed"></td>'
+      +'<td style="background:'+bg+';padding:7px 10px;border:1px solid #e2e6ed"></td>'
+    +'</tr>';
+  });
+  html+='</tbody></table></div>';
+  return html;
 }
 
 function buildPrintFormHTML(sups, cats, forPrint){
@@ -2618,6 +2658,89 @@ function renderRptSummary(){
 // ── INVENTORY VIEW ────────────────────────────────────────────────────────
 function renderRptInventory(){
   var dcs=getActiveDCs();
+  var d=rptAllData[currentDC];
+  var qtyTypes=state.qtyTypes||['Pallets','Each'];
+  var sups=sharedSupplies?sharedSupplies.supplies:DSUP;
+  var cats=sharedSupplies?sharedSupplies.cats:DCATS;
+
+  // ── Totals summary by item ──
+  var itemTotals={};
+  if(d&&d.racks){
+    Object.values(d.racks).forEach(function(r){
+      if(!r.slots) return;
+      Object.values(r.slots).forEach(function(slot){
+        if(!slot||!slot.sections) return;
+        slot.sections.forEach(function(sec){
+          if(!sec.supply) return;
+          if(!itemTotals[sec.supply]) itemTotals[sec.supply]={cat:sec.cat||'',qtys:{}};
+          qtyTypes.forEach(function(qt){
+            itemTotals[sec.supply].qtys[qt]=(itemTotals[sec.supply].qtys[qt]||0)+(parseInt((sec.qtys||{})[qt])||0);
+          });
+        });
+      });
+    });
+    // Also include overflow
+    if(d.overflowLines) d.overflowLines.forEach(function(line){
+      if(!line.item) return;
+      if(!itemTotals[line.item]) itemTotals[line.item]={cat:line.cat||'',qtys:{}};
+      qtyTypes.forEach(function(qt,qi){
+        var v=Array.isArray(line.qtys)?line.qtys.reduce(function(sum,x){return sum+(parseInt(x)||0);},0):0;
+        itemTotals[line.item].qtys[qt]=(itemTotals[line.item].qtys[qt]||0)+v;
+      });
+    });
+  }
+
+  var html='';
+  // Totals card
+  var totalKeys=Object.keys(itemTotals);
+  html+='<div class="rpt-card" style="margin-bottom:1.25rem">'
+    +'<div class="rpt-card-hd"><h3>📦 Inventory Totals — '+escHtml(currentDC)+'</h3>'
+      +'<span style="font-size:12px;color:var(--gray)">'+totalKeys.length+' items with quantities assigned</span>'
+    +'</div>';
+  if(totalKeys.length){
+    html+='<div style="overflow-x:auto"><table class="rpt-tbl"><thead><tr>'
+      +'<th>Item</th><th>Category</th>'
+      +qtyTypes.map(function(qt){return '<th>'+escHtml(qt)+'</th>';}).join('')
+    +'</tr></thead><tbody>';
+    // Group by category
+    Object.keys(cats).forEach(function(cat){
+      var catItems=totalKeys.filter(function(item){return itemTotals[item].cat===cat;});
+      if(!catItems.length) return;
+      var cs=cats[cat]||{bg:'#f9fafb',text:'#374151'};
+      html+='<tr><td colspan="'+(2+qtyTypes.length)+'" style="background:'+cs.bg+';color:'+cs.text+';font-size:10px;font-weight:800;padding:5px 12px;text-transform:uppercase;letter-spacing:.4px">'+escHtml(cat)+'</td></tr>';
+      catItems.forEach(function(item){
+        var t=itemTotals[item];
+        var hasQty=qtyTypes.some(function(qt){return t.qtys[qt]>0;});
+        html+='<tr>'
+          +'<td class="rpt-item">'+escHtml(item)+'</td>'
+          +'<td><span class="chip" style="background:'+cs.bg+';color:'+cs.text+'">'+escHtml(cat)+'</span></td>'
+          +qtyTypes.map(function(qt){
+            var v=t.qtys[qt]||0;
+            return '<td class="rpt-num" style="'+(v>0?'font-weight:800;color:var(--navy)':'color:var(--gray-mid)')+'">'+( v||'—')+'</td>';
+          }).join('')
+        +'</tr>';
+      });
+    });
+    // Items with unknown/other category
+    var otherItems=totalKeys.filter(function(item){return !cats[itemTotals[item].cat];});
+    otherItems.forEach(function(item){
+      var t=itemTotals[item];
+      html+='<tr>'
+        +'<td class="rpt-item">'+escHtml(item)+'</td>'
+        +'<td></td>'
+        +qtyTypes.map(function(qt){
+          var v=t.qtys[qt]||0;
+          return '<td class="rpt-num" style="'+(v>0?'font-weight:800;color:var(--navy)':'color:var(--gray-mid)')+'">'+( v||'—')+'</td>';
+        }).join('')
+      +'</tr>';
+    });
+    html+='</tbody></table></div>';
+  } else {
+    html+='<div class="rpt-empty">No quantities assigned yet. Open slots in the rack view and enter quantities to see totals here.</div>';
+  }
+  html+='</div>';
+
+  // ── Slot detail (existing) ──
   var rows=[];
   dcs.forEach(function(dc){
     var d=rptAllData[dc]; if(!d||!d.racks) return;
