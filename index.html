@@ -342,7 +342,68 @@ body{font-family:'Inter',Arial,sans-serif;background:var(--offwhite);color:var(-
 .area-field input:focus{outline:none;border-color:var(--orange)}
 .shared-note{background:#f0f9ff;border:1px solid #bae6fd;border-radius:var(--radius);padding:10px 14px;font-size:13px;color:#0369a1;font-weight:500;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
 
-/* ── DELIVERY / COUNT / PRINT TABS ──────────────────────────────────────── */
+/* OCR Upload */
+.ocr-upload-zone{border:2.5px dashed var(--gray-lt);border-radius:var(--radius-lg);padding:2rem;text-align:center;cursor:pointer;background:#fff;transition:all .2s;position:relative;margin-bottom:1rem}
+.ocr-upload-zone:hover,.ocr-upload-zone.dragover{border-color:var(--orange);background:var(--orange-lt)}
+.ocr-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ocr-file-list{display:grid;gap:8px;margin-bottom:1rem}
+.ocr-file-row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--gray-lt);border-radius:var(--radius);padding:8px 12px;font-size:13px}
+.ocr-file-row .ocr-file-name{flex:1;font-weight:600;color:var(--dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ocr-file-row .ocr-file-status{font-size:12px;font-weight:600;white-space:nowrap}
+.ocr-file-row .ocr-file-status.pending{color:var(--gray-mid)}
+.ocr-file-row .ocr-file-status.reading{color:var(--orange)}
+.ocr-file-row .ocr-file-status.done{color:#16a34a}
+.ocr-file-row .ocr-file-status.error{color:#dc2626}
+.ocr-progress{background:var(--offwhite);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;font-size:14px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:10px}
+.ocr-review-tbl{border-collapse:collapse;width:100%;font-size:13px}
+.ocr-review-tbl th{background:var(--navy);color:#fff;font-size:11px;font-weight:700;padding:8px 12px;text-align:left;border:1px solid rgba(255,255,255,.1);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.ocr-review-tbl td{padding:7px 10px;border:1px solid var(--gray-lt);vertical-align:middle}
+.ocr-review-tbl tr:nth-child(even) td{background:#fafbfc}
+.ocr-review-tbl input{width:100%;font-size:13px;padding:4px 7px;border:1.5px solid var(--gray-lt);border-radius:6px;font-family:'Inter',sans-serif;color:var(--dark);background:transparent}
+.ocr-review-tbl input:focus{outline:none;border-color:var(--orange)}
+.ocr-conf-high{color:#16a34a;font-size:11px;font-weight:700}
+.ocr-conf-med{color:#ca8a04;font-size:11px;font-weight:700}
+.ocr-conf-low{color:#dc2626;font-size:11px;font-weight:700}
+.rpt-subnav{display:flex;gap:4px;background:#fff;border:1px solid var(--gray-lt);border-radius:var(--radius-lg);padding:5px;margin-bottom:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,.05);flex-wrap:wrap}
+.rpt-subnav-btn{padding:8px 14px;border:none;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;color:var(--gray);background:transparent;transition:all .15s;white-space:nowrap}
+.rpt-subnav-btn:hover{background:var(--offwhite);color:var(--dark)}
+.rpt-subnav-btn.active{background:var(--navy);color:#fff}
+.rpt-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:1.5rem}
+.rpt-stat{background:#fff;border:1px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1rem 1.25rem;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.rpt-stat .sv{font-size:30px;font-weight:900;color:var(--navy);line-height:1}
+.rpt-stat .sl{font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-top:6px}
+.rpt-stat .sd{font-size:11px;color:var(--gray-mid);margin-top:3px}
+.rpt-stat.warn .sv{color:#ca8a04}
+.rpt-stat.crit .sv{color:#dc2626}
+.rpt-stat.ok .sv{color:#16a34a}
+.rpt-card{background:#fff;border:1px solid var(--gray-lt);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);margin-bottom:1.25rem}
+.rpt-card-hd{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;border-bottom:1px solid var(--gray-lt);flex-wrap:wrap;gap:8px}
+.rpt-card-hd h3{font-size:15px;font-weight:700;color:var(--dark)}
+.rpt-tbl{border-collapse:collapse;width:100%;font-size:13px}
+.rpt-tbl th{background:var(--navy);color:#fff;font-size:11px;font-weight:700;padding:8px 12px;text-align:left;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px;border:1px solid rgba(255,255,255,.1)}
+.rpt-tbl td{padding:8px 12px;border:1px solid var(--gray-lt);vertical-align:middle}
+.rpt-tbl tr:nth-child(even) td{background:#fafbfc}
+.rpt-tbl td.rpt-item{font-weight:700}
+.rpt-tbl td.rpt-dc{font-size:11px;font-weight:700;color:var(--navy)}
+.rpt-tbl td.rpt-loc{font-size:11px;color:var(--gray)}
+.rpt-tbl td.rpt-num{text-align:center;font-weight:700}
+.rpt-tbl td.rpt-diff{text-align:center;font-weight:800}
+.rpt-tbl td.rpt-diff.ok{color:#16a34a}
+.rpt-tbl td.rpt-diff.warn{color:#ca8a04;background:#fef9c3}
+.rpt-tbl td.rpt-diff.crit{color:#dc2626;background:#fee2e2}
+.rpt-tbl td.rpt-diff.unknown{color:var(--gray-mid)}
+.anomaly-row td{background:#fff8f8!important}
+.anomaly-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
+.anomaly-badge.warn{background:#fef9c3;color:#a16207}
+.anomaly-badge.crit{background:#fee2e2;color:#dc2626}
+.anomaly-badge.ok{background:#dcfce7;color:#15803d}
+.rpt-dc-filter{display:flex;gap:6px;flex-wrap:wrap}
+.rpt-dc-btn{padding:4px 12px;border-radius:20px;border:2px solid var(--gray-lt);background:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--dark)}
+.rpt-dc-btn.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.rpt-empty{text-align:center;padding:3rem;color:var(--gray-mid);font-size:14px;font-style:italic}
+.trend-up{color:#16a34a}
+.trend-dn{color:#dc2626}
+.trend-flat{color:var(--gray-mid)}
 /* Shared section header */
 .tab-section-hd{font-size:20px;font-weight:800;color:var(--dark);display:flex;align-items:center;gap:10px;margin-bottom:1.5rem}
 .tab-section-hd::before{content:'';display:block;width:5px;height:24px;background:var(--orange);border-radius:3px;flex-shrink:0}
@@ -918,6 +979,7 @@ function renderTabs(){
   html+='<button class="tab'+(curTab==="delivery"?" active":"")+'" onclick="switchTab(\'delivery\')">🚚 Delivery</button>';
   html+='<button class="tab'+(curTab==="countentry"?" active":"")+'" onclick="switchTab(\'countentry\')">📋 Count Entry</button>';
   html+='<button class="tab'+(curTab==="printform"?" active":"")+'" onclick="switchTab(\'printform\')">🖨️ Print Form</button>';
+  html+='<button class="tab'+(curTab==="reports"?" active":"")+'" onclick="switchTab(\'reports\')">📊 Reports</button>';
   html+='<button class="tab'+(curTab==="supplylist"?" active":"")+'" onclick="switchTab(\'supplylist\')">Supply List</button>';
   html+='<button class="tab settings-tab'+(curTab==="settings"?" active":"")+'" onclick="switchTab(\'settings\')">⚙ Settings</button>';
   el.innerHTML=html;
@@ -952,6 +1014,7 @@ function renderContent(){
   if(curTab==="delivery")    {el.innerHTML=renderDelivery();    return;}
   if(curTab==="countentry")  {el.innerHTML=renderCountEntry();  return;}
   if(curTab==="printform")   {el.innerHTML=renderPrintForm();   showPrintForm(); return;}
+  if(curTab==="reports")     {el.innerHTML='<div id="rpt-root"><div class="connecting-msg"><div class="spinner"></div><div class="conn-txt">Loading report data…</div></div></div>'; loadReportData(); return;}
   var rack=state.racks[curTab];
   if(!rack){
     // curTab may point to a deleted rack — fall back to first available
@@ -1335,6 +1398,7 @@ function saveSlot(){
     if(type) qtys[type]=val;
   });
   sec.qtys=qtys;
+  logEvent('slot_update',{dc:currentDC,slotKey:d.slotKey,item:sec.supply,cat:sec.cat,qtys:deepCopy(qtys),updatedBy:userName||'Unknown'});
   saveDB(); closeModal(); renderContent();
 }
 function addQtyType(){
@@ -1424,6 +1488,22 @@ function renderSettings(){
       +'<button class="btn b-navy" onclick="switchDC()">⇄ Switch to a Different DC</button>'
       +'<p style="font-size:12px;color:var(--gray-mid);margin-top:10px">Each DC has its own isolated rack data. The supply list is shared across all DCs.</p>'
     +'</div></div>';
+
+  // Google Vision API key
+  var gvKey=localStorage.getItem('cpGoogleVisionKey')||'';
+  html+='<div class="settings-card">'
+    +'<div class="settings-card-hd"><h3>📷 Google Cloud Vision API Key</h3></div>'
+    +'<div class="settings-card-bd">'
+      +'<p style="font-size:13px;color:var(--gray);margin-bottom:10px">Required for photo/scan upload on the Count Entry tab. Stored in your browser only — never saved to Firebase.</p>'
+      +'<div style="display:flex;gap:8px;align-items:center">'
+        +'<input type="password" id="gv-key-inp" value="'+escHtml(gvKey)+'" placeholder="AIzaSy..." '
+          +'style="flex:1;font-size:14px;padding:9px 12px;border-radius:var(--radius);border:2px solid var(--gray-lt);font-family:\'Inter\',sans-serif;letter-spacing:1px">'
+        +'<button class="btn b-org" onclick="saveGVKey()">Save Key</button>'
+        +(gvKey?'<button class="btn b-danger" onclick="clearGVKey()" style="font-size:12px">Clear</button>':"")
+      +'</div>'
+      +(gvKey?'<p style="font-size:12px;color:#16a34a;margin-top:8px;font-weight:600">✓ API key saved — photo upload enabled on Count Entry tab.</p>':'<p style="font-size:12px;color:var(--gray-mid);margin-top:8px">Get your key from console.cloud.google.com → APIs & Services → Credentials.</p>')
+    +'</div></div>';
+
   html+='</div>';
   return html;
 }
@@ -1796,6 +1876,7 @@ function submitDelivery(){
     fileName: fn, notes: notes, dc: currentDC,
     submittedBy: userName||'Unknown', submittedAt: new Date().toISOString()
   };
+  logEvent('delivery',{dc:currentDC,fileName:fn,notes:notes,submittedBy:userName||'Unknown'});
   saveDB();
 
   // Build mailto
@@ -1827,42 +1908,58 @@ function deleteDelivery(k){
 }
 
 // ── COUNT ENTRY ────────────────────────────────────────────────────────────
-var cntMode = 'choose'; // choose | digital
+var cntMode = 'choose'; // choose | digital | ocr | review
 var cntEntries = {};
+var ocrFiles = [];
+var ocrReviewRows = [];
 
 function renderCountEntry(){
   var html = '<div class="tab-section-hd">📋 Count Entry</div>';
-
   if(cntMode === 'digital') return html + renderDigitalEntry();
+  if(cntMode === 'ocr')     return html + renderOcrUpload();
+  if(cntMode === 'review')  return html + renderOcrReview();
 
-  // History
-  var counts = state.counts || {};
-  var ckeys = Object.keys(counts).sort().reverse();
-  html += '<div style="display:flex;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap">'
-    + '<button class="btn b-org" onclick="cntMode=\'digital\';renderContent()" style="padding:12px 28px;font-size:15px;font-weight:700">📝 Start New Count</button>'
-    + '<div style="font-size:13px;color:var(--gray);display:flex;align-items:center">Enter counts on screen as you walk the floor, or after filling in the print form.</div>'
+  var gvKey = localStorage.getItem('cpGoogleVisionKey')||'';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">'
+    + '<div onclick="cntMode=\'digital\';renderContent()" style="border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.5rem;cursor:pointer;background:#fff;text-align:center;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
+      + '<div style="font-size:36px;margin-bottom:10px">⌨️</div>'
+      + '<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px">Digital Entry</div>'
+      + '<div style="font-size:12px;color:var(--gray);line-height:1.5">Type counts directly on screen. Shows system qty for reference.</div>'
+    + '</div>'
+    + (gvKey
+      ? '<div onclick="cntMode=\'ocr\';ocrFiles=[];renderContent()" style="border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.5rem;cursor:pointer;background:#fff;text-align:center;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
+          + '<div style="font-size:36px;margin-bottom:10px">📷</div>'
+          + '<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px">Photo / Scan Upload</div>'
+          + '<div style="font-size:12px;color:var(--gray);line-height:1.5">Upload photos or scanned PDFs. Google Vision reads the handwriting automatically.</div>'
+        + '</div>'
+      : '<div style="border:2px dashed var(--gray-lt);border-radius:var(--radius-lg);padding:1.5rem;background:var(--offwhite);text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">'
+          + '<div style="font-size:28px;opacity:.35">📷</div>'
+          + '<div style="font-size:13px;font-weight:600;color:var(--gray-mid)">Photo Upload</div>'
+          + '<div style="font-size:12px;color:var(--gray-mid)">Add Google Vision API key in ⚙ Settings to enable</div>'
+        + '</div>')
   + '</div>';
 
+  var counts = state.counts || {};
+  var ckeys = Object.keys(counts).sort().reverse();
   if(ckeys.length){
-    html += '<div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:12px">Count History</div>'
-      + '<div class="cnt-hist-list">';
+    html += '<div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:12px">Count History</div><div class="cnt-hist-list">';
     ckeys.forEach(function(k){
       var c = counts[k];
       var variances = c.variances || 0;
-      var badge = variances === 0 ? 'ok' : variances <= 3 ? 'warn' : 'bad';
-      var badgeLabel = variances === 0 ? '✓ No variances' : variances + ' variance' + (variances > 1 ? 's' : '');
-      html += '<div class="cnt-hist-card">'
-        + '<div class="cnt-hist-hd">'
-          + '<span class="cnt-hist-title">' + new Date(c.submittedAt).toLocaleString() + ' — by ' + escHtml(c.submittedBy) + '</span>'
-          + '<span class="cnt-hist-badge ' + badge + '">' + badgeLabel + '</span>'
+      var anomalies = c.anomalies ? c.anomalies.length : 0;
+      var badge = anomalies > 0 ? 'bad' : variances === 0 ? 'ok' : variances <= 3 ? 'warn' : 'bad';
+      var badgeLabel = anomalies > 0 ? '⚠ '+anomalies+' anomal'+(anomalies>1?'ies':'y') : variances === 0 ? '✓ No variances' : variances + ' variance'+(variances>1?'s':'');
+      var method = c.method === 'ocr' ? ' · 📷 Scan' : ' · ⌨️ Digital';
+      html += '<div class="cnt-hist-card"><div class="cnt-hist-hd">'
+        + '<span class="cnt-hist-title">'+new Date(c.submittedAt).toLocaleString()+' — by '+escHtml(c.submittedBy)+'</span>'
+        + '<span class="cnt-hist-badge '+badge+'">'+badgeLabel+'</span>'
         + '</div>'
-        + '<div class="cnt-hist-meta">' + escHtml(c.dc) + ' · ' + (c.itemCount||0) + ' items counted</div>'
-        + (c.summary ? '<div class="cnt-hist-summary">' + escHtml(c.summary) + '</div>' : '')
+        + '<div class="cnt-hist-meta">'+escHtml(c.dc)+' · '+(c.itemCount||0)+' items counted'+method+'</div>'
+        + (c.summary?'<div class="cnt-hist-summary">'+escHtml(c.summary)+'</div>':'')
         + '<div style="margin-top:8px;display:flex;gap:6px">'
-          + '<button class="btn" onclick="viewCount(\'' + k + '\')" style="font-size:12px;padding:6px 12px">View</button>'
-          + '<button class="btn b-danger" onclick="deleteCount(\'' + k + '\')" style="font-size:12px;padding:6px 12px">✕</button>'
-        + '</div>'
-      + '</div>';
+          + '<button class="btn" onclick="viewCount(\''+k+'\')" style="font-size:12px;padding:6px 12px">View</button>'
+          + '<button class="btn b-danger" onclick="deleteCount(\''+k+'\')" style="font-size:12px;padding:6px 12px">✕</button>'
+        + '</div></div>';
     });
     html += '</div>';
   } else {
@@ -1870,6 +1967,244 @@ function renderCountEntry(){
   }
   return html;
 }
+
+// ── OCR UPLOAD ────────────────────────────────────────────────────────────
+function saveGVKey(){
+  var v=(document.getElementById('gv-key-inp').value||'').trim();
+  if(!v){alert('Please enter a key.');return;}
+  localStorage.setItem('cpGoogleVisionKey',v);
+  renderContent();
+}
+function clearGVKey(){
+  if(!confirm('Remove the Google Vision API key from this browser?'))return;
+  localStorage.removeItem('cpGoogleVisionKey');
+  renderContent();
+}
+
+function renderOcrUpload(){
+  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">'
+    +'<div style="font-size:15px;font-weight:700;color:var(--dark)">Upload Count Sheet Photos / Scans</div>'
+    +'<button class="btn" onclick="cntMode=\'choose\';ocrFiles=[];renderContent()" style="font-size:13px">← Back</button>'
+    +'</div>';
+  html+='<div class="ocr-upload-zone" id="ocr-zone">'
+    +'<input type="file" accept="image/*,.pdf" multiple onchange="ocrFilesChosen(event)">'
+    +'<div style="font-size:32px;margin-bottom:8px">📁</div>'
+    +'<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px">Click or drag files here</div>'
+    +'<div style="font-size:13px;color:var(--gray)">JPG, PNG, or PDF · Multiple files accepted · One photo per sheet section is fine</div>'
+    +'</div>';
+  if(ocrFiles.length){
+    html+='<div class="ocr-file-list">';
+    ocrFiles.forEach(function(f,i){
+      var icon=f.name.toLowerCase().endsWith('.pdf')?'📄':'🖼️';
+      html+='<div class="ocr-file-row">'
+        +'<span>'+icon+'</span>'
+        +'<span class="ocr-file-name">'+escHtml(f.name)+'</span>'
+        +'<span class="ocr-file-status '+f.status+'">'+{pending:'Queued',reading:'Reading…',done:'✓ Done',error:'✗ Failed'}[f.status]+'</span>'
+        +'<button onclick="ocrFiles.splice('+i+',1);renderContent()" style="border:none;background:none;color:var(--gray-mid);cursor:pointer;font-size:14px;padding:0 4px">✕</button>'
+      +'</div>';
+    });
+    html+='</div>';
+    html+='<div style="display:flex;gap:10px;flex-wrap:wrap">'
+      +'<button class="btn b-org" onclick="runOCR()" style="padding:10px 24px;font-size:15px">🔍 Process with Google Vision →</button>'
+      +'<button class="btn" onclick="ocrFiles=[];renderContent()">Clear All</button>'
+    +'</div>';
+  }
+  return html;
+}
+
+function ocrFilesChosen(e){
+  Array.from(e.target.files).forEach(function(f){
+    ocrFiles.push({file:f,name:f.name,status:'pending',text:''});
+  });
+  renderContent();
+}
+
+function runOCR(){
+  var key=localStorage.getItem('cpGoogleVisionKey');
+  if(!key){alert('Google Vision API key not set. Go to ⚙ Settings to add it.');return;}
+  var pending=ocrFiles.filter(function(f){return f.status==='pending';});
+  if(!pending.length){
+    // All done — go to review
+    buildOcrReview(); return;
+  }
+  renderContent();
+  var processed=0;
+  function processNext(idx){
+    if(idx>=ocrFiles.length){buildOcrReview();return;}
+    var f=ocrFiles[idx];
+    if(f.status!=='pending'){processNext(idx+1);return;}
+    f.status='reading';
+    updateOcrFileStatus(idx,'reading','Reading…');
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var b64=ev.target.result.split(',')[1];
+      var mime=f.file.type||'image/jpeg';
+      // Google Vision API
+      var url='https://vision.googleapis.com/v1/images:annotate?key='+key;
+      var body={requests:[{image:{content:b64},features:[{type:'DOCUMENT_TEXT_DETECTION',maxResults:1}]}]};
+      // For PDFs, use pages if possible
+      if(mime==='application/pdf'){
+        body.requests[0].image={content:b64};
+      }
+      fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+        .then(function(r){return r.json();})
+        .then(function(data){
+          var text='';
+          if(data.responses&&data.responses[0]){
+            text=data.responses[0].fullTextAnnotation?data.responses[0].fullTextAnnotation.text:'';
+            if(!text&&data.responses[0].error) text='ERROR:'+data.responses[0].error.message;
+          }
+          f.text=text;
+          f.status=text&&!text.startsWith('ERROR:')?'done':'error';
+          updateOcrFileStatus(idx,f.status,f.status==='done'?'✓ Done':'✗ Failed');
+          processNext(idx+1);
+        })
+        .catch(function(err){
+          f.status='error'; f.text='';
+          updateOcrFileStatus(idx,'error','✗ Failed');
+          processNext(idx+1);
+        });
+    };
+    reader.readAsDataURL(f.file);
+  }
+  processNext(0);
+}
+
+function updateOcrFileStatus(idx,status,label){
+  var rows=document.querySelectorAll('.ocr-file-row');
+  if(rows[idx]){
+    var s=rows[idx].querySelector('.ocr-file-status');
+    if(s){s.className='ocr-file-status '+status;s.textContent=label;}
+  }
+}
+
+function buildOcrReview(){
+  // Parse all extracted text into structured rows
+  var sups=sharedSupplies?sharedSupplies.supplies:DSUP;
+  var allItems=Object.values(sups).flat().map(function(i){return i.toLowerCase();});
+  var allItemsOrig=Object.values(sups).flat();
+  var qtyTypes=state.qtyTypes||['Pallets','Each'];
+  var rows=[];
+
+  ocrFiles.forEach(function(f){
+    if(!f.text||f.status!=='done') return;
+    var lines=f.text.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+    lines.forEach(function(line,li){
+      // Try to match a supply item
+      var matchedItem=null;
+      allItemsOrig.forEach(function(item,ii){
+        if(line.toLowerCase().indexOf(item.toLowerCase())>=0) matchedItem=item;
+      });
+      if(!matchedItem) return;
+      // Extract numbers from this line and nearby lines
+      var combined=lines.slice(Math.max(0,li),li+3).join(' ');
+      var nums=combined.match(/\b\d+\b/g)||[];
+      var row={item:matchedItem,source:f.name,rawLine:line,nums:nums,qtys:{}};
+      // Map numbers to qty types in order
+      qtyTypes.forEach(function(qt,qi){
+        row.qtys[qt]=nums[qi]?parseInt(nums[qi]):0;
+      });
+      rows.push(row);
+    });
+  });
+
+  // Deduplicate — if same item appears multiple times, merge quantities
+  var merged={};
+  rows.forEach(function(r){
+    if(!merged[r.item]) merged[r.item]={item:r.item,qtys:{},sources:[],confidence:0};
+    var m=merged[r.item];
+    m.sources.push(r.source);
+    Object.keys(r.qtys).forEach(function(qt){
+      m.qtys[qt]=(m.qtys[qt]||0)+r.qtys[qt];
+    });
+    m.confidence++;
+  });
+
+  ocrReviewRows=Object.values(merged);
+  cntMode='review';
+  renderContent();
+}
+
+// ── OCR REVIEW ─────────────────────────────────────────────────────────────
+function renderOcrReview(){
+  var qtyTypes=state.qtyTypes||['Pallets','Each'];
+  var total=ocrReviewRows.length;
+  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'
+    +'<div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--dark)">Review Scanned Results</div>'
+      +'<div style="font-size:12px;color:var(--gray);margin-top:3px">'+total+' items read · Correct any misreads before approving</div>'
+    +'</div>'
+    +'<button class="btn" onclick="cntMode=\'ocr\';renderContent()" style="font-size:13px">← Re-scan</button>'
+    +'</div>';
+
+  if(!total){
+    return html+'<div style="background:#fff8ec;border:2px solid #fed7aa;border-radius:var(--radius-lg);padding:1.25rem;font-size:14px;color:#92400e">'
+      +'⚠️ No recognizable supply items were found in the uploaded images. Tips:<br>'
+      +'• Make sure photos are in focus and well-lit<br>'
+      +'• Ensure item names on the form match the supply list exactly<br>'
+      +'• Try re-uploading with higher contrast or a flatter angle'
+    +'</div>';
+  }
+
+  html+='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius);padding:10px 14px;font-size:13px;font-weight:600;color:#15803d;margin-bottom:1rem">'
+    +'✓ Review the table below. Edit any values that look wrong, then click Approve & Submit.'
+  +'</div>';
+
+  html+='<div style="overflow-x:auto;margin-bottom:1rem"><table class="ocr-review-tbl"><thead><tr>'
+    +'<th>Item</th>';
+  qtyTypes.forEach(function(qt){ html+='<th>'+escHtml(qt)+'</th>'; });
+  html+='<th>Confidence</th><th>Source File</th><th></th></tr></thead><tbody>';
+
+  ocrReviewRows.forEach(function(row,i){
+    var conf=row.confidence>=2?'high':row.confidence===1?'med':'low';
+    var confLabel=row.confidence>=2?'✓ High':'⚡ Medium';
+    html+='<tr>'
+      +'<td><input type="text" value="'+escHtml(row.item)+'" data-i="'+i+'" data-f="item" onchange="ocrEditRow(this)"></td>';
+    qtyTypes.forEach(function(qt){
+      html+='<td><input type="number" min="0" value="'+(row.qtys[qt]||0)+'" data-i="'+i+'" data-qt="'+escHtml(qt)+'" onchange="ocrEditQty(this)"></td>';
+    });
+    html+='<td><span class="ocr-conf-'+conf+'">'+confLabel+'</span></td>'
+      +'<td style="font-size:11px;color:var(--gray-mid)">'+escHtml((row.sources||[]).join(', '))+'</td>'
+      +'<td><button onclick="ocrReviewRows.splice('+i+',1);renderContent()" style="border:none;background:none;color:var(--gray-mid);cursor:pointer;font-size:15px" title="Remove row">✕</button></td>'
+    +'</tr>';
+  });
+  html+='</tbody></table></div>';
+
+  html+='<div style="display:flex;gap:10px;flex-wrap:wrap">'
+    +'<button class="btn b-org" onclick="approveOcrCount()" style="padding:10px 24px;font-size:15px">✓ Approve & Submit →</button>'
+    +'<button class="btn" onclick="cntMode=\'choose\';ocrFiles=[];ocrReviewRows=[];renderContent()">Cancel</button>'
+  +'</div>';
+  return html;
+}
+
+function ocrEditRow(inp){
+  var i=parseInt(inp.dataset.i);
+  if(ocrReviewRows[i]) ocrReviewRows[i][inp.dataset.f]=inp.value;
+}
+function ocrEditQty(inp){
+  var i=parseInt(inp.dataset.i);
+  var qt=inp.dataset.qt;
+  if(ocrReviewRows[i]) ocrReviewRows[i].qtys[qt]=parseInt(inp.value)||0;
+}
+function approveOcrCount(){
+  if(!ocrReviewRows.length){alert('Nothing to submit.');return;}
+  var qtyTypes=state.qtyTypes||['Pallets','Each'];
+  cntEntries={};
+  ocrReviewRows.forEach(function(row){
+    if(!row.item) return;
+    qtyTypes.forEach(function(qt){
+      if(row.qtys&&row.qtys[qt]!==undefined) cntEntries[row.item+'||'+qt]=row.qtys[qt];
+    });
+  });
+  // Tag as OCR method
+  var origSubmit=submitDigitalCount;
+  _ocrMethod=true;
+  submitDigitalCount();
+  _ocrMethod=false;
+  ocrFiles=[];
+  ocrReviewRows=[];
+}
+var _ocrMethod=false;
 
 // ── DIGITAL ENTRY ──────────────────────────────────────────────────────────
 function renderDigitalEntry(){
@@ -2000,8 +2335,13 @@ function submitDigitalCount(){
     dc: currentDC, submittedBy: userName||'Unknown',
     submittedAt: new Date().toISOString(),
     itemCount: itemCount, variances: variances,
-    entries: deepCopy(cntEntries), summary: summary
+    entries: deepCopy(cntEntries), summary: summary,
+    method: _ocrMethod ? 'ocr' : 'digital'
   };
+  logEvent('count_submission',{dc:currentDC,submittedBy:userName||'Unknown',itemCount:itemCount,variances:variances,summary:summary,entries:deepCopy(cntEntries)});
+  // Run anomaly detection against previous count
+  var anomalies=detectAnomalies(state.counts[id],lastCount);
+  if(anomalies.length) state.counts[id].anomalies=anomalies;
   saveDB();
 
   // Build email to Don
@@ -2106,7 +2446,470 @@ function showPrintForm(){
   pf.innerHTML = header + buildPrintFormHTML(sups, cats);
 }
 
-// ── FLOOR BAY HELPERS ─────────────────────────────────────────────────────
+// ── EVENT LOGGING ─────────────────────────────────────────────────────────
+function logEvent(type, data){
+  if(!window.fbDCRef) return;
+  var db=firebase.database();
+  var evRef=db.ref('events/'+currentDC);
+  var id='ev_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
+  evRef.child(id).set(Object.assign({type:type,ts:new Date().toISOString()},data));
+}
+
+// ── ANOMALY DETECTION ─────────────────────────────────────────────────────
+function detectAnomalies(currCount, prevCount){
+  var anomalies=[];
+  if(!currCount||!currCount.entries) return anomalies;
+  var qtyTypes=state.qtyTypes||['Pallets','Each'];
+  Object.keys(currCount.entries).forEach(function(key){
+    var parts=key.split('||'); var item=parts[0]; var qt=parts[1];
+    var curr=parseInt(currCount.entries[key])||0;
+    if(!prevCount||!prevCount.entries||prevCount.entries[key]===undefined) return;
+    var prev=parseInt(prevCount.entries[key])||0;
+    if(prev===0&&curr===0) return;
+    var diff=curr-prev;
+    var pct=prev>0?Math.abs(diff)/prev:1;
+    var sev=pct>=0.25?'critical':pct>=0.10?'warning':null;
+    if(!sev) return;
+    // Check for suspicious patterns
+    var reason='';
+    if(curr===0&&prev>5) reason='Item dropped to zero from '+prev;
+    else if(curr>prev*3) reason='Quantity tripled unexpectedly ('+prev+' → '+curr+')';
+    else if(diff<0) reason='Decrease of '+(Math.abs(diff))+' '+qt+' ('+Math.round(pct*100)+'%)';
+    else reason='Increase of '+diff+' '+qt+' ('+Math.round(pct*100)+'%)';
+    anomalies.push({item:item,qt:qt,prev:prev,curr:curr,diff:diff,pct:Math.round(pct*100),severity:sev,reason:reason});
+  });
+  return anomalies;
+}
+
+// ── REPORT DATA LOADER ─────────────────────────────────────────────────────
+var rptView='summary';
+var rptDCFilter='ALL';
+var rptAllData={};  // keyed by DC code
+
+function loadReportData(){
+  var db=firebase.database();
+  var dcs=['LAS','LSL','JAX','GPT'];
+  var loaded=0;
+  rptAllData={};
+  dcs.forEach(function(dc){
+    db.ref('dc/'+dc).once('value',function(snap){
+      var val=snap.val();
+      rptAllData[dc]=val?normaliseDCState(val):null;
+      loaded++;
+      if(loaded===dcs.length) renderReportPage();
+    });
+  });
+}
+
+function renderReportPage(){
+  var el=document.getElementById('rpt-root');
+  if(!el) return;
+  el.innerHTML=renderReports();
+}
+
+function renderReports(){
+  var html='<div class="tab-section-hd">📊 Reports</div>';
+  // Sub-nav
+  html+='<div class="rpt-subnav">'
+    +['summary','inventory','variance','anomalies','events'].map(function(v){
+      var labels={summary:'📋 Summary',inventory:'📦 Inventory',variance:'📐 Variance',anomalies:'⚠️ Anomalies',events:'📜 Event Log'};
+      return '<button class="rpt-subnav-btn'+(rptView===v?' active':'')+'" onclick="rptView=\''+v+'\';renderReportPage()">'+labels[v]+'</button>';
+    }).join('')
+    +'</div>';
+  // DC filter
+  html+='<div class="rpt-dc-filter" style="margin-bottom:1.25rem">';
+  ['ALL','LAS','LSL','JAX','GPT'].forEach(function(dc){
+    html+='<button class="rpt-dc-btn'+(rptDCFilter===dc?' active':'')+'" onclick="rptDCFilter=\''+dc+'\';renderReportPage()">'+dc+'</button>';
+  });
+  html+='</div>';
+  if(rptView==='summary')   html+=renderRptSummary();
+  if(rptView==='inventory') html+=renderRptInventory();
+  if(rptView==='variance')  html+=renderRptVariance();
+  if(rptView==='anomalies') html+=renderRptAnomalies();
+  if(rptView==='events')    html+=renderRptEvents();
+  return html;
+}
+
+function getActiveDCs(){
+  if(rptDCFilter!=='ALL') return [rptDCFilter];
+  return ['LAS','LSL','JAX','GPT'];
+}
+
+// ── SUMMARY VIEW ──────────────────────────────────────────────────────────
+function renderRptSummary(){
+  var dcs=getActiveDCs();
+  var totalItems=0,totalSlots=0,totalCounts=0,totalAnomalies=0,totalDeliveries=0;
+  var critAnomalies=0,warnAnomalies=0;
+  dcs.forEach(function(dc){
+    var d=rptAllData[dc]; if(!d) return;
+    // Count filled slots
+    if(d.racks) Object.values(d.racks).forEach(function(r){
+      if(!r.slots) return;
+      Object.values(r.slots).forEach(function(slot){
+        if(!slot||!slot.sections) return;
+        slot.sections.forEach(function(sec){ totalSlots++; if(sec.supply) totalItems++; });
+      });
+    });
+    if(d.counts) Object.values(d.counts).forEach(function(c){
+      totalCounts++;
+      if(c.anomalies) c.anomalies.forEach(function(a){
+        totalAnomalies++;
+        if(a.severity==='critical') critAnomalies++; else warnAnomalies++;
+      });
+    });
+    if(d.deliveries) totalDeliveries+=Object.keys(d.deliveries).length;
+  });
+  var html='<div class="rpt-stat-grid">'
+    +'<div class="rpt-stat"><div class="sv">'+totalItems+'</div><div class="sl">Items Tracked</div><div class="sd">across '+totalSlots+' slot sections</div></div>'
+    +'<div class="rpt-stat"><div class="sv">'+totalCounts+'</div><div class="sl">Count Submissions</div><div class="sd">all time</div></div>'
+    +'<div class="rpt-stat"><div class="sv">'+totalDeliveries+'</div><div class="sl">Deliveries Logged</div></div>'
+    +'<div class="rpt-stat '+(critAnomalies>0?'crit':warnAnomalies>0?'warn':'ok')+'"><div class="sv">'+totalAnomalies+'</div><div class="sl">Anomalies Detected</div><div class="sd">'+critAnomalies+' critical · '+warnAnomalies+' warnings</div></div>'
+  +'</div>';
+  // Per-DC summary table
+  html+='<div class="rpt-card"><div class="rpt-card-hd"><h3>DC Status Overview</h3>'
+    +'<button class="btn b-org" onclick="sendWeeklyReport()" style="font-size:13px">📧 Email Weekly Report to Don</button>'
+    +'</div><div style="overflow-x:auto"><table class="rpt-tbl"><thead><tr>'
+    +'<th>DC</th><th>Items Tracked</th><th>Last Count</th><th>Count Submissions</th><th>Deliveries</th><th>Open Anomalies</th><th>Status</th>'
+    +'</tr></thead><tbody>';
+  ['LAS','LSL','JAX','GPT'].forEach(function(dc){
+    var d=rptAllData[dc];
+    if(!d){html+='<tr><td class="rpt-dc">'+dc+'</td><td colspan="6" style="color:var(--gray-mid);font-style:italic">No data</td></tr>';return;}
+    var items=0,slots=0,counts=0,anom=0,crit=0,delivs=0,lastCnt='—';
+    if(d.racks) Object.values(d.racks).forEach(function(r){
+      if(!r.slots) return;
+      Object.values(r.slots).forEach(function(slot){
+        if(!slot||!slot.sections) return;
+        slot.sections.forEach(function(sec){slots++;if(sec.supply)items++;});
+      });
+    });
+    if(d.counts){
+      var ckeys=Object.keys(d.counts).sort();
+      counts=ckeys.length;
+      if(ckeys.length) lastCnt=new Date(d.counts[ckeys[ckeys.length-1]].submittedAt).toLocaleDateString();
+      Object.values(d.counts).forEach(function(c){ if(c.anomalies) c.anomalies.forEach(function(a){anom++;if(a.severity==='critical')crit++;}); });
+    }
+    if(d.deliveries) delivs=Object.keys(d.deliveries).length;
+    var status=crit>0?'<span class="anomaly-badge crit">⚠ '+crit+' Critical</span>':anom>0?'<span class="anomaly-badge warn">⚡ '+anom+' Warn</span>':'<span class="anomaly-badge ok">✓ OK</span>';
+    html+='<tr'+(crit>0?' class="anomaly-row"':'')+'>'
+      +'<td class="rpt-dc">'+dc+'</td>'
+      +'<td class="rpt-num">'+items+'</td>'
+      +'<td style="font-size:12px">'+lastCnt+'</td>'
+      +'<td class="rpt-num">'+counts+'</td>'
+      +'<td class="rpt-num">'+delivs+'</td>'
+      +'<td class="rpt-num">'+anom+'</td>'
+      +'<td>'+status+'</td>'
+    +'</tr>';
+  });
+  html+='</tbody></table></div></div>';
+  return html;
+}
+
+// ── INVENTORY VIEW ────────────────────────────────────────────────────────
+function renderRptInventory(){
+  var dcs=getActiveDCs();
+  var rows=[];
+  dcs.forEach(function(dc){
+    var d=rptAllData[dc]; if(!d||!d.racks) return;
+    Object.keys(d.racks).forEach(function(rid){
+      var r=d.racks[rid]; if(!r||!r.slots) return;
+      Object.keys(r.slots).forEach(function(key){
+        var slot=r.slots[key]; if(!slot||!slot.sections) return;
+        slot.sections.forEach(function(sec,si){
+          if(!sec.supply) return;
+          var parts=key.split('_');
+          var ci=parseInt(parts[0]),li=parseInt(parts[1]);
+          var colName=(r.colNames&&r.colNames[ci])||('Col '+(ci+1));
+          var colLevels=r.colLevels&&r.colLevels[ci]?r.colLevels[ci]:r.levels;
+          var colLevelNames=(r.colLevelNames&&r.colLevelNames[ci])||makeLevelNames(colLevels);
+          var lvName=colLevelNames[li]||('Lvl '+(colLevels-li));
+          var locStr=r.name+' · '+colName+' · '+lvName+(slot.sections.length>1?' · S'+(si+1):'');
+          rows.push({dc:dc,rack:r.name,loc:locStr,item:sec.supply,cat:sec.cat||'',qtys:sec.qtys||{},updated:sec.updated||'',by:sec.updatedBy||''});
+        });
+      });
+    });
+  });
+  // Sort by DC then item
+  rows.sort(function(a,b){return (a.dc+a.item).localeCompare(b.dc+b.item);});
+  var qtyTypes=state.qtyTypes||['Pallets','Each'];
+  var html='<div class="rpt-card"><div class="rpt-card-hd"><h3>Current Inventory — All Assigned Slots</h3>'
+    +'<div style="display:flex;gap:8px">'
+      +'<span style="font-size:12px;color:var(--gray);display:flex;align-items:center">'+rows.length+' items</span>'
+      +'<button class="btn" onclick="exportInventoryCSV()" style="font-size:13px">⬇ Export CSV</button>'
+    +'</div>'
+    +'</div>';
+  if(!rows.length){return html+'<div class="rpt-empty">No inventory data found.</div></div>';}
+  html+='<div style="overflow-x:auto"><table class="rpt-tbl"><thead><tr>'
+    +'<th>DC</th><th>Item</th><th>Category</th><th>Location</th>'
+    +qtyTypes.map(function(qt){return '<th>'+escHtml(qt)+'</th>';}).join('')
+    +'<th>Last Updated</th><th>By</th>'
+    +'</tr></thead><tbody>';
+  rows.forEach(function(row){
+    html+='<tr>'
+      +'<td class="rpt-dc">'+row.dc+'</td>'
+      +'<td class="rpt-item">'+escHtml(row.item)+'</td>'
+      +'<td><span class="chip" style="background:#f0f0f0;color:#374151">'+escHtml(row.cat)+'</span></td>'
+      +'<td class="rpt-loc">'+escHtml(row.loc)+'</td>'
+      +qtyTypes.map(function(qt){return '<td class="rpt-num">'+(row.qtys[qt]||'—')+'</td>';}).join('')
+      +'<td style="font-size:11px;color:var(--gray)">'+escHtml(row.updated)+'</td>'
+      +'<td style="font-size:11px;color:var(--orange)">'+escHtml(row.by)+'</td>'
+    +'</tr>';
+  });
+  html+='</tbody></table></div></div>';
+  return html;
+}
+
+// ── VARIANCE VIEW ─────────────────────────────────────────────────────────
+function renderRptVariance(){
+  var dcs=getActiveDCs();
+  var rows=[];
+  dcs.forEach(function(dc){
+    var d=rptAllData[dc]; if(!d||!d.counts) return;
+    var ckeys=Object.keys(d.counts).sort();
+    if(ckeys.length<1) return;
+    // Compare last two counts
+    var curr=d.counts[ckeys[ckeys.length-1]];
+    var prev=ckeys.length>1?d.counts[ckeys[ckeys.length-2]]:null;
+    if(!curr.entries) return;
+    Object.keys(curr.entries).forEach(function(key){
+      var parts=key.split('||'); var item=parts[0],qt=parts[1];
+      var currVal=parseInt(curr.entries[key])||0;
+      var prevVal=prev&&prev.entries&&prev.entries[key]!==undefined?parseInt(prev.entries[key]):null;
+      var diff=prevVal!==null?currVal-prevVal:null;
+      var pct=diff!==null&&prevVal>0?Math.abs(diff)/prevVal:null;
+      var cls=pct===null?'unknown':pct===0?'ok':pct<0.10?'ok':pct<0.25?'warn':'crit';
+      rows.push({dc:dc,item:item,qt:qt,curr:currVal,prev:prevVal,diff:diff,pct:pct,cls:cls,date:curr.submittedAt});
+    });
+  });
+  rows.sort(function(a,b){
+    var order={crit:0,warn:1,ok:2,unknown:3};
+    return (order[a.cls]||3)-(order[b.cls]||3);
+  });
+  var html='<div class="rpt-card"><div class="rpt-card-hd"><h3>Count Variance — Latest vs Previous Count</h3>'
+    +'<button class="btn" onclick="exportVarianceCSV()" style="font-size:13px">⬇ Export CSV</button>'
+    +'</div>';
+  if(!rows.length){return html+'<div class="rpt-empty">No count data yet. Submit at least one count per DC to see variance.</div></div>';}
+  html+='<div style="overflow-x:auto"><table class="rpt-tbl"><thead><tr>'
+    +'<th>DC</th><th>Item</th><th>Qty Type</th><th>Previous</th><th>Current</th><th>Diff</th><th>% Change</th><th>Status</th>'
+    +'</tr></thead><tbody>';
+  rows.forEach(function(row){
+    var pctStr=row.pct!==null?Math.round(row.pct*100)+'%':'—';
+    var diffStr=row.diff!==null?(row.diff>0?'+':'')+row.diff:'—';
+    var badge=row.cls==='crit'?'<span class="anomaly-badge crit">⚠ Critical</span>':row.cls==='warn'?'<span class="anomaly-badge warn">⚡ Warning</span>':row.cls==='ok'?'<span class="anomaly-badge ok">✓ OK</span>':'<span style="font-size:11px;color:var(--gray-mid)">No prior</span>';
+    html+='<tr'+(row.cls==='crit'?' class="anomaly-row"':'')+'>'
+      +'<td class="rpt-dc">'+row.dc+'</td>'
+      +'<td class="rpt-item">'+escHtml(row.item)+'</td>'
+      +'<td style="font-size:12px;color:var(--gray)">'+escHtml(row.qt)+'</td>'
+      +'<td class="rpt-num">'+(row.prev!==null?row.prev:'—')+'</td>'
+      +'<td class="rpt-num">'+row.curr+'</td>'
+      +'<td class="rpt-diff '+row.cls+'">'+diffStr+'</td>'
+      +'<td class="rpt-diff '+row.cls+'">'+pctStr+'</td>'
+      +'<td>'+badge+'</td>'
+    +'</tr>';
+  });
+  html+='</tbody></table></div></div>';
+  return html;
+}
+
+// ── ANOMALIES VIEW ────────────────────────────────────────────────────────
+function renderRptAnomalies(){
+  var dcs=getActiveDCs();
+  var allAnom=[];
+  dcs.forEach(function(dc){
+    var d=rptAllData[dc]; if(!d||!d.counts) return;
+    Object.values(d.counts).forEach(function(c){
+      if(!c.anomalies||!c.anomalies.length) return;
+      c.anomalies.forEach(function(a){
+        allAnom.push(Object.assign({dc:dc,date:c.submittedAt,submittedBy:c.submittedBy},a));
+      });
+    });
+  });
+  allAnom.sort(function(a,b){
+    var order={critical:0,warning:1};
+    return (order[a.severity]||2)-(order[b.severity]||2)||(b.date||'').localeCompare(a.date||'');
+  });
+  var crit=allAnom.filter(function(a){return a.severity==='critical';}).length;
+  var warn=allAnom.filter(function(a){return a.severity==='warning';}).length;
+  var html='<div class="rpt-stat-grid">'
+    +'<div class="rpt-stat crit"><div class="sv">'+crit+'</div><div class="sl">Critical Anomalies</div><div class="sd">&gt;25% variance</div></div>'
+    +'<div class="rpt-stat warn"><div class="sv">'+warn+'</div><div class="sl">Warnings</div><div class="sd">10–25% variance</div></div>'
+    +'<div class="rpt-stat ok"><div class="sv">'+(allAnom.length?Math.round(crit/allAnom.length*100):0)+'%</div><div class="sl">Critical Rate</div></div>'
+  +'</div>';
+  html+='<div class="rpt-card"><div class="rpt-card-hd"><h3>All Detected Anomalies</h3></div>';
+  if(!allAnom.length){return html+'<div class="rpt-empty">✓ No anomalies detected across all counts.</div></div>';}
+  html+='<div style="overflow-x:auto"><table class="rpt-tbl"><thead><tr>'
+    +'<th>DC</th><th>Item</th><th>Qty Type</th><th>Previous</th><th>Current</th><th>% Change</th><th>Reason</th><th>Severity</th><th>Date</th><th>By</th>'
+    +'</tr></thead><tbody>';
+  allAnom.forEach(function(a){
+    var badge=a.severity==='critical'?'<span class="anomaly-badge crit">⚠ Critical</span>':'<span class="anomaly-badge warn">⚡ Warning</span>';
+    html+='<tr class="anomaly-row">'
+      +'<td class="rpt-dc">'+a.dc+'</td>'
+      +'<td class="rpt-item">'+escHtml(a.item)+'</td>'
+      +'<td style="font-size:12px;color:var(--gray)">'+escHtml(a.qt)+'</td>'
+      +'<td class="rpt-num">'+a.prev+'</td>'
+      +'<td class="rpt-num">'+a.curr+'</td>'
+      +'<td class="rpt-diff '+(a.severity==='critical'?'crit':'warn')+'">'+a.pct+'%</td>'
+      +'<td style="font-size:12px">'+escHtml(a.reason||'')+'</td>'
+      +'<td>'+badge+'</td>'
+      +'<td style="font-size:11px;color:var(--gray)">'+new Date(a.date).toLocaleDateString()+'</td>'
+      +'<td style="font-size:11px;color:var(--orange)">'+escHtml(a.submittedBy||'')+'</td>'
+    +'</tr>';
+  });
+  html+='</tbody></table></div></div>';
+  return html;
+}
+
+// ── EVENT LOG VIEW ─────────────────────────────────────────────────────────
+function renderRptEvents(){
+  var dcs=getActiveDCs();
+  var allEvs=[];
+  dcs.forEach(function(dc){
+    var d=rptAllData[dc]; if(!d) return;
+    // Pull events from counts, deliveries (events ref loaded separately)
+    if(d.counts) Object.values(d.counts).forEach(function(c){
+      allEvs.push({dc:dc,type:'count_submission',ts:c.submittedAt,by:c.submittedBy,detail:(c.itemCount||0)+' items · '+(c.variances||0)+' variances'});
+    });
+    if(d.deliveries) Object.values(d.deliveries).forEach(function(del){
+      allEvs.push({dc:dc,type:'delivery',ts:del.submittedAt,by:del.submittedBy,detail:escHtml(del.fileName||'')+(del.notes?' — '+del.notes.substring(0,60):'')});
+    });
+  });
+  allEvs.sort(function(a,b){return (b.ts||'').localeCompare(a.ts||'');});
+  var typeIcon={count_submission:'📋',delivery:'🚚',slot_update:'📦'};
+  var typeLabel={count_submission:'Count',delivery:'Delivery',slot_update:'Slot Update'};
+  var html='<div class="rpt-card"><div class="rpt-card-hd"><h3>Event Log</h3>'
+    +'<span style="font-size:12px;color:var(--gray)">'+allEvs.length+' events</span>'
+    +'</div>';
+  if(!allEvs.length){return html+'<div class="rpt-empty">No events recorded yet.</div></div>';}
+  html+='<div style="overflow-x:auto"><table class="rpt-tbl"><thead><tr>'
+    +'<th>DC</th><th>Type</th><th>Date / Time</th><th>By</th><th>Detail</th>'
+    +'</tr></thead><tbody>';
+  allEvs.slice(0,200).forEach(function(ev){
+    html+='<tr>'
+      +'<td class="rpt-dc">'+ev.dc+'</td>'
+      +'<td><span style="font-size:12px">'+(typeIcon[ev.type]||'•')+' '+(typeLabel[ev.type]||ev.type)+'</span></td>'
+      +'<td style="font-size:12px;white-space:nowrap;color:var(--gray)">'+new Date(ev.ts).toLocaleString()+'</td>'
+      +'<td style="font-size:12px;color:var(--orange)">'+escHtml(ev.by||'')+'</td>'
+      +'<td style="font-size:12px">'+ev.detail+'</td>'
+    +'</tr>';
+  });
+  html+='</tbody></table></div></div>';
+  return html;
+}
+
+// ── WEEKLY REPORT EMAIL ────────────────────────────────────────────────────
+function sendWeeklyReport(){
+  var dcs=['LAS','LSL','JAX','GPT'];
+  var lines=['INDIRECT MATERIALS TRACKER — WEEKLY REPORT'];
+  lines.push('Generated: '+new Date().toLocaleString());
+  lines.push('Prepared by: '+(userName||'Unknown'));
+  lines.push('');
+  lines.push('═══════════════════════════════════════');
+  lines.push('DC SUMMARY');
+  lines.push('═══════════════════════════════════════');
+  var totalAnom=0;
+  dcs.forEach(function(dc){
+    var d=rptAllData[dc];
+    lines.push('');
+    lines.push('── '+dc+' ──');
+    if(!d){lines.push('  No data available');return;}
+    var items=0,counts=0,anom=0,crit=0,lastCnt='None',delivs=0;
+    if(d.racks) Object.values(d.racks).forEach(function(r){
+      if(!r.slots) return;
+      Object.values(r.slots).forEach(function(slot){
+        if(!slot||!slot.sections) return;
+        slot.sections.forEach(function(sec){if(sec.supply)items++;});
+      });
+    });
+    if(d.counts){
+      var ckeys=Object.keys(d.counts).sort(); counts=ckeys.length;
+      if(ckeys.length) lastCnt=new Date(d.counts[ckeys[ckeys.length-1]].submittedAt).toLocaleDateString();
+      Object.values(d.counts).forEach(function(c){ if(c.anomalies) c.anomalies.forEach(function(a){anom++;totalAnom++;if(a.severity==='critical')crit++;}); });
+    }
+    if(d.deliveries) delivs=Object.keys(d.deliveries).length;
+    lines.push('  Items tracked: '+items);
+    lines.push('  Count submissions: '+counts+' (last: '+lastCnt+')');
+    lines.push('  Deliveries logged: '+delivs);
+    lines.push('  Anomalies: '+anom+' ('+crit+' critical)');
+    // List critical anomalies
+    if(crit>0&&d.counts){
+      lines.push('  ⚠ Critical anomalies:');
+      Object.values(d.counts).forEach(function(c){
+        if(!c.anomalies) return;
+        c.anomalies.filter(function(a){return a.severity==='critical';}).forEach(function(a){
+          lines.push('    - '+a.item+' ('+a.qt+'): '+a.reason);
+        });
+      });
+    }
+  });
+  lines.push('');
+  lines.push('═══════════════════════════════════════');
+  lines.push('TOTAL ANOMALIES ACROSS ALL DCS: '+totalAnom);
+  lines.push('═══════════════════════════════════════');
+  lines.push('');
+  lines.push('Please review the Reports tab for full details:');
+  lines.push('https://mcalabro108.github.io/indirect-materials-tracker');
+  var subject='[Indirect Materials] Weekly Report — '+new Date().toLocaleDateString();
+  window.location.href='mailto:Dhomiller@carparts.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(lines.join('\n'));
+}
+
+// ── CSV EXPORTS ───────────────────────────────────────────────────────────
+function exportInventoryCSV(){
+  var dcs=getActiveDCs();
+  var qtyTypes=state.qtyTypes||['Pallets','Each'];
+  var headers=['DC','Rack','Location','Item','Category'].concat(qtyTypes).concat(['Last Updated','Updated By']);
+  var rows=[headers.join(',')];
+  dcs.forEach(function(dc){
+    var d=rptAllData[dc]; if(!d||!d.racks) return;
+    Object.values(d.racks).forEach(function(r){
+      if(!r.slots) return;
+      Object.keys(r.slots).forEach(function(key){
+        var slot=r.slots[key]; if(!slot||!slot.sections) return;
+        slot.sections.forEach(function(sec){
+          if(!sec.supply) return;
+          var parts=key.split('_'); var ci=parseInt(parts[0]),li=parseInt(parts[1]);
+          var colName=(r.colNames&&r.colNames[ci])||('Col '+(ci+1));
+          var colLevels=r.colLevels&&r.colLevels[ci]?r.colLevels[ci]:r.levels;
+          var colLevelNames=(r.colLevelNames&&r.colLevelNames[ci])||makeLevelNames(colLevels);
+          var lvName=colLevelNames[li]||('Lvl '+(colLevels-li));
+          var row=[dc,'"'+r.name+'"','"'+colName+' · '+lvName+'"','"'+sec.supply+'"','"'+(sec.cat||'')+'"']
+            .concat(qtyTypes.map(function(qt){return sec.qtys&&sec.qtys[qt]?sec.qtys[qt]:0;}))
+            .concat(['"'+(sec.updated||'')+'"','"'+(sec.updatedBy||'')+'"']);
+          rows.push(row.join(','));
+        });
+      });
+    });
+  });
+  var blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='indirect_materials_inventory_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+}
+
+function exportVarianceCSV(){
+  var dcs=getActiveDCs();
+  var headers=['DC','Item','Qty Type','Previous','Current','Diff','% Change','Status','Date'];
+  var rows=[headers.join(',')];
+  dcs.forEach(function(dc){
+    var d=rptAllData[dc]; if(!d||!d.counts) return;
+    var ckeys=Object.keys(d.counts).sort();
+    if(!ckeys.length) return;
+    var curr=d.counts[ckeys[ckeys.length-1]];
+    var prev=ckeys.length>1?d.counts[ckeys[ckeys.length-2]]:null;
+    if(!curr.entries) return;
+    Object.keys(curr.entries).forEach(function(key){
+      var parts=key.split('||'); var item=parts[0],qt=parts[1];
+      var currVal=parseInt(curr.entries[key])||0;
+      var prevVal=prev&&prev.entries&&prev.entries[key]!==undefined?parseInt(prev.entries[key]):null;
+      var diff=prevVal!==null?currVal-prevVal:null;
+      var pct=diff!==null&&prevVal>0?Math.round(Math.abs(diff)/prevVal*100):null;
+      var status=pct===null?'No prior':pct===0?'OK':pct<10?'OK':pct<25?'Warning':'Critical';
+      rows.push([dc,'"'+item+'"','"'+qt+'"',prevVal!==null?prevVal:'',currVal,diff!==null?diff:'',pct!==null?pct+'%':'',status,new Date(curr.submittedAt).toLocaleDateString()].join(','));
+    });
+  });
+  var blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='indirect_materials_variance_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────
 function buildFloorSections(slot, rackId, slotKey, isBetween){
   if(!slot||!slot.sections||!slot.sections.length) slot={sections:[emptySection()]};
   var numSec=slot.sections.length;
