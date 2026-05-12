@@ -2279,8 +2279,14 @@ function runOCR(){
                 .then(function(r){return r.json();})
                 .then(function(data){
                   var text='';
-                  if(data.responses&&data.responses[0]&&data.responses[0].fullTextAnnotation){
-                    text=data.responses[0].fullTextAnnotation.text||'';
+                  if(data.responses&&data.responses[0]){
+                    if(data.responses[0].fullTextAnnotation){
+                      text=data.responses[0].fullTextAnnotation.text||'';
+                    } else if(data.responses[0].error){
+                      text='API ERROR: '+data.responses[0].error.message+' (code '+data.responses[0].error.code+')';
+                    }
+                  } else if(data.error){
+                    text='API ERROR: '+data.error.message+' (code '+data.error.code+')';
                   }
                   allPageTexts.push(text);
                   renderNextPage();
