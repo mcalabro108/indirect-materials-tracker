@@ -1310,13 +1310,31 @@ function openSlotModal(rackId, slotKey, si){
   if(!slot.sections||!slot.sections.length) slot.sections=[emptySection()];
   if(si>=slot.sections.length) si=slot.sections.length-1;
   var sec=slot.sections[si];
-  var parts=slotKey.split("_"); var ci=parseInt(parts[0]),li=parseInt(parts[1]);
-  var cName=(rack.colNames&&rack.colNames[ci])||("Col "+(ci+1));
-  var colLevels=rack.colLevels&&rack.colLevels[ci]?rack.colLevels[ci]:rack.levels;
-  var colLevelNames=(rack.colLevelNames&&rack.colLevelNames[ci])||makeLevelNames(colLevels);
-  var lvName=colLevelNames[li]||("Lvl "+(colLevels-li));
+
+  // Build label — handle floor slot keys specially
+  var label='';
   var secLabel=slot.sections.length>1?(" · "+["Left","Ctr-L","Center","Ctr-R","Right"].slice(0,slot.sections.length)[si]):"";
-  var label=cName+" · "+lvName+secLabel;
+  if(slotKey.indexOf('cf_')===0){
+    // Column floor bay: cf_{ci}
+    var ci=parseInt(slotKey.replace('cf_',''));
+    var cName=(rack.colNames&&rack.colNames[ci])||("Col "+(ci+1));
+    label=cName+" · Floor"+secLabel;
+  } else if(slotKey.indexOf('fb_')===0){
+    // Floor between columns: fb_{ci}
+    var ci2=parseInt(slotKey.replace('fb_',''));
+    var cNameL=(rack.colNames&&rack.colNames[ci2-1])||("Col "+ci2);
+    var cNameR=(rack.colNames&&rack.colNames[ci2])||("Col "+(ci2+1));
+    label="Floor between "+cNameL+" & "+cNameR+secLabel;
+  } else {
+    // Normal rack slot: ci_li
+    var parts=slotKey.split("_"); var ci3=parseInt(parts[0]),li=parseInt(parts[1]);
+    var cName2=(rack.colNames&&rack.colNames[ci3])||("Col "+(ci3+1));
+    var colLevels=rack.colLevels&&rack.colLevels[ci3]?rack.colLevels[ci3]:rack.levels;
+    var colLevelNames=(rack.colLevelNames&&rack.colLevelNames[ci3])||makeLevelNames(colLevels);
+    var lvName=colLevelNames[li]||("Lvl "+(colLevels-li));
+    label=cName2+" · "+lvName+secLabel;
+  }
+
   modalData={rackId:rackId,slotKey:slotKey,si:si};
 
   var cats=sharedSupplies?sharedSupplies.cats:DCATS;
