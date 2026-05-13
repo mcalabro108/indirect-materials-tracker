@@ -2352,12 +2352,21 @@ function buildOcrReview(){
     lines.forEach(function(line){
       // Try to match a supply item name
       var matchedItem=null;
+      var matchEnd=0;
       allItemsOrig.forEach(function(item){
-        if(line.toLowerCase().indexOf(item.toLowerCase())>=0) matchedItem=item;
+        var idx=line.toLowerCase().indexOf(item.toLowerCase());
+        if(idx>=0){
+          matchedItem=item;
+          matchEnd=idx+item.length; // where the item name ends on this line
+        }
       });
       if(!matchedItem) return;
-      // Get the LAST number on the line — that's the Total column
-      var nums=line.match(/\b\d+\b/g)||[];
+
+      // Only look for numbers AFTER the item name ends
+      // This prevents "1800 Hood Blocks" from reading 1800 as the total
+      var afterItem=line.substring(matchEnd);
+      var nums=afterItem.match(/\b\d+\b/g)||[];
+      // Use the last number after the item name — that's the Total column
       var total=nums.length>0?parseInt(nums[nums.length-1]):0;
       rows.push({item:matchedItem,total:total,source:f.name,confidence:total>0?1:0});
     });
