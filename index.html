@@ -2346,33 +2346,44 @@ function buildOcrReview(){
   var allItemsOrig=Object.values(sups).flat();
   var rows=[];
 
+  // Normalise for fuzzy matching — lowercase, strip punctuation, collapse spaces
+  function norm(s){
+    return s.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/ +/g,' ').trim();
+  }
+
   ocrFiles.forEach(function(f){
     if(!f.text||f.status!=='done') return;
-    var lines=f.text.split('\n').map(function(l){return l.trim();}).filter(Boolean);
-    lines.forEach(function(line){
-      // Try to match a supply item name
+    var rawLines=f.text.split('\n');
+    rawLines.forEach(function(line){
+      line=line.trim();
+      if(!line) return;
+      var normLine=norm(line);
       var matchedItem=null;
       var matchEnd=0;
+
+      // Find longest matching supply item in this line (fuzzy)
       allItemsOrig.forEach(function(item){
-        var idx=line.toLowerCase().indexOf(item.toLowerCase());
+        var normItem=norm(item);
+        if(!normItem) return;
+        var idx=normLine.indexOf(normItem);
         if(idx>=0){
-          matchedItem=item;
-          matchEnd=idx+item.length; // where the item name ends on this line
+          var end=idx+normItem.length;
+          if(end>matchEnd){matchedItem=item;matchEnd=end;}
         }
       });
       if(!matchedItem) return;
 
-      // Only look for numbers AFTER the item name ends
-      // This prevents "1800 Hood Blocks" from reading 1800 as the total
-      var afterItem=line.substring(matchEnd);
+      // Only look for numbers after where the item name ended
+      var ratio=normLine.length>0?matchEnd/normLine.length:0;
+      var approxEnd=Math.round(ratio*line.length);
+      var afterItem=line.substring(approxEnd).trim();
       var nums=afterItem.match(/\b\d+\b/g)||[];
-      // Use the last number after the item name — that's the Total column
       var total=nums.length>0?parseInt(nums[nums.length-1]):0;
       rows.push({item:matchedItem,total:total,source:f.name,confidence:total>0?1:0});
     });
   });
 
-  // Deduplicate — sum totals if same item on multiple lines/pages
+  // Deduplicate — sum totals across pages
   var merged={};
   rows.forEach(function(r){
     if(!merged[r.item]) merged[r.item]={item:r.item,total:0,sources:[],confidence:0};
@@ -2385,7 +2396,6 @@ function buildOcrReview(){
   cntMode='review';
   renderContent();
 }
-
 // ── OCR REVIEW ─────────────────────────────────────────────────────────────
 function renderOcrReview(){
   var qtyTypes=state.qtyTypes||['Pallets','Each'];
