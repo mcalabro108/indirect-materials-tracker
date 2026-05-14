@@ -2372,6 +2372,9 @@ function _doBuildOcrReview(){
     return s.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/ +/g,' ').trim();
   }
 
+  // Get all digit strings from a string
+  function allNums(s){ return (s.match(/\d+/g)||[]).map(String); }
+
   ocrFiles.forEach(function(f){
     if(!f.text||f.status!=='done') return;
     var rawLines = f.text.split('\n');
@@ -2382,6 +2385,7 @@ function _doBuildOcrReview(){
       var matchedItem = null;
       var matchEnd = 0;
 
+      // Find the longest matching supply item in this line
       allItemsOrig.forEach(function(item){
         var normItem = norm(item);
         if(!normItem) return;
@@ -2393,11 +2397,20 @@ function _doBuildOcrReview(){
       });
       if(!matchedItem) return;
 
-      var ratio = normLine.length > 0 ? matchEnd / normLine.length : 0;
-      var approxEnd = Math.round(ratio * line.length);
-      var afterItem = line.substring(approxEnd).trim();
-      var nums = afterItem.match(/\b\d+\b/g)||[];
-      var total = nums.length > 0 ? parseInt(nums[nums.length-1]) : 0;
+      // Get all numbers in the full line
+      var lineNums = allNums(line);
+      if(!lineNums.length){ rows.push({item:matchedItem,total:0,source:f.name,confidence:0}); return; }
+
+      // Remove numbers that appear in the item name itself
+      var itemNums = allNums(matchedItem);
+      var extraNums = lineNums.slice(); // copy
+      itemNums.forEach(function(n){
+        var idx = extraNums.indexOf(n);
+        if(idx >= 0) extraNums.splice(idx, 1);
+      });
+
+      // The total is the last remaining number (the handwritten total at end of line)
+      var total = extraNums.length > 0 ? parseInt(extraNums[extraNums.length-1]) : 0;
       rows.push({item:matchedItem, total:total, source:f.name, confidence:total>0?1:0});
     });
   });
