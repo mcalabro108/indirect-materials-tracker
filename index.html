@@ -2417,10 +2417,10 @@ function _doBuildOcrReview(){
 
   var merged = {};
   rows.forEach(function(r){
-    if(!merged[r.item]) merged[r.item] = {item:r.item, total:0, sources:[], confidence:0};
-    merged[r.item].total += r.total;
-    merged[r.item].sources.push(r.source);
-    merged[r.item].confidence++;
+    // First time we see an item, use it. Ignore duplicates.
+    if(!merged[r.item]){
+      merged[r.item] = {item:r.item, total:r.total, sources:[r.source], confidence:r.confidence};
+    }
   });
 
   ocrReviewRows = Object.values(merged);
