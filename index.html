@@ -2071,214 +2071,225 @@ function deleteDelivery(k){
 }
 
 // ── COUNT ENTRY ────────────────────────────────────────────────────────────
-var cntMode = 'choose';
-var cntEntries = {};
-var manualEntries = {};
-var cntPreviewMode = '';
+var cntMode = 'choose'; // choose | location | standalone | preview
+var standaloneEntries = {}; // standalone: item -> total
+var cntPreviewMode = ''; // 'location' or 'standalone'
 
 function renderCountEntry(){
-  var html = pageCtx('count','Enter inventory counts directly on screen (Digital) or fill in a simple item list (Manual). Both send results to Don after you review them.');
-  if(cntMode === 'digital') return html + renderDigitalEntry();
-  if(cntMode === 'manual')  return html + renderManualEntry();
-  if(cntMode === 'preview') return html + renderCountPreview();
+  var html = pageCtx('count','Submit a count to Don two ways: Location Count pulls live totals from your rack and overflow entries. Standalone Count lets you enter any counts independently without affecting locations.');
+  if(cntMode === 'location')   return html + renderLocationCount();
+  if(cntMode === 'standalone') return html + renderStandaloneCount();
+  if(cntMode === 'preview')    return html + renderCountPreview();
 
   var counts = state.counts || {};
   var ckeys = Object.keys(counts).sort().reverse();
 
+  // Home — two count type cards
   html += '<div style="display:flex;gap:16px;margin-bottom:2rem;flex-wrap:wrap">';
-  html += '<div style="flex:1;min-width:260px;background:#fff;border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.75rem;cursor:pointer;text-align:center;transition:all .15s" onclick="cntMode=\'digital\';cntEntries={};renderContent()" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
-    + '<div style="font-size:36px;margin-bottom:12px">📊</div>'
-    + '<div style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:8px">Digital Entry</div>'
-    + '<div style="font-size:13px;color:var(--gray);line-height:1.6">Enter counts per item and quantity type. Shows system quantities for comparison.</div>'
-    + '<div style="margin-top:16px"><span style="background:var(--navy);color:#fff;font-size:13px;font-weight:700;padding:8px 20px;border-radius:8px;display:inline-block">Start Digital Entry →</span></div>'
+
+  html += '<div style="flex:1;min-width:260px;background:#fff;border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.75rem;cursor:pointer;transition:border-color .15s" onclick="cntMode=\'location\';renderContent()" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
+    + '<div style="font-size:30px;margin-bottom:10px">📍</div>'
+    + '<div style="font-size:15px;font-weight:800;color:var(--navy);margin-bottom:6px">Location Count</div>'
+    + '<div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:12px">Shows live totals pulled directly from your rack slots and overflow entries. Reflects exactly what is recorded in the system. Send to Don as a snapshot of current inventory.</div>'
+    + '<span style="background:var(--navy);color:#fff;font-size:12px;font-weight:700;padding:7px 16px;border-radius:7px;display:inline-block">View Location Count →</span>'
     + '</div>';
-  html += '<div style="flex:1;min-width:260px;background:#fff;border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.75rem;cursor:pointer;text-align:center;transition:all .15s" onclick="cntMode=\'manual\';manualEntries={};renderContent()" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
-    + '<div style="font-size:36px;margin-bottom:12px">📋</div>'
-    + '<div style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:8px">Manual Entry</div>'
-    + '<div style="font-size:13px;color:var(--gray);line-height:1.6">Simple item list with a count box next to each item. Same format as the printed count sheet.</div>'
-    + '<div style="margin-top:16px"><span style="background:var(--orange);color:#fff;font-size:13px;font-weight:700;padding:8px 20px;border-radius:8px;display:inline-block">Start Manual Entry →</span></div>'
+
+  html += '<div style="flex:1;min-width:260px;background:#fff;border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.75rem;cursor:pointer;transition:border-color .15s" onclick="cntMode=\'standalone\';standaloneEntries={};renderContent()" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
+    + '<div style="font-size:30px;margin-bottom:10px">📋</div>'
+    + '<div style="font-size:15px;font-weight:800;color:var(--navy);margin-bottom:6px">Standalone Count</div>'
+    + '<div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:12px">Enter counts independently by hand. Does not update locations — use this for a physical floor count you want to send to Don without changing the system.</div>'
+    + '<span style="background:var(--orange);color:#fff;font-size:12px;font-weight:700;padding:7px 16px;border-radius:7px;display:inline-block">Start Standalone Count →</span>'
     + '</div>';
+
   html += '</div>';
 
+  // History
   if(ckeys.length){
-    html += '<div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:12px">Count History</div>'
-      + '<div class="cnt-hist-list">';
+    html += '<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:10px">Count History</div><div class="cnt-hist-list">';
     ckeys.forEach(function(k){
       var c = counts[k];
       var variances = c.variances || 0;
       var badge = variances === 0 ? 'ok' : variances <= 3 ? 'warn' : 'bad';
       var badgeLabel = variances === 0 ? '✓ No variances' : variances + ' variance' + (variances > 1 ? 's' : '');
-      var method = c.method === 'manual' ? 'Manual' : 'Digital';
+      var method = c.method === 'standalone' ? 'Standalone' : 'Location';
       html += '<div class="cnt-hist-card">'
         + '<div class="cnt-hist-hd">'
-          + '<span class="cnt-hist-title">' + new Date(c.submittedAt).toLocaleString() + ' — by ' + escHtml(c.submittedBy) + '</span>'
+          + '<span class="cnt-hist-title">' + new Date(c.submittedAt).toLocaleString() + ' — ' + escHtml(c.submittedBy) + '</span>'
           + '<div style="display:flex;gap:6px;align-items:center">'
             + '<span style="font-size:11px;background:var(--offwhite);border:1px solid var(--gray-lt);border-radius:20px;padding:2px 8px;color:var(--gray)">' + method + '</span>'
             + '<span class="cnt-hist-badge ' + badge + '">' + badgeLabel + '</span>'
           + '</div>'
         + '</div>'
-        + '<div class="cnt-hist-meta">' + escHtml(c.dc) + ' · ' + (c.itemCount||0) + ' items counted</div>'
+        + '<div class="cnt-hist-meta">' + escHtml(c.dc) + ' · ' + (c.itemCount||0) + ' items</div>'
         + (c.summary ? '<div class="cnt-hist-summary">' + escHtml(c.summary) + '</div>' : '')
-        + '<div style="margin-top:8px">'
-          + '<button class="btn b-danger" onclick="deleteCount(\'' + k + '\')" style="font-size:12px;padding:6px 12px">✕ Delete</button>'
-        + '</div>'
+        + '<div style="margin-top:6px"><button class="btn b-danger" onclick="deleteCount(\'' + k + '\')" style="font-size:12px;padding:5px 10px">✕ Delete</button></div>'
       + '</div>';
     });
     html += '</div>';
   } else {
-    html += '<div style="text-align:center;padding:2rem;color:var(--gray-mid);font-size:14px;font-style:italic">No count history yet.</div>';
+    html += '<div style="text-align:center;padding:2rem;color:var(--gray-mid);font-size:13px;font-style:italic">No count history yet.</div>';
   }
   return html;
 }
 
-function renderDigitalEntry(){
+// ── LOCATION COUNT ────────────────────────────────────────────────────────
+function renderLocationCount(){
   var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
   var cats = sharedSupplies ? sharedSupplies.cats : DCATS;
   var qtyTypes = state.qtyTypes || ['Pallets','Each'];
-  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'
-    + '<div style="font-size:15px;font-weight:700;color:var(--dark)">Digital Entry</div>'
-    + '<div style="display:flex;gap:8px">'
-      + '<button class="btn" onclick="cntMode=\'manual\';manualEntries={};renderContent()" style="font-size:13px">📋 Switch to Manual</button>'
-      + '<button class="btn" onclick="cntMode=\'choose\';renderContent()" style="font-size:13px">← Back</button>'
+
+  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">'
+    + '<div>'
+      + '<div style="font-size:15px;font-weight:700;color:var(--dark)">Location Count</div>'
+      + '<div style="font-size:12px;color:var(--gray);margin-top:2px">Live totals from rack slots and overflow. Update locations to change these numbers.</div>'
     + '</div>'
+    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
   + '</div>';
-  html += '<div style="overflow-x:auto"><table class="cnt-entry-tbl"><thead><tr>'
-    + '<th class="ce-item">Item</th><th>Category</th>';
+
+  html += '<div style="background:#e8f4fd;border-left:3px solid #3b82f6;padding:9px 14px;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:1rem;font-size:12px;color:#1e40af;line-height:1.6">'
+    + '📍 These counts come directly from your rack and overflow entries. To update a count, go to the Rack or Overflow tab and edit the quantity there, then come back here to send the updated count to Don.'
+  + '</div>';
+
+  html += '<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:13px"><thead><tr>'
+    + '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1)">Item</th>';
   qtyTypes.forEach(function(qt){
-    html += '<th class="ce-sys">' + escHtml(qt) + '<br><span style="font-weight:400;opacity:.6">System</span></th>'
-          + '<th class="ce-actual">' + escHtml(qt) + '<br><span style="font-weight:400;opacity:.6">Count</span></th>'
-          + '<th class="ce-diff">' + escHtml(qt) + '<br><span style="font-weight:400;opacity:.6">Diff</span></th>';
+    html += '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1)">' + escHtml(qt) + '</th>';
   });
   html += '</tr></thead><tbody>';
+
+  var hasAny = false;
   Object.keys(cats).forEach(function(cat){
     var items = sups[cat] || [];
     if(!items.length) return;
     var cs = cats[cat] || {bg:'#f9fafb',text:'#374151'};
-    html += '<tr><td colspan="' + (2 + qtyTypes.length*3) + '" style="background:' + cs.bg + ';color:' + cs.text + ';font-size:11px;font-weight:800;padding:6px 12px;text-transform:uppercase;letter-spacing:.5px">' + escHtml(cat) + '</td></tr>';
-    items.forEach(function(item){
-      html += '<tr><td class="ce-item">' + escHtml(item) + '</td>'
-        + '<td><span class="chip" style="background:' + cs.bg + ';color:' + cs.text + '">' + escHtml(cat) + '</span></td>';
-      qtyTypes.forEach(function(qt,qi){
-        var key = item + '||' + qt;
-        var sysVal = getSystemQty(item, qt);
-        var actVal = cntEntries[key] !== undefined ? cntEntries[key] : '';
-        var diff = actVal !== '' ? (parseInt(actVal)||0) - sysVal : null;
-        var diffCls = diff === null ? '' : diff === 0 ? 'ok' : Math.abs(diff) <= 2 ? 'warn' : 'bad';
-        html += '<td class="ce-sys">' + (sysVal || '—') + '</td>'
-          + '<td class="ce-actual"><input type="number" min="0" value="' + actVal + '" placeholder="—"'
-            + ' data-item="' + escHtml(item) + '" data-qt="' + escHtml(qt) + '"'
-            + ' onchange="cntSetEntry(this.dataset.item,this.dataset.qt,this.value);updateDiffCell(this)">'
-          + '</td>'
-          + '<td class="ce-diff ' + diffCls + '" id="diff_' + btoa(encodeURIComponent(key)).replace(/=/g,'') + '">'
-            + (diff === null ? '—' : diff === 0 ? '✓' : (diff > 0 ? '+' : '') + diff)
-          + '</td>';
+    var catHtml = '<tr><td colspan="' + (1 + qtyTypes.length) + '" style="background:' + cs.bg + ';color:' + cs.text + ';font-size:11px;font-weight:800;padding:6px 14px;text-transform:uppercase;letter-spacing:.5px;border:1px solid #e2e6ed">' + escHtml(cat) + '</td></tr>';
+    var itemsHtml = '';
+    items.forEach(function(item, idx){
+      var bg = idx%2===0 ? '#fff' : '#fafbfc';
+      var rowHtml = '<tr style="background:' + bg + '"><td style="padding:8px 14px;border:1px solid var(--gray-lt);font-weight:600;color:var(--dark)">' + escHtml(item) + '</td>';
+      var hasQty = false;
+      qtyTypes.forEach(function(qt){
+        var sys = getSystemQty(item, qt);
+        if(sys > 0) hasQty = true;
+        rowHtml += '<td style="padding:8px 14px;border:1px solid var(--gray-lt);text-align:center;font-weight:700;color:' + (sys>0?'var(--navy)':'var(--gray-mid)') + '">' + (sys > 0 ? sys : '—') + '</td>';
       });
-      html += '</tr>';
+      rowHtml += '</tr>';
+      if(hasQty){ itemsHtml += rowHtml; hasAny = true; }
     });
+    if(itemsHtml) html += catHtml + itemsHtml;
   });
+
+  if(!hasAny){
+    html += '<tr><td colspan="' + (1+qtyTypes.length) + '" style="text-align:center;padding:2rem;color:var(--gray-mid);font-style:italic">No quantities recorded in locations yet. Add items and quantities in the Rack or Overflow tabs.</td></tr>';
+  }
   html += '</tbody></table></div>';
+
   html += '<div style="display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap">'
-    + '<button class="btn b-org" onclick="cntPreviewMode=\'digital\';cntMode=\'preview\';renderContent()" style="padding:10px 24px;font-size:15px">👁 Preview & Send →</button>'
+    + '<button class="btn b-org" onclick="cntPreviewMode=\'location\';cntMode=\'preview\';renderContent()" style="padding:10px 24px;font-size:15px">👁 Preview & Send to Don →</button>'
     + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
   + '</div>';
   return html;
 }
 
-function renderManualEntry(){
+// ── STANDALONE COUNT ──────────────────────────────────────────────────────
+function renderStandaloneCount(){
   var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
   var cats = sharedSupplies ? sharedSupplies.cats : DCATS;
-  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'
-    + '<div style="font-size:15px;font-weight:700;color:var(--dark)">Manual Entry — enter total count per item</div>'
-    + '<div style="display:flex;gap:8px">'
-      + '<button class="btn" onclick="cntMode=\'digital\';cntEntries={};renderContent()" style="font-size:13px">📊 Switch to Digital</button>'
-      + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
+
+  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">'
+    + '<div>'
+      + '<div style="font-size:15px;font-weight:700;color:var(--dark)">Standalone Count</div>'
+      + '<div style="font-size:12px;color:var(--gray);margin-top:2px">Enter physical counts. Will not update rack or overflow locations.</div>'
     + '</div>'
+    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
   + '</div>';
-  html += '<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;max-width:640px;font-size:14px">';
-  html += '<thead><tr>'
-    + '<th style="background:var(--navy);color:#fff;padding:10px 14px;text-align:left;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1)">Supply Item</th>'
-    + '<th style="background:var(--navy);color:#fff;padding:10px 14px;text-align:center;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);width:140px">Total Count</th>'
+
+  html += '<div style="background:#fff8ec;border-left:3px solid var(--orange);padding:9px 14px;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:1rem;font-size:12px;color:#92400e;line-height:1.6">'
+    + '📋 Enter the total count for each item you counted. Leave blank for items not counted. This sends directly to Don without updating any locations in the system.'
+  + '</div>';
+
+  html += '<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;max-width:580px;font-size:14px"><thead><tr>'
+    + '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1)">Supply Item</th>'
+    + '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);width:130px">Count</th>'
     + '</tr></thead><tbody>';
+
   Object.keys(cats).forEach(function(cat){
     var items = sups[cat] || [];
     if(!items.length) return;
     var cs = cats[cat] || {bg:'#f9fafb',text:'#374151'};
-    html += '<tr><td colspan="2" style="background:' + cs.bg + ';color:' + cs.text + ';font-size:11px;font-weight:800;padding:7px 14px;text-transform:uppercase;letter-spacing:.5px;border:1px solid #e2e6ed">' + escHtml(cat) + '</td></tr>';
+    html += '<tr><td colspan="2" style="background:' + cs.bg + ';color:' + cs.text + ';font-size:11px;font-weight:800;padding:6px 14px;text-transform:uppercase;letter-spacing:.5px;border:1px solid #e2e6ed">' + escHtml(cat) + '</td></tr>';
     items.forEach(function(item, idx){
       var bg = idx%2===0 ? '#fff' : '#fafbfc';
-      var val = manualEntries[item] !== undefined ? manualEntries[item] : '';
+      var val = standaloneEntries[item] !== undefined ? standaloneEntries[item] : '';
       html += '<tr style="background:' + bg + '">'
-        + '<td style="padding:9px 14px;border:1px solid var(--gray-lt);font-weight:600;font-size:14px;color:var(--dark)">' + escHtml(item) + '</td>'
-        + '<td style="padding:6px 10px;border:1px solid var(--gray-lt);text-align:center">'
+        + '<td style="padding:8px 14px;border:1px solid var(--gray-lt);font-weight:600;color:var(--dark)">' + escHtml(item) + '</td>'
+        + '<td style="padding:5px 10px;border:1px solid var(--gray-lt);text-align:center">'
           + '<input type="number" min="0" value="' + val + '" placeholder="—"'
             + ' data-item="' + escHtml(item) + '"'
-            + ' onchange="manualEntries[this.dataset.item]=this.value===\'\'?undefined:parseInt(this.value)||0"'
-            + ' style="width:100px;font-size:15px;font-weight:700;padding:7px 10px;border:2px solid var(--gray-lt);border-radius:8px;text-align:center;font-family:Inter,sans-serif;color:var(--dark)"'
+            + ' onchange="standaloneEntries[this.dataset.item]=this.value===\'\'?undefined:parseInt(this.value)||0"'
+            + ' style="width:90px;font-size:15px;font-weight:700;padding:6px 8px;border:2px solid var(--gray-lt);border-radius:7px;text-align:center;font-family:Inter,sans-serif;color:var(--dark)"'
             + ' onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\'var(--gray-lt)\'">'
         + '</td>'
       + '</tr>';
     });
   });
+
   html += '</tbody></table></div>';
   html += '<div style="display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap">'
-    + '<button class="btn b-org" onclick="cntPreviewMode=\'manual\';cntMode=\'preview\';renderContent()" style="padding:10px 24px;font-size:15px">👁 Preview & Send →</button>'
+    + '<button class="btn b-org" onclick="cntPreviewMode=\'standalone\';cntMode=\'preview\';renderContent()" style="padding:10px 24px;font-size:15px">👁 Preview & Send to Don →</button>'
     + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
   + '</div>';
   return html;
 }
 
+// ── PREVIEW & SUBMIT ──────────────────────────────────────────────────────
 function renderCountPreview(){
-  var isManual = cntPreviewMode === 'manual';
+  var isLocation = cntPreviewMode === 'location';
+  var qtyTypes = state.qtyTypes || ['Pallets','Each'];
+  var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
   var filledLines = [];
   var itemCount = 0;
-  var variances = 0;
-  var summaryLines = [];
-  var qtyTypes = state.qtyTypes || ['Pallets','Each'];
 
-  if(isManual){
-    var allItems = Object.values(sharedSupplies ? sharedSupplies.supplies : DSUP).flat();
-    allItems.forEach(function(item){
-      var val = manualEntries[item];
-      if(val === undefined || val === null || val === '') return;
-      var total = parseInt(val)||0;
-      filledLines.push(item + ' — ' + total);
-      itemCount++;
-      var sys = getSystemQty(item, qtyTypes[0]);
-      if(sys > 0 && total !== sys){ variances++; summaryLines.push(item+': counted='+total+' system='+sys); }
+  if(isLocation){
+    Object.values(sups).flat().forEach(function(item){
+      var qtySummary = [];
+      qtyTypes.forEach(function(qt){
+        var sys = getSystemQty(item, qt);
+        if(sys > 0) qtySummary.push(qt + ': ' + sys);
+      });
+      if(qtySummary.length){ filledLines.push(item + ' — ' + qtySummary.join(', ')); itemCount++; }
     });
   } else {
-    Object.keys(cntEntries).forEach(function(key){
-      var parts = key.split('||'); var item = parts[0]; var qt = parts[1];
-      var val = cntEntries[key];
-      if(val === undefined || val === '') return;
-      filledLines.push(item + ' ('+qt+'): ' + val);
+    Object.keys(standaloneEntries).forEach(function(item){
+      var val = standaloneEntries[item];
+      if(val === undefined || val === null || val === '') return;
+      var total = parseInt(val)||0;
+      if(!total) return;
+      filledLines.push(item + ': ' + total);
       itemCount++;
-      var sys = getSystemQty(item, qt);
-      var diff = (parseInt(val)||0) - sys;
-      if(diff !== 0 && sys > 0){ variances++; summaryLines.push(item+' '+qt+': counted='+val+' system='+sys+' diff='+(diff>0?'+':'')+diff); }
     });
   }
 
-  var subject = '['+currentDC+'] Count Sheet — '+(isManual?'Manual':'Digital')+' — '+new Date().toLocaleDateString();
+  var subject = '['+currentDC+'] '+(isLocation?'Location':'Standalone')+' Count — '+new Date().toLocaleDateString();
   var bodyLines = [
-    'COUNT SHEET SUBMISSION — '+(currentDC||''),
+    (isLocation ? 'LOCATION COUNT' : 'STANDALONE COUNT') + ' — ' + (currentDC||''),
     'Submitted by: '+(userName||'Unknown'),
     'Date: '+new Date().toLocaleString(),
-    'Method: '+(isManual?'Manual Entry':'Digital Entry'),
-    'Items with counts: '+itemCount,
+    isLocation ? 'Source: Live rack and overflow totals' : 'Source: Manual floor count (locations not updated)',
+    'Items: '+itemCount,
     '',
-    'ITEM COUNTS:',
+    'COUNTS:',
     '─────────────────────────────────────'
   ].concat(filledLines);
-  if(summaryLines.length){ bodyLines.push(''); bodyLines.push('VARIANCES: '+variances); bodyLines = bodyLines.concat(summaryLines); }
 
   var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'
     + '<div>'
       + '<div style="font-size:15px;font-weight:700;color:var(--dark)">Preview — Email to Don</div>'
-      + '<div style="font-size:12px;color:var(--gray);margin-top:2px">Review what will be sent before confirming</div>'
+      + '<div style="font-size:12px;color:var(--gray);margin-top:2px">' + itemCount + ' item' + (itemCount!==1?'s':'') + ' with counts</div>'
     + '</div>'
     + '<button class="btn" onclick="cntMode=\''+cntPreviewMode+'\';renderContent()">← Edit</button>'
   + '</div>';
+
   html += '<div style="background:#fff;border:1.5px solid var(--gray-lt);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.25rem">'
     + '<div style="background:var(--navy);color:#fff;padding:10px 16px">'
       + '<div style="font-size:13px;font-weight:700">To: Don Homiller (Dhomiller@carparts.com)</div>'
@@ -2286,6 +2297,7 @@ function renderCountPreview(){
     + '</div>'
     + '<div style="padding:14px 16px;font-family:monospace;font-size:12px;color:var(--dark);line-height:1.8;white-space:pre-wrap;background:#fafbfc;max-height:320px;overflow-y:auto">'+escHtml(bodyLines.join('\n'))+'</div>'
   + '</div>';
+
   html += '<div style="display:flex;gap:10px;flex-wrap:wrap">'
     + '<button class="btn b-org" onclick="submitCount()" style="padding:10px 24px;font-size:15px">✓ Send to Don →</button>'
     + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">Cancel</button>'
@@ -2294,55 +2306,54 @@ function renderCountPreview(){
 }
 
 function submitCount(){
-  var isManual = cntPreviewMode === 'manual';
-  var filledLines = []; var itemCount = 0; var variances = 0; var summaryLines = [];
+  var isLocation = cntPreviewMode === 'location';
   var qtyTypes = state.qtyTypes || ['Pallets','Each'];
-  if(isManual){
-    var allItems = Object.values(sharedSupplies ? sharedSupplies.supplies : DSUP).flat();
-    allItems.forEach(function(item){
-      var val = manualEntries[item];
-      if(val === undefined || val === null || val === '') return;
-      var total = parseInt(val)||0;
-      filledLines.push(item + ' — ' + total);
-      itemCount++;
-      var sys = getSystemQty(item, qtyTypes[0]);
-      if(sys > 0 && total !== sys){ variances++; summaryLines.push(item+': counted='+total+' system='+sys); }
+  var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
+  var filledLines = []; var itemCount = 0;
+
+  if(isLocation){
+    Object.values(sups).flat().forEach(function(item){
+      var qtySummary = [];
+      qtyTypes.forEach(function(qt){
+        var sys = getSystemQty(item, qt);
+        if(sys > 0) qtySummary.push(qt+': '+sys);
+      });
+      if(qtySummary.length){ filledLines.push(item+' — '+qtySummary.join(', ')); itemCount++; }
     });
   } else {
-    Object.keys(cntEntries).forEach(function(key){
-      var parts = key.split('||'); var item = parts[0]; var qt = parts[1];
-      var val = cntEntries[key];
-      if(val === undefined || val === '') return;
-      filledLines.push(item+' ('+qt+'): '+val); itemCount++;
-      var sys = getSystemQty(item, qt); var diff = (parseInt(val)||0)-sys;
-      if(diff !== 0 && sys > 0){ variances++; summaryLines.push(item+' '+qt+': counted='+val+' system='+sys+' diff='+(diff>0?'+':'')+diff); }
+    Object.keys(standaloneEntries).forEach(function(item){
+      var val = standaloneEntries[item];
+      if(val === undefined || val === null || val === '') return;
+      var total = parseInt(val)||0;
+      if(!total) return;
+      filledLines.push(item+': '+total); itemCount++;
     });
   }
+
   if(!state.counts) state.counts = {};
   var id = 'cnt_'+Date.now();
-  var summary = summaryLines.length ? summaryLines.join('; ') : 'No variances.';
-  state.counts[id] = {dc:currentDC,submittedBy:userName||'Unknown',submittedAt:new Date().toISOString(),itemCount:itemCount,variances:variances,method:isManual?'manual':'digital',summary:summary};
-  logEvent('count_submission',{dc:currentDC,submittedBy:userName||'Unknown',itemCount:itemCount,method:isManual?'manual':'digital'});
+  state.counts[id] = {
+    dc:currentDC, submittedBy:userName||'Unknown',
+    submittedAt:new Date().toISOString(),
+    itemCount:itemCount, variances:0,
+    method: isLocation?'location':'standalone',
+    summary: filledLines.slice(0,5).join('; ')+(filledLines.length>5?' +more':'')
+  };
+  logEvent('count_submission',{dc:currentDC,submittedBy:userName||'Unknown',itemCount:itemCount,method:isLocation?'location':'standalone'});
   saveDB();
-  var subject = '['+currentDC+'] Count Sheet — '+(isManual?'Manual':'Digital')+' — '+new Date().toLocaleDateString()+' — '+itemCount+' items';
-  var bodyLines = ['COUNT SHEET SUBMISSION — '+(currentDC||''),'Submitted by: '+(userName||'Unknown'),'Date: '+new Date().toLocaleString(),'Method: '+(isManual?'Manual Entry':'Digital Entry'),'Items with counts: '+itemCount,'','ITEM COUNTS:','─────────────────────────────────────'].concat(filledLines);
-  if(summaryLines.length){ bodyLines.push(''); bodyLines.push('VARIANCES: '+variances); bodyLines=bodyLines.concat(summaryLines); }
+
+  var subject = '['+currentDC+'] '+(isLocation?'Location':'Standalone')+' Count — '+new Date().toLocaleDateString()+' — '+itemCount+' items';
+  var bodyLines = [
+    (isLocation?'LOCATION COUNT':'STANDALONE COUNT')+' — '+(currentDC||''),
+    'Submitted by: '+(userName||'Unknown'),
+    'Date: '+new Date().toLocaleString(),
+    isLocation?'Source: Live rack and overflow totals':'Source: Manual floor count',
+    'Items: '+itemCount,'','COUNTS:','─────────────────────────────────────'
+  ].concat(filledLines);
   window.location.href='mailto:Dhomiller@carparts.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(bodyLines.join('\n'));
-  cntMode='choose'; cntEntries={}; manualEntries={};
+
+  cntMode='choose'; standaloneEntries={};
   renderContent();
-}
-
-function cntSetEntry(item,qt,val){ cntEntries[item+'||'+qt]=parseInt(val)||0; }
-
-function updateDiffCell(inp){
-  var key=inp.dataset.item+'||'+inp.dataset.qt;
-  var sysVal=getSystemQty(inp.dataset.item,inp.dataset.qt);
-  var actVal=parseInt(inp.value);
-  var diff=isNaN(actVal)?null:actVal-sysVal;
-  var id='diff_'+btoa(encodeURIComponent(key)).replace(/=/g,'');
-  var cell=document.getElementById(id); if(!cell) return;
-  cell.className='ce-diff '+(diff===null?'':diff===0?'ok':Math.abs(diff)<=2?'warn':'bad');
-  cell.textContent=diff===null?'—':diff===0?'✓':(diff>0?'+':'')+diff;
 }
 
 function getSystemQty(item,qt){
@@ -2358,8 +2369,12 @@ function getSystemQty(item,qt){
   return total;
 }
 
-function viewCount(k){ var c=state.counts&&state.counts[k]; if(!c){alert('Count not found.');return;} alert('Count by '+(c.submittedBy||'Unknown')+'\n'+new Date(c.submittedAt).toLocaleString()+'\n'+(c.dc||currentDC)+' · '+(c.itemCount||0)+' items\n\n'+(c.variances===0?'✓ No variances.':c.variances+' variance(s).\n\n'+(c.summary||''))); }
-function deleteCount(k){ if(!confirm('Delete this count record?')) return; if(state.counts) delete state.counts[k]; saveDB(); renderContent(); }
+function deleteCount(k){
+  if(!confirm('Delete this count record?')) return;
+  if(state.counts) delete state.counts[k];
+  saveDB(); renderContent();
+}
+
 
 // ── PRINT FORM ─────────────────────────────────────────────────────────────
 var printFormMode='count'; // count | location
