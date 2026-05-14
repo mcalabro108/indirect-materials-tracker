@@ -2133,61 +2133,42 @@ function renderCountEntry(){
 }
 
 // ── LOCATION COUNT ────────────────────────────────────────────────────────
+// ── LOCATION COUNT ────────────────────────────────────────────────────────
 function renderLocationCount(){
   var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
   var cats = sharedSupplies ? sharedSupplies.cats : DCATS;
   var qtyTypes = state.qtyTypes || ['Pallets','Each'];
-
   var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">'
-    + '<div>'
-      + '<div style="font-size:15px;font-weight:700;color:var(--dark)">Location Count</div>'
-      + '<div style="font-size:12px;color:var(--gray);margin-top:2px">Live totals from rack slots and overflow. Update locations to change these numbers.</div>'
-    + '</div>'
-    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
-  + '</div>';
-
+    + '<div><div style="font-size:15px;font-weight:700;color:var(--dark)">Location Count</div>'
+    + '<div style="font-size:12px;color:var(--gray);margin-top:2px">Live totals from rack slots and overflow. Update locations to change these numbers.</div></div>'
+    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button></div>';
   html += '<div style="background:#e8f4fd;border-left:3px solid #3b82f6;padding:9px 14px;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:1rem;font-size:12px;color:#1e40af;line-height:1.6">'
-    + '📍 These counts come directly from your rack and overflow entries. To update a count, go to the Rack or Overflow tab and edit the quantity there, then come back here to send the updated count to Don.'
-  + '</div>';
-
+    + '📍 These totals come directly from your rack and overflow entries. To update a number, go to the Rack or Overflow tab and edit the quantity there.</div>';
   html += '<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:13px"><thead><tr>'
     + '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1)">Item</th>';
   qtyTypes.forEach(function(qt){
-    html += '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1)">' + escHtml(qt) + '</th>';
+    html += '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);min-width:90px">' + escHtml(qt) + '</th>';
   });
   html += '</tr></thead><tbody>';
-
-  var hasAny = false;
   Object.keys(cats).forEach(function(cat){
     var items = sups[cat] || [];
     if(!items.length) return;
     var cs = cats[cat] || {bg:'#f9fafb',text:'#374151'};
-    var catHtml = '<tr><td colspan="' + (1 + qtyTypes.length) + '" style="background:' + cs.bg + ';color:' + cs.text + ';font-size:11px;font-weight:800;padding:6px 14px;text-transform:uppercase;letter-spacing:.5px;border:1px solid #e2e6ed">' + escHtml(cat) + '</td></tr>';
-    var itemsHtml = '';
+    html += '<tr><td colspan="' + (1 + qtyTypes.length) + '" style="background:' + cs.bg + ';color:' + cs.text + ';font-size:11px;font-weight:800;padding:6px 14px;text-transform:uppercase;letter-spacing:.5px;border:1px solid #e2e6ed">' + escHtml(cat) + '</td></tr>';
     items.forEach(function(item, idx){
       var bg = idx%2===0 ? '#fff' : '#fafbfc';
-      var rowHtml = '<tr style="background:' + bg + '"><td style="padding:8px 14px;border:1px solid var(--gray-lt);font-weight:600;color:var(--dark)">' + escHtml(item) + '</td>';
-      var hasQty = false;
+      html += '<tr style="background:' + bg + '"><td style="padding:8px 14px;border:1px solid var(--gray-lt);font-weight:600;color:var(--dark)">' + escHtml(item) + '</td>';
       qtyTypes.forEach(function(qt){
         var sys = getSystemQty(item, qt);
-        if(sys > 0) hasQty = true;
-        rowHtml += '<td style="padding:8px 14px;border:1px solid var(--gray-lt);text-align:center;font-weight:700;color:' + (sys>0?'var(--navy)':'var(--gray-mid)') + '">' + (sys > 0 ? sys : '—') + '</td>';
+        html += '<td style="padding:8px 14px;border:1px solid var(--gray-lt);text-align:center;font-weight:700;color:' + (sys>0?'var(--navy)':'var(--gray-mid)') + '">' + (sys > 0 ? sys : '—') + '</td>';
       });
-      rowHtml += '</tr>';
-      if(hasQty){ itemsHtml += rowHtml; hasAny = true; }
+      html += '</tr>';
     });
-    if(itemsHtml) html += catHtml + itemsHtml;
   });
-
-  if(!hasAny){
-    html += '<tr><td colspan="' + (1+qtyTypes.length) + '" style="text-align:center;padding:2rem;color:var(--gray-mid);font-style:italic">No quantities recorded in locations yet. Add items and quantities in the Rack or Overflow tabs.</td></tr>';
-  }
   html += '</tbody></table></div>';
-
   html += '<div style="display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap">'
     + '<button class="btn b-org" onclick="cntPreviewMode=\'location\';cntMode=\'preview\';renderContent()" style="padding:10px 24px;font-size:15px">👁 Preview & Send to Don →</button>'
-    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
-  + '</div>';
+    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button></div>';
   return html;
 }
 
@@ -2195,54 +2176,66 @@ function renderLocationCount(){
 function renderStandaloneCount(){
   var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
   var cats = sharedSupplies ? sharedSupplies.cats : DCATS;
-
+  var qtyTypes = state.qtyTypes || ['Pallets','Each'];
   var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">'
-    + '<div>'
-      + '<div style="font-size:15px;font-weight:700;color:var(--dark)">Standalone Count</div>'
-      + '<div style="font-size:12px;color:var(--gray);margin-top:2px">Enter physical counts. Will not update rack or overflow locations.</div>'
-    + '</div>'
-    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
-  + '</div>';
-
+    + '<div><div style="font-size:15px;font-weight:700;color:var(--dark)">Standalone Count</div>'
+    + '<div style="font-size:12px;color:var(--gray);margin-top:2px">Enter physical counts. Does not update rack or overflow locations.</div></div>'
+    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button></div>';
   html += '<div style="background:#fff8ec;border-left:3px solid var(--orange);padding:9px 14px;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:1rem;font-size:12px;color:#92400e;line-height:1.6">'
-    + '📋 Enter the total count for each item you counted. Leave blank for items not counted. This sends directly to Don without updating any locations in the system.'
-  + '</div>';
-
-  html += '<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;max-width:580px;font-size:14px"><thead><tr>'
+    + '📋 Enter the count and select the unit type (Each, Pallets, etc.) for each item you counted. Leave blank for items not counted.</div>';
+  html += '<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:13px"><thead><tr>'
     + '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1)">Supply Item</th>'
-    + '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);width:130px">Count</th>'
+    + '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);width:90px">Count</th>'
+    + '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1)">Unit</th>'
     + '</tr></thead><tbody>';
-
   Object.keys(cats).forEach(function(cat){
     var items = sups[cat] || [];
     if(!items.length) return;
     var cs = cats[cat] || {bg:'#f9fafb',text:'#374151'};
-    html += '<tr><td colspan="2" style="background:' + cs.bg + ';color:' + cs.text + ';font-size:11px;font-weight:800;padding:6px 14px;text-transform:uppercase;letter-spacing:.5px;border:1px solid #e2e6ed">' + escHtml(cat) + '</td></tr>';
+    html += '<tr><td colspan="3" style="background:' + cs.bg + ';color:' + cs.text + ';font-size:11px;font-weight:800;padding:6px 14px;text-transform:uppercase;letter-spacing:.5px;border:1px solid #e2e6ed">' + escHtml(cat) + '</td></tr>';
     items.forEach(function(item, idx){
       var bg = idx%2===0 ? '#fff' : '#fafbfc';
-      var val = standaloneEntries[item] !== undefined ? standaloneEntries[item] : '';
+      var entry = standaloneEntries[item] || {qty:'', unit: qtyTypes[0]||'Each'};
+      var unitBtns = qtyTypes.map(function(qt){
+        var active = (entry.unit === qt);
+        return '<button onclick="saSetUnit(\''+escHtml(item).replace(/'/g,"\\'")+'\',' + '\''+escHtml(qt)+'\''+')" '
+          + 'style="padding:5px 10px;border:1.5px solid '+(active?'var(--orange)':'var(--gray-lt)')+';border-radius:6px;'
+          + 'background:'+(active?'var(--orange)':'#fff')+';color:'+(active?'#fff':'var(--gray)')+';'
+          + 'font-size:11px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">'
+          + escHtml(qt)+'</button>';
+      }).join(' ');
       html += '<tr style="background:' + bg + '">'
         + '<td style="padding:8px 14px;border:1px solid var(--gray-lt);font-weight:600;color:var(--dark)">' + escHtml(item) + '</td>'
-        + '<td style="padding:5px 10px;border:1px solid var(--gray-lt);text-align:center">'
-          + '<input type="number" min="0" value="' + val + '" placeholder="—"'
+        + '<td style="padding:5px 8px;border:1px solid var(--gray-lt);text-align:center">'
+          + '<input type="number" min="0" value="' + (entry.qty!==''?entry.qty:'') + '" placeholder="—"'
             + ' data-item="' + escHtml(item) + '"'
-            + ' onchange="standaloneEntries[this.dataset.item]=this.value===\'\'?undefined:parseInt(this.value)||0"'
-            + ' style="width:90px;font-size:15px;font-weight:700;padding:6px 8px;border:2px solid var(--gray-lt);border-radius:7px;text-align:center;font-family:Inter,sans-serif;color:var(--dark)"'
+            + ' onchange="saSetQty(this.dataset.item,this.value)"'
+            + ' style="width:72px;font-size:15px;font-weight:700;padding:6px;border:2px solid var(--gray-lt);border-radius:7px;text-align:center;font-family:Inter,sans-serif;color:var(--dark)"'
             + ' onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\'var(--gray-lt)\'">'
+        + '</td>'
+        + '<td style="padding:5px 10px;border:1px solid var(--gray-lt);text-align:center">'
+          + '<div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap">' + unitBtns + '</div>'
         + '</td>'
       + '</tr>';
     });
   });
-
   html += '</tbody></table></div>';
   html += '<div style="display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap">'
     + '<button class="btn b-org" onclick="cntPreviewMode=\'standalone\';cntMode=\'preview\';renderContent()" style="padding:10px 24px;font-size:15px">👁 Preview & Send to Don →</button>'
-    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
-  + '</div>';
+    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button></div>';
   return html;
 }
 
-// ── PREVIEW & SUBMIT ──────────────────────────────────────────────────────
+function saSetQty(item, val){
+  if(!standaloneEntries[item]) standaloneEntries[item] = {qty:'', unit:(state.qtyTypes&&state.qtyTypes[0])||'Each'};
+  standaloneEntries[item].qty = val===''?'':parseInt(val)||0;
+}
+function saSetUnit(item, unit){
+  if(!standaloneEntries[item]) standaloneEntries[item] = {qty:'', unit:unit};
+  else standaloneEntries[item].unit = unit;
+  renderContent();
+}
+
 function renderCountPreview(){
   var isLocation = cntPreviewMode === 'location';
   var qtyTypes = state.qtyTypes || ['Pallets','Each'];
@@ -2261,11 +2254,11 @@ function renderCountPreview(){
     });
   } else {
     Object.keys(standaloneEntries).forEach(function(item){
-      var val = standaloneEntries[item];
-      if(val === undefined || val === null || val === '') return;
-      var total = parseInt(val)||0;
+      var entry = standaloneEntries[item];
+      if(!entry || entry.qty === '' || entry.qty === undefined || entry.qty === null) return;
+      var total = parseInt(entry.qty)||0;
       if(!total) return;
-      filledLines.push(item + ': ' + total);
+      filledLines.push(item + ': ' + total + ' ' + (entry.unit||'Each'));
       itemCount++;
     });
   }
@@ -2322,11 +2315,11 @@ function submitCount(){
     });
   } else {
     Object.keys(standaloneEntries).forEach(function(item){
-      var val = standaloneEntries[item];
-      if(val === undefined || val === null || val === '') return;
-      var total = parseInt(val)||0;
+      var entry = standaloneEntries[item];
+      if(!entry || entry.qty === '' || entry.qty === undefined || entry.qty === null) return;
+      var total = parseInt(entry.qty)||0;
       if(!total) return;
-      filledLines.push(item+': '+total); itemCount++;
+      filledLines.push(item+': '+total+' '+(entry.unit||'Each')); itemCount++;
     });
   }
 
@@ -2356,16 +2349,33 @@ function submitCount(){
   renderContent();
 }
 
-function getSystemQty(item,qt){
-  if(!state||!state.racks) return 0;
-  var total=0;
-  Object.values(state.racks).forEach(function(rack){
-    if(!rack.slots) return;
-    Object.values(rack.slots).forEach(function(slot){
-      if(!slot||!slot.sections) return;
-      slot.sections.forEach(function(sec){ if(sec&&sec.supply===item&&sec.qtys&&sec.qtys[qt]) total+=parseInt(sec.qtys[qt])||0; });
+function getSystemQty(item, qt){
+  if(!state) return 0;
+  var total = 0;
+  // Sum rack slots
+  if(state.racks){
+    Object.values(state.racks).forEach(function(rack){
+      if(!rack.slots) return;
+      Object.values(rack.slots).forEach(function(slot){
+        if(!slot||!slot.sections) return;
+        slot.sections.forEach(function(sec){
+          if(sec && sec.supply===item && sec.qtys && sec.qtys[qt])
+            total += parseInt(sec.qtys[qt])||0;
+        });
+      });
     });
-  });
+  }
+  // Sum overflow lines (qtys is array by area — sum all areas)
+  if(state.overflowLines){
+    state.overflowLines.forEach(function(line){
+      if(line && line.item===item && Array.isArray(line.qtys)){
+        // Overflow doesn't separate by qty type — count all areas as Pallets
+        if(qt === (state.qtyTypes&&state.qtyTypes[0] || 'Pallets')){
+          line.qtys.forEach(function(q){ total += parseInt(q)||0; });
+        }
+      }
+    });
+  }
   return total;
 }
 
