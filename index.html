@@ -2352,6 +2352,10 @@ function submitCount(){
 function getSystemQty(item, qt){
   if(!state) return 0;
   var total = 0;
+  // Normalize: strip trailing inch-mark and whitespace so "Packsize 65"" matches "Packsize 65"
+  function n(s){ return (s||'').replace(/["\u201c\u201d]+$/,'').trim().toLowerCase(); }
+  var target = n(item);
+
   // Sum rack slots
   if(state.racks){
     Object.values(state.racks).forEach(function(rack){
@@ -2359,18 +2363,17 @@ function getSystemQty(item, qt){
       Object.values(rack.slots).forEach(function(slot){
         if(!slot||!slot.sections) return;
         slot.sections.forEach(function(sec){
-          if(sec && sec.supply===item && sec.qtys && sec.qtys[qt])
+          if(sec && n(sec.supply) === target && sec.qtys && sec.qtys[qt])
             total += parseInt(sec.qtys[qt])||0;
         });
       });
     });
   }
-  // Sum overflow lines (qtys is array by area — sum all areas)
+  // Sum overflow lines — qtys is array by area column, sum all areas
   if(state.overflowLines){
     state.overflowLines.forEach(function(line){
-      if(line && line.item===item && Array.isArray(line.qtys)){
-        // Overflow doesn't separate by qty type — count all areas as Pallets
-        if(qt === (state.qtyTypes&&state.qtyTypes[0] || 'Pallets')){
+      if(line && n(line.item) === target && Array.isArray(line.qtys)){
+        if(qt === ((state.qtyTypes&&state.qtyTypes[0])||'Pallets')){
           line.qtys.forEach(function(q){ total += parseInt(q)||0; });
         }
       }
