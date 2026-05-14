@@ -2071,535 +2071,77 @@ function deleteDelivery(k){
 }
 
 // ── COUNT ENTRY ────────────────────────────────────────────────────────────
-var cntMode = 'choose'; // choose | digital | ocr | review | preview
+var cntMode = 'choose';
 var cntEntries = {};
-var ocrFiles = [];
-var ocrReviewRows = [];
+var manualEntries = {};
+var cntPreviewMode = '';
 
 function renderCountEntry(){
-  var html = '<div class="tab-section-hd">📋 Count Entry</div>'
-    +pageCtx('count','Enter inventory counts directly on screen, or upload photos and scans of your filled count sheets. Both methods send results to Don automatically.');
+  var html = pageCtx('count','Enter inventory counts directly on screen (Digital) or fill in a simple item list (Manual). Both send results to Don after you review them.');
   if(cntMode === 'digital') return html + renderDigitalEntry();
-  if(cntMode === 'ocr')     return html + renderOcrUpload();
-  if(cntMode === 'review')  return html + renderOcrReview();
-  if(cntMode === 'preview') return html + renderOcrPreview();
+  if(cntMode === 'manual')  return html + renderManualEntry();
+  if(cntMode === 'preview') return html + renderCountPreview();
 
-  var gvKey = localStorage.getItem('cpGoogleVisionKey')||'';
-
-  html+=instrBox('How to submit a count',[
-    '<strong>Digital Entry</strong> — type counts on screen while walking the floor, or at your desk after counting.',
-    '<strong>Photo / Scan Upload</strong> — photograph or scan your filled Count Form and upload here. The app reads totals automatically, shows you a preview, then sends to Don.'
-  ]);
-
-  // Two mode cards
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">'
-    +'<div onclick="cntMode=\'digital\';renderContent()" style="border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.5rem;cursor:pointer;background:#fff;text-align:center;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
-      +'<div style="font-size:36px;margin-bottom:10px">⌨️</div>'
-      +'<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px">Digital Entry</div>'
-      +'<div style="font-size:12px;color:var(--gray);line-height:1.5">Type counts on screen. Shows system quantities for comparison.</div>'
-    +'</div>'
-    +(gvKey
-      ? '<div onclick="cntMode=\'ocr\';ocrFiles=[];renderContent()" style="border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.5rem;cursor:pointer;background:#fff;text-align:center;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
-          +'<div style="font-size:36px;margin-bottom:10px">📷</div>'
-          +'<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px">Photo / Scan Upload</div>'
-          +'<div style="font-size:12px;color:var(--gray);line-height:1.5">Upload photos or scans of your Count Form. Totals are read automatically.</div>'
-        +'</div>'
-      : '<div style="border:2px dashed var(--gray-lt);border-radius:var(--radius-lg);padding:1.5rem;background:var(--offwhite);text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">'
-          +'<div style="font-size:28px;opacity:.35">📷</div>'
-          +'<div style="font-size:13px;font-weight:600;color:var(--gray-mid)">Photo / Scan Upload</div>'
-          +'<div style="font-size:12px;color:var(--gray-mid)">Not configured on this device. Contact your supervisor to enable.</div>'
-        +'</div>')
-  +'</div>';
-
-  // Count history
   var counts = state.counts || {};
   var ckeys = Object.keys(counts).sort().reverse();
+
+  html += '<div style="display:flex;gap:16px;margin-bottom:2rem;flex-wrap:wrap">';
+  html += '<div style="flex:1;min-width:260px;background:#fff;border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.75rem;cursor:pointer;text-align:center;transition:all .15s" onclick="cntMode=\'digital\';cntEntries={};renderContent()" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
+    + '<div style="font-size:36px;margin-bottom:12px">📊</div>'
+    + '<div style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:8px">Digital Entry</div>'
+    + '<div style="font-size:13px;color:var(--gray);line-height:1.6">Enter counts per item and quantity type. Shows system quantities for comparison.</div>'
+    + '<div style="margin-top:16px"><span style="background:var(--navy);color:#fff;font-size:13px;font-weight:700;padding:8px 20px;border-radius:8px;display:inline-block">Start Digital Entry →</span></div>'
+    + '</div>';
+  html += '<div style="flex:1;min-width:260px;background:#fff;border:2px solid var(--gray-lt);border-radius:var(--radius-lg);padding:1.75rem;cursor:pointer;text-align:center;transition:all .15s" onclick="cntMode=\'manual\';manualEntries={};renderContent()" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--gray-lt)\'">'
+    + '<div style="font-size:36px;margin-bottom:12px">📋</div>'
+    + '<div style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:8px">Manual Entry</div>'
+    + '<div style="font-size:13px;color:var(--gray);line-height:1.6">Simple item list with a count box next to each item. Same format as the printed count sheet.</div>'
+    + '<div style="margin-top:16px"><span style="background:var(--orange);color:#fff;font-size:13px;font-weight:700;padding:8px 20px;border-radius:8px;display:inline-block">Start Manual Entry →</span></div>'
+    + '</div>';
+  html += '</div>';
+
   if(ckeys.length){
-    html += '<div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:12px">Count History</div><div class="cnt-hist-list">';
+    html += '<div style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:12px">Count History</div>'
+      + '<div class="cnt-hist-list">';
     ckeys.forEach(function(k){
       var c = counts[k];
-      var method = c.method === 'ocr' ? '📷 Scan' : '⌨️ Digital';
       var variances = c.variances || 0;
       var badge = variances === 0 ? 'ok' : variances <= 3 ? 'warn' : 'bad';
-      var badgeLabel = c.method === 'ocr' ? '📷 Scan submitted' : (variances === 0 ? '✓ No variances' : variances + ' variance'+(variances>1?'s':''));
-      html += '<div class="cnt-hist-card"><div class="cnt-hist-hd">'
-        + '<span class="cnt-hist-title">'+new Date(c.submittedAt).toLocaleString()+' — by '+escHtml(c.submittedBy||'Unknown')+'</span>'
-        + '<span class="cnt-hist-badge '+badge+'">'+badgeLabel+'</span>'
+      var badgeLabel = variances === 0 ? '✓ No variances' : variances + ' variance' + (variances > 1 ? 's' : '');
+      var method = c.method === 'manual' ? 'Manual' : 'Digital';
+      html += '<div class="cnt-hist-card">'
+        + '<div class="cnt-hist-hd">'
+          + '<span class="cnt-hist-title">' + new Date(c.submittedAt).toLocaleString() + ' — by ' + escHtml(c.submittedBy) + '</span>'
+          + '<div style="display:flex;gap:6px;align-items:center">'
+            + '<span style="font-size:11px;background:var(--offwhite);border:1px solid var(--gray-lt);border-radius:20px;padding:2px 8px;color:var(--gray)">' + method + '</span>'
+            + '<span class="cnt-hist-badge ' + badge + '">' + badgeLabel + '</span>'
+          + '</div>'
         + '</div>'
-        + '<div class="cnt-hist-meta">'+escHtml(c.dc||currentDC)+' · '+(c.itemCount||0)+' items · '+method+'</div>'
-        + (c.summary?'<div class="cnt-hist-summary">'+escHtml(c.summary)+'</div>':'')
-        + '<div style="margin-top:8px;display:flex;gap:6px">'
-          + '<button class="btn b-danger" onclick="deleteCount(\''+k+'\')" style="font-size:12px;padding:6px 12px">✕</button>'
-        + '</div></div>';
+        + '<div class="cnt-hist-meta">' + escHtml(c.dc) + ' · ' + (c.itemCount||0) + ' items counted</div>'
+        + (c.summary ? '<div class="cnt-hist-summary">' + escHtml(c.summary) + '</div>' : '')
+        + '<div style="margin-top:8px">'
+          + '<button class="btn b-danger" onclick="deleteCount(\'' + k + '\')" style="font-size:12px;padding:6px 12px">✕ Delete</button>'
+        + '</div>'
+      + '</div>';
     });
     html += '</div>';
   } else {
-    html += '<div style="text-align:center;padding:3rem;color:var(--gray-mid);font-size:14px;font-style:italic">No count submissions yet.</div>';
+    html += '<div style="text-align:center;padding:2rem;color:var(--gray-mid);font-size:14px;font-style:italic">No count history yet.</div>';
   }
   return html;
 }
 
-// ── OCR UPLOAD ────────────────────────────────────────────────────────────
-function saveGVKey(){
-  var v=(document.getElementById('gv-key-inp').value||'').trim();
-  if(!v){alert('Please enter a key.');return;}
-  localStorage.setItem('cpGoogleVisionKey',v);
-  renderContent();
-}
-function clearGVKey(){
-  if(!confirm('Remove the Google Vision API key from this browser?'))return;
-  localStorage.removeItem('cpGoogleVisionKey');
-  renderContent();
-}
-
-// Admin PIN — hashed. Default: CarPartsAdmin1!
-// To change: run in browser console:
-//   crypto.subtle.digest('SHA-256',new TextEncoder().encode('YourNewAdminPIN'))
-//     .then(b=>console.log([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')))
-var ADMIN_PIN_HASH='8dcaef6784b333af6ed02384f71b374b891e3a040c4bc4d52d7c2fd8b380320b';
-
-function checkAdminPin(){
-  var val=(document.getElementById('admin-pin-inp').value||'').trim();
-  if(!val){document.getElementById('admin-pin-error').textContent='Please enter the PIN.';return;}
-  crypto.subtle.digest('SHA-256',new TextEncoder().encode(val)).then(function(buf){
-    var hash=Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
-    if(hash===ADMIN_PIN_HASH){
-      sessionStorage.setItem('cpAdminAuth','1');
-      renderContent();
-    } else {
-      var el=document.getElementById('admin-pin-error');
-      if(el) el.textContent='Incorrect PIN. Contact your system administrator.';
-      document.getElementById('admin-pin-inp').value='';
-      document.getElementById('admin-pin-inp').focus();
-    }
-  });
-}
-
-function renderOcrUpload(){
-  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">'
-    +'<div style="font-size:15px;font-weight:700;color:var(--dark)">Upload Count Sheet Photos / Scans</div>'
-    +'<button class="btn" onclick="cntMode=\'choose\';ocrFiles=[];renderContent()" style="font-size:13px">← Back</button>'
-    +'</div>';
-  // File input hidden, triggered by label
-  html+='<input type="file" id="ocr-file-input" accept="image/*,.pdf" multiple style="display:none" onchange="ocrFilesChosen(event)">'
-    +'<label for="ocr-file-input" class="ocr-upload-zone" id="ocr-zone">'
-      +'<div style="font-size:32px;margin-bottom:8px">📁</div>'
-      +'<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px">Click or drag files here</div>'
-      +'<div style="font-size:13px;color:var(--gray)">JPG, PNG, or PDF · Multiple files OK · One photo per page is fine</div>'
-    +'</label>';
-  if(ocrFiles.length){
-    html+='<div class="ocr-file-list">';
-    ocrFiles.forEach(function(f,i){
-      var icon=f.name.toLowerCase().endsWith('.pdf')?'📄':'🖼️';
-      html+='<div class="ocr-file-row">'
-        +'<span>'+icon+'</span>'
-        +'<span class="ocr-file-name">'+escHtml(f.name)+'</span>'
-        +'<span class="ocr-file-status '+f.status+'">'+({pending:'Queued',reading:'Reading…',done:'✓ Done',error:'✗ Failed'}[f.status]||f.status)+'</span>'
-        +'<button onclick="ocrFiles.splice('+i+',1);renderContent()" style="border:none;background:none;color:var(--gray-mid);cursor:pointer;font-size:14px;padding:0 4px">✕</button>'
-      +'</div>';
-    });
-    html+='</div>'
-      +'<div style="display:flex;gap:10px;flex-wrap:wrap">'
-        +'<button class="btn b-org" onclick="runOCR()" style="padding:10px 24px;font-size:15px">🔍 Process with Google Vision →</button>'
-        +'<button class="btn" onclick="ocrFiles=[];renderContent()">Clear All</button>'
-      +'</div>';
-  }
-  return html;
-}
-
-function ocrFilesChosen(e){
-  Array.from(e.target.files).forEach(function(f){
-    ocrFiles.push({file:f,name:f.name,status:'pending',text:''});
-  });
-  renderContent();
-}
-
-function runOCR(){
-  var key=localStorage.getItem('cpGoogleVisionKey');
-  if(!key){alert('Google Vision API key not set. Go to ⚙ Settings → Admin to add it.');return;}
-  var pending=ocrFiles.filter(function(f){return f.status==='pending';});
-  if(!pending.length){buildOcrReview();return;}
-  renderContent();
-
-  function sendImageToVision(b64,mimeType,f,idx,then){
-    var url='https://vision.googleapis.com/v1/images:annotate?key='+key;
-    var body={requests:[{image:{content:b64},features:[{type:'DOCUMENT_TEXT_DETECTION',maxResults:1}]}]};
-    fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-      .then(function(r){return r.json();})
-      .then(function(data){
-        var text='';
-        if(data.responses&&data.responses[0]){
-          text=data.responses[0].fullTextAnnotation?data.responses[0].fullTextAnnotation.text:'';
-          if(!text&&data.responses[0].error) text='ERROR:'+data.responses[0].error.message;
-        }
-        f.text=(f.text||'')+'\n'+text;
-        then();
-      })
-      .catch(function(){then();});
-  }
-
-  function processPDF(f,idx,done){
-    f.text='';
-    var workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    if(typeof pdfjsLib==='undefined'){
-      f.status='error';
-      f.text='ERROR: PDF.js library not loaded. Try refreshing the page.';
-      updateOcrFileStatus(idx,'error','✗ PDF.js missing');
-      done(); return;
-    }
-    pdfjsLib.GlobalWorkerOptions.workerSrc=workerSrc;
-    var reader=new FileReader();
-    reader.onload=function(ev){
-      var typedArray=new Uint8Array(ev.target.result);
-      pdfjsLib.getDocument({data:typedArray}).promise.then(function(pdf){
-        var totalPages=pdf.numPages;
-        var allPageTexts=[];
-        var pageIdx=0;
-        function renderNextPage(){
-          if(pageIdx>=totalPages){
-            f.text=allPageTexts.join('\n');
-            f.status=f.text.trim()?'done':'error';
-            updateOcrFileStatus(idx,f.status,f.status==='done'?'✓ Done ('+totalPages+'p)':'✗ No text found');
-            done(); return;
-          }
-          pageIdx++;
-          updateOcrFileStatus(idx,'reading','Reading p'+pageIdx+'/'+totalPages+'…');
-          pdf.getPage(pageIdx).then(function(page){
-            var scale=2.5;
-            var viewport=page.getViewport({scale:scale});
-            var canvas=document.createElement('canvas');
-            canvas.width=viewport.width;
-            canvas.height=viewport.height;
-            var ctx=canvas.getContext('2d');
-            page.render({canvasContext:ctx,viewport:viewport}).promise.then(function(){
-              var b64=canvas.toDataURL('image/jpeg',0.95).split(',')[1];
-              var url='https://vision.googleapis.com/v1/images:annotate?key='+key;
-              var body={requests:[{image:{content:b64},features:[{type:'DOCUMENT_TEXT_DETECTION',maxResults:1}]}]};
-              fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-                .then(function(r){return r.json();})
-                .then(function(data){
-                  var text='';
-                  if(data.responses&&data.responses[0]){
-                    if(data.responses[0].fullTextAnnotation){
-                      text=data.responses[0].fullTextAnnotation.text||'';
-                    } else if(data.responses[0].error){
-                      text='API ERROR: '+data.responses[0].error.message+' (code '+data.responses[0].error.code+')';
-                    }
-                  } else if(data.error){
-                    text='API ERROR: '+data.error.message+' (code '+data.error.code+')';
-                  }
-                  allPageTexts.push(text);
-                  renderNextPage();
-                })
-                .catch(function(){allPageTexts.push('');renderNextPage();});
-            }).catch(function(){allPageTexts.push('');renderNextPage();});
-          }).catch(function(){allPageTexts.push('');renderNextPage();});
-        }
-        renderNextPage();
-      }).catch(function(e){
-        f.status='error';
-        f.text='ERROR: Could not parse PDF — '+e.message;
-        updateOcrFileStatus(idx,'error','✗ PDF parse error');
-        done();
-      });
-    };
-    reader.readAsArrayBuffer(f.file);
-  }
-
-  function processNext(idx){
-    if(idx>=ocrFiles.length){buildOcrReview();return;}
-    var f=ocrFiles[idx];
-    if(f.status!=='pending'){processNext(idx+1);return;}
-    f.status='reading';
-    f.text='';
-    updateOcrFileStatus(idx,'reading','Reading…');
-    var mime=f.file.type||'';
-    if(mime==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){
-      processPDF(f,idx,function(){processNext(idx+1);});
-    } else {
-      // Image file — send directly
-      var reader=new FileReader();
-      reader.onload=function(ev){
-        var b64=ev.target.result.split(',')[1];
-        sendImageToVision(b64,'image/jpeg',f,idx,function(){
-          f.status=f.text&&f.text.trim()?'done':'error';
-          updateOcrFileStatus(idx,f.status,f.status==='done'?'✓ Done':'✗ Failed');
-          processNext(idx+1);
-        });
-      };
-      reader.readAsDataURL(f.file);
-    }
-  }
-  processNext(0);
-}
-
-function updateOcrFileStatus(idx,status,label){
-  var rows=document.querySelectorAll('.ocr-file-row');
-  if(rows[idx]){
-    var s=rows[idx].querySelector('.ocr-file-status');
-    if(s){s.className='ocr-file-status '+status;s.textContent=label;}
-  }
-}
-
-function buildOcrReview(){
-  // If supply list not loaded yet, fetch it first then retry
-  var sups = sharedSupplies ? sharedSupplies.supplies : null;
-  if(!sups || Object.values(sups).flat().length === 0){
-    // Try to load from Firebase directly
-    try{
-      var db = firebase.database();
-      db.ref('shared/supplies').once('value', function(snap){
-        var val = snap.val();
-        if(val && val.supplies){
-          sharedSupplies = val;
-        } else if(val){
-          sharedSupplies = {supplies: val, cats: {}};
-        }
-        _doBuildOcrReview();
-      });
-    } catch(e){ _doBuildOcrReview(); }
-    return;
-  }
-  _doBuildOcrReview();
-}
-
-function _doBuildOcrReview(){
-  var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
-  var allItemsOrig = Object.values(sups).flat();
-  var rows = [];
-
-  function norm(s){
-    return s.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/ +/g,' ').trim();
-  }
-
-  // Get all digit strings from a string
-  function allNums(s){ return (s.match(/\d+/g)||[]).map(String); }
-
-  ocrFiles.forEach(function(f){
-    if(!f.text||f.status!=='done') return;
-    var rawLines = f.text.split('\n');
-    rawLines.forEach(function(line){
-      line = line.trim();
-      if(!line) return;
-      var normLine = norm(line);
-      var matchedItem = null;
-      var matchEnd = 0;
-
-      // Find the longest matching supply item in this line
-      allItemsOrig.forEach(function(item){
-        var normItem = norm(item);
-        if(!normItem) return;
-        var idx = normLine.indexOf(normItem);
-        if(idx >= 0){
-          var end = idx + normItem.length;
-          if(end > matchEnd){matchedItem = item; matchEnd = end;}
-        }
-      });
-      if(!matchedItem) return;
-
-      // Get all numbers in the full line
-      var lineNums = allNums(line);
-      if(!lineNums.length){ rows.push({item:matchedItem,total:0,source:f.name,confidence:0}); return; }
-
-      // Remove numbers that appear in the item name itself
-      var itemNums = allNums(matchedItem);
-      var extraNums = lineNums.slice(); // copy
-      itemNums.forEach(function(n){
-        var idx = extraNums.indexOf(n);
-        if(idx >= 0) extraNums.splice(idx, 1);
-      });
-
-      // The total is the last remaining number (the handwritten total at end of line)
-      var total = extraNums.length > 0 ? parseInt(extraNums[extraNums.length-1]) : 0;
-      rows.push({item:matchedItem, total:total, source:f.name, confidence:total>0?1:0});
-    });
-  });
-
-  var merged = {};
-  rows.forEach(function(r){
-    // First time we see an item, use it. Ignore duplicates.
-    if(!merged[r.item]){
-      merged[r.item] = {item:r.item, total:r.total, sources:[r.source], confidence:r.confidence};
-    }
-  });
-
-  ocrReviewRows = Object.values(merged);
-  cntMode = 'review';
-  renderContent();
-}
-// ── OCR REVIEW ─────────────────────────────────────────────────────────────
-function renderOcrReview(){
-  var qtyTypes=state.qtyTypes||['Pallets','Each'];
-  var total=ocrReviewRows.length;
-  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'
-    +'<div>'
-      +'<div style="font-size:15px;font-weight:700;color:var(--dark)">Review Scanned Results</div>'
-      +'<div style="font-size:12px;color:var(--gray);margin-top:3px">'+total+' items read · Correct any misreads before approving</div>'
-    +'</div>'
-    +'<button class="btn" onclick="cntMode=\'ocr\';renderContent()" style="font-size:13px">← Re-scan</button>'
-    +'</div>';
-
-  if(!total){
-    var rawTexts=ocrFiles.filter(function(f){return f.text;}).map(function(f){
-      return '── '+f.name+' ──\n'+(f.text||'(no text extracted)');
-    }).join('\n\n');
-    return html+'<div style="background:#fff8ec;border:2px solid #fed7aa;border-radius:var(--radius-lg);padding:1.25rem;font-size:14px;color:#92400e;margin-bottom:1rem">'
-      +'⚠️ No recognizable supply items were found. Common causes:<br>'
-      +'• Supply List tab is empty — add items there first<br>'
-      +'• Item names on the form don\'t match the supply list exactly<br>'
-      +'• Photo is blurry, too dark, or at an angle<br>'
-      +'• Form was blank (no handwritten values yet)'
-    +'</div>'
-    +(rawTexts?'<div style="background:#1e2530;border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem">'
-      +'<div style="font-size:11px;font-weight:700;color:#7dd3fc;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Raw text extracted by Google Vision:</div>'
-      +'<pre style="font-size:11px;color:#e2e8f0;white-space:pre-wrap;word-break:break-word;font-family:\'Courier New\',monospace;max-height:300px;overflow-y:auto">'+escHtml(rawTexts)+'</pre>'
-    +'</div>':'<div style="background:#fee2e2;border-radius:var(--radius);padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:1rem">Google Vision returned no text at all — check your API key in ⚙ Settings and ensure the image is readable.</div>')
-    +'<button class="btn" onclick="cntMode=\'ocr\';renderContent()">← Try Again</button>';
-  }
-
-  html+='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius);padding:10px 14px;font-size:13px;font-weight:600;color:#15803d;margin-bottom:1rem">'
-    +'✓ '+total+' items read. Review and correct any misreads, then click Approve & Email Don.'
-  +'</div>';
-
-  html+='<div style="overflow-x:auto;margin-bottom:1rem"><table class="ocr-review-tbl"><thead><tr>'
-    +'<th>Item</th><th>Total Count</th><th>Source</th><th></th>'
-    +'</tr></thead><tbody>';
-
-  ocrReviewRows.forEach(function(row,i){
-    var conf=row.confidence>=2?'high':'med';
-    var confLabel=row.confidence>=2?'✓':'⚡';
-    html+='<tr>'
-      +'<td><input type="text" value="'+escHtml(row.item)+'" data-i="'+i+'" data-f="item" onchange="ocrEditRow(this)" style="min-width:180px"></td>'
-      +'<td><input type="number" min="0" value="'+(row.total||0)+'" data-i="'+i+'" data-f="total" onchange="ocrEditRow(this)" style="width:80px;font-size:15px;font-weight:700;text-align:center"></td>'
-      +'<td style="font-size:11px;color:var(--gray-mid)"><span class="ocr-conf-'+conf+'">'+confLabel+'</span> '+escHtml((row.sources||[]).join(', '))+'</td>'
-      +'<td><button onclick="ocrReviewRows.splice('+i+',1);renderContent()" style="border:none;background:none;color:var(--gray-mid);cursor:pointer;font-size:15px">✕</button></td>'
-    +'</tr>';
-  });
-  html+='</tbody></table></div>';
-
-  html+='<div style="display:flex;gap:10px;flex-wrap:wrap">'
-    +'<button class="btn b-org" onclick="approveOcrCount()" style="padding:10px 24px;font-size:15px">👁 Preview & Send →</button>'
-    +'<button class="btn" onclick="cntMode=\'choose\';ocrFiles=[];ocrReviewRows=[];renderContent()">Cancel</button>'
-  +'</div>';
-  return html;
-}
-
-function ocrEditRow(inp){
-  var i=parseInt(inp.dataset.i);
-  var f=inp.dataset.f;
-  if(ocrReviewRows[i]) ocrReviewRows[i][f]=f==='total'?parseInt(inp.value)||0:inp.value;
-}
-function ocrEditQty(inp){
-  var i=parseInt(inp.dataset.i);
-  if(ocrReviewRows[i]) ocrReviewRows[i].total=parseInt(inp.value)||0;
-}
-function approveOcrCount(){
-  if(!ocrReviewRows.length){alert('Nothing to submit.');return;}
-  // Go to preview screen instead of emailing directly
-  cntMode='preview';
-  renderContent();
-}
-
-function renderOcrPreview(){
-  var itemCount=ocrReviewRows.length;
-  var qtyTypes=state.qtyTypes||['Pallets','Each'];
-  var lines=['COUNT SHEET SUBMISSION — '+(currentDC||'')];
-  lines.push('Submitted by: '+(userName||'Unknown'));
-  lines.push('Date: '+new Date().toLocaleString());
-  lines.push('Items read: '+itemCount);
-  lines.push('');
-  lines.push('ITEM TOTALS:');
-  lines.push('─────────────────────────────────────');
-  ocrReviewRows.forEach(function(row){
-    if(!row.item) return;
-    lines.push(row.item+' — Total: '+(row.total||0));
-  });
-  lines.push('');
-  lines.push('Source files: '+ocrFiles.map(function(f){return f.name;}).join(', '));
-
-  var subject='['+currentDC+'] Count Sheet Submitted — '+new Date().toLocaleDateString()+' — '+itemCount+' items';
-
-  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'
-    +'<div>'
-      +'<div style="font-size:15px;font-weight:700;color:var(--dark)">Preview — Email to Don</div>'
-      +'<div style="font-size:12px;color:var(--gray);margin-top:2px">Review what will be sent before confirming</div>'
-    +'</div>'
-    +'<button class="btn" onclick="cntMode=\'review\';renderContent()" style="font-size:13px">← Edit</button>'
-  +'</div>';
-
-  // Email preview card
-  html+='<div style="background:#fff;border:1.5px solid var(--gray-lt);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.25rem">'
-    +'<div style="background:var(--navy);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px">'
-      +'<span style="font-size:16px">📧</span>'
-      +'<div>'
-        +'<div style="font-size:13px;font-weight:700">To: Don Homiller (Dhomiller@carparts.com)</div>'
-        +'<div style="font-size:11px;opacity:.7;margin-top:1px">Subject: '+escHtml(subject)+'</div>'
-      +'</div>'
-    +'</div>'
-    +'<div style="padding:14px 16px;font-family:monospace;font-size:12px;color:var(--dark);line-height:1.8;white-space:pre-wrap;background:#fafbfc;max-height:320px;overflow-y:auto">'+escHtml(lines.join('\n'))+'</div>'
-  +'</div>';
-
-  html+='<div style="display:flex;gap:10px;flex-wrap:wrap">'
-    +'<button class="btn b-org" onclick="confirmSendOcrCount()" style="padding:10px 24px;font-size:15px">✓ Send to Don →</button>'
-    +'<button class="btn" onclick="cntMode=\'choose\';ocrFiles=[];ocrReviewRows=[];renderContent()">Cancel</button>'
-  +'</div>';
-  return html;
-}
-
-function confirmSendOcrCount(){
-  if(!ocrReviewRows.length){alert('Nothing to submit.');return;}
-  var qtyTypes=state.qtyTypes||['Pallets','Each'];
-  var itemCount=ocrReviewRows.length;
-  var lines=['COUNT SHEET SUBMISSION — '+(currentDC||'')];
-  lines.push('Submitted by: '+(userName||'Unknown'));
-  lines.push('Date: '+new Date().toLocaleString());
-  lines.push('Items read: '+itemCount);
-  lines.push('');
-  lines.push('ITEM TOTALS:');
-  lines.push('─────────────────────────────────────');
-  ocrReviewRows.forEach(function(row){
-    if(!row.item) return;
-    lines.push(row.item+' — Total: '+(row.total||0));
-  });
-  lines.push('');
-  lines.push('Source files: '+ocrFiles.map(function(f){return f.name;}).join(', '));
-
-  // Save to history
-  if(!state.counts) state.counts={};
-  var id='cnt_'+Date.now();
-  var summary=ocrReviewRows.slice(0,5).map(function(r){return r.item;}).join(', ')+(itemCount>5?' +more':'');
-  state.counts[id]={
-    dc:currentDC,submittedBy:userName||'Unknown',
-    submittedAt:new Date().toISOString(),
-    itemCount:itemCount,method:'ocr',summary:summary
-  };
-  logEvent('count_submission',{dc:currentDC,submittedBy:userName||'Unknown',itemCount:itemCount,method:'ocr'});
-  saveDB();
-
-  var subject='['+currentDC+'] Count Sheet Submitted — '+new Date().toLocaleDateString()+' — '+itemCount+' items';
-  window.location.href='mailto:Dhomiller@carparts.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(lines.join('\n'));
-
-  ocrFiles=[];
-  ocrReviewRows=[];
-  cntMode='choose';
-  renderContent();
-}
-var _ocrMethod=false;
-
-// ── DIGITAL ENTRY ──────────────────────────────────────────────────────────
 function renderDigitalEntry(){
   var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
   var cats = sharedSupplies ? sharedSupplies.cats : DCATS;
-  var qtyTypes = state.qtyTypes || ['Pallets','Cartons'];
-
-  // Get last count for comparison
-  var lastCount = getLastCount();
-
+  var qtyTypes = state.qtyTypes || ['Pallets','Each'];
   var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'
-    + '<div style="font-size:15px;font-weight:700;color:var(--dark)">Enter counts for each item</div>'
-    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()" style="font-size:13px">← Back</button>'
+    + '<div style="font-size:15px;font-weight:700;color:var(--dark)">Digital Entry</div>'
+    + '<div style="display:flex;gap:8px">'
+      + '<button class="btn" onclick="cntMode=\'manual\';manualEntries={};renderContent()" style="font-size:13px">📋 Switch to Manual</button>'
+      + '<button class="btn" onclick="cntMode=\'choose\';renderContent()" style="font-size:13px">← Back</button>'
+    + '</div>'
   + '</div>';
-
   html += '<div style="overflow-x:auto"><table class="cnt-entry-tbl"><thead><tr>'
     + '<th class="ce-item">Item</th><th>Category</th>';
   qtyTypes.forEach(function(qt){
@@ -2608,12 +2150,10 @@ function renderDigitalEntry(){
           + '<th class="ce-diff">' + escHtml(qt) + '<br><span style="font-weight:400;opacity:.6">Diff</span></th>';
   });
   html += '</tr></thead><tbody>';
-
   Object.keys(cats).forEach(function(cat){
     var items = sups[cat] || [];
     if(!items.length) return;
     var cs = cats[cat] || {bg:'#f9fafb',text:'#374151'};
-    // Category separator row
     html += '<tr><td colspan="' + (2 + qtyTypes.length*3) + '" style="background:' + cs.bg + ';color:' + cs.text + ';font-size:11px;font-weight:800;padding:6px 12px;text-transform:uppercase;letter-spacing:.5px">' + escHtml(cat) + '</td></tr>';
     items.forEach(function(item){
       html += '<tr><td class="ce-item">' + escHtml(item) + '</td>'
@@ -2638,124 +2178,188 @@ function renderDigitalEntry(){
   });
   html += '</tbody></table></div>';
   html += '<div style="display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap">'
-    + '<button class="btn b-org" onclick="submitDigitalCount()" style="padding:10px 24px;font-size:15px">Submit Count & Email Don →</button>'
-    + '<button class="btn" onclick="cntMode=\'choose\';cntEntries={};renderContent()" style="font-size:13px">Cancel</button>'
+    + '<button class="btn b-org" onclick="cntPreviewMode=\'digital\';cntMode=\'preview\';renderContent()" style="padding:10px 24px;font-size:15px">👁 Preview & Send →</button>'
+    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
   + '</div>';
   return html;
 }
 
-function cntSetEntry(item, qt, val){
-  cntEntries[item + '||' + qt] = parseInt(val) || 0;
+function renderManualEntry(){
+  var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
+  var cats = sharedSupplies ? sharedSupplies.cats : DCATS;
+  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'
+    + '<div style="font-size:15px;font-weight:700;color:var(--dark)">Manual Entry — enter total count per item</div>'
+    + '<div style="display:flex;gap:8px">'
+      + '<button class="btn" onclick="cntMode=\'digital\';cntEntries={};renderContent()" style="font-size:13px">📊 Switch to Digital</button>'
+      + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
+    + '</div>'
+  + '</div>';
+  html += '<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;max-width:640px;font-size:14px">';
+  html += '<thead><tr>'
+    + '<th style="background:var(--navy);color:#fff;padding:10px 14px;text-align:left;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1)">Supply Item</th>'
+    + '<th style="background:var(--navy);color:#fff;padding:10px 14px;text-align:center;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);width:140px">Total Count</th>'
+    + '</tr></thead><tbody>';
+  Object.keys(cats).forEach(function(cat){
+    var items = sups[cat] || [];
+    if(!items.length) return;
+    var cs = cats[cat] || {bg:'#f9fafb',text:'#374151'};
+    html += '<tr><td colspan="2" style="background:' + cs.bg + ';color:' + cs.text + ';font-size:11px;font-weight:800;padding:7px 14px;text-transform:uppercase;letter-spacing:.5px;border:1px solid #e2e6ed">' + escHtml(cat) + '</td></tr>';
+    items.forEach(function(item, idx){
+      var bg = idx%2===0 ? '#fff' : '#fafbfc';
+      var val = manualEntries[item] !== undefined ? manualEntries[item] : '';
+      html += '<tr style="background:' + bg + '">'
+        + '<td style="padding:9px 14px;border:1px solid var(--gray-lt);font-weight:600;font-size:14px;color:var(--dark)">' + escHtml(item) + '</td>'
+        + '<td style="padding:6px 10px;border:1px solid var(--gray-lt);text-align:center">'
+          + '<input type="number" min="0" value="' + val + '" placeholder="—"'
+            + ' data-item="' + escHtml(item) + '"'
+            + ' onchange="manualEntries[this.dataset.item]=this.value===\'\'?undefined:parseInt(this.value)||0"'
+            + ' style="width:100px;font-size:15px;font-weight:700;padding:7px 10px;border:2px solid var(--gray-lt);border-radius:8px;text-align:center;font-family:Inter,sans-serif;color:var(--dark)"'
+            + ' onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\'var(--gray-lt)\'">'
+        + '</td>'
+      + '</tr>';
+    });
+  });
+  html += '</tbody></table></div>';
+  html += '<div style="display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap">'
+    + '<button class="btn b-org" onclick="cntPreviewMode=\'manual\';cntMode=\'preview\';renderContent()" style="padding:10px 24px;font-size:15px">👁 Preview & Send →</button>'
+    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
+  + '</div>';
+  return html;
 }
+
+function renderCountPreview(){
+  var isManual = cntPreviewMode === 'manual';
+  var filledLines = [];
+  var itemCount = 0;
+  var variances = 0;
+  var summaryLines = [];
+  var qtyTypes = state.qtyTypes || ['Pallets','Each'];
+
+  if(isManual){
+    var allItems = Object.values(sharedSupplies ? sharedSupplies.supplies : DSUP).flat();
+    allItems.forEach(function(item){
+      var val = manualEntries[item];
+      if(val === undefined || val === null || val === '') return;
+      var total = parseInt(val)||0;
+      filledLines.push(item + ' — ' + total);
+      itemCount++;
+      var sys = getSystemQty(item, qtyTypes[0]);
+      if(sys > 0 && total !== sys){ variances++; summaryLines.push(item+': counted='+total+' system='+sys); }
+    });
+  } else {
+    Object.keys(cntEntries).forEach(function(key){
+      var parts = key.split('||'); var item = parts[0]; var qt = parts[1];
+      var val = cntEntries[key];
+      if(val === undefined || val === '') return;
+      filledLines.push(item + ' ('+qt+'): ' + val);
+      itemCount++;
+      var sys = getSystemQty(item, qt);
+      var diff = (parseInt(val)||0) - sys;
+      if(diff !== 0 && sys > 0){ variances++; summaryLines.push(item+' '+qt+': counted='+val+' system='+sys+' diff='+(diff>0?'+':'')+diff); }
+    });
+  }
+
+  var subject = '['+currentDC+'] Count Sheet — '+(isManual?'Manual':'Digital')+' — '+new Date().toLocaleDateString();
+  var bodyLines = [
+    'COUNT SHEET SUBMISSION — '+(currentDC||''),
+    'Submitted by: '+(userName||'Unknown'),
+    'Date: '+new Date().toLocaleString(),
+    'Method: '+(isManual?'Manual Entry':'Digital Entry'),
+    'Items with counts: '+itemCount,
+    '',
+    'ITEM COUNTS:',
+    '─────────────────────────────────────'
+  ].concat(filledLines);
+  if(summaryLines.length){ bodyLines.push(''); bodyLines.push('VARIANCES: '+variances); bodyLines = bodyLines.concat(summaryLines); }
+
+  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'
+    + '<div>'
+      + '<div style="font-size:15px;font-weight:700;color:var(--dark)">Preview — Email to Don</div>'
+      + '<div style="font-size:12px;color:var(--gray);margin-top:2px">Review what will be sent before confirming</div>'
+    + '</div>'
+    + '<button class="btn" onclick="cntMode=\''+cntPreviewMode+'\';renderContent()">← Edit</button>'
+  + '</div>';
+  html += '<div style="background:#fff;border:1.5px solid var(--gray-lt);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.25rem">'
+    + '<div style="background:var(--navy);color:#fff;padding:10px 16px">'
+      + '<div style="font-size:13px;font-weight:700">To: Don Homiller (Dhomiller@carparts.com)</div>'
+      + '<div style="font-size:11px;opacity:.7;margin-top:2px">Subject: '+escHtml(subject)+'</div>'
+    + '</div>'
+    + '<div style="padding:14px 16px;font-family:monospace;font-size:12px;color:var(--dark);line-height:1.8;white-space:pre-wrap;background:#fafbfc;max-height:320px;overflow-y:auto">'+escHtml(bodyLines.join('\n'))+'</div>'
+  + '</div>';
+  html += '<div style="display:flex;gap:10px;flex-wrap:wrap">'
+    + '<button class="btn b-org" onclick="submitCount()" style="padding:10px 24px;font-size:15px">✓ Send to Don →</button>'
+    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">Cancel</button>'
+  + '</div>';
+  return html;
+}
+
+function submitCount(){
+  var isManual = cntPreviewMode === 'manual';
+  var filledLines = []; var itemCount = 0; var variances = 0; var summaryLines = [];
+  var qtyTypes = state.qtyTypes || ['Pallets','Each'];
+  if(isManual){
+    var allItems = Object.values(sharedSupplies ? sharedSupplies.supplies : DSUP).flat();
+    allItems.forEach(function(item){
+      var val = manualEntries[item];
+      if(val === undefined || val === null || val === '') return;
+      var total = parseInt(val)||0;
+      filledLines.push(item + ' — ' + total);
+      itemCount++;
+      var sys = getSystemQty(item, qtyTypes[0]);
+      if(sys > 0 && total !== sys){ variances++; summaryLines.push(item+': counted='+total+' system='+sys); }
+    });
+  } else {
+    Object.keys(cntEntries).forEach(function(key){
+      var parts = key.split('||'); var item = parts[0]; var qt = parts[1];
+      var val = cntEntries[key];
+      if(val === undefined || val === '') return;
+      filledLines.push(item+' ('+qt+'): '+val); itemCount++;
+      var sys = getSystemQty(item, qt); var diff = (parseInt(val)||0)-sys;
+      if(diff !== 0 && sys > 0){ variances++; summaryLines.push(item+' '+qt+': counted='+val+' system='+sys+' diff='+(diff>0?'+':'')+diff); }
+    });
+  }
+  if(!state.counts) state.counts = {};
+  var id = 'cnt_'+Date.now();
+  var summary = summaryLines.length ? summaryLines.join('; ') : 'No variances.';
+  state.counts[id] = {dc:currentDC,submittedBy:userName||'Unknown',submittedAt:new Date().toISOString(),itemCount:itemCount,variances:variances,method:isManual?'manual':'digital',summary:summary};
+  logEvent('count_submission',{dc:currentDC,submittedBy:userName||'Unknown',itemCount:itemCount,method:isManual?'manual':'digital'});
+  saveDB();
+  var subject = '['+currentDC+'] Count Sheet — '+(isManual?'Manual':'Digital')+' — '+new Date().toLocaleDateString()+' — '+itemCount+' items';
+  var bodyLines = ['COUNT SHEET SUBMISSION — '+(currentDC||''),'Submitted by: '+(userName||'Unknown'),'Date: '+new Date().toLocaleString(),'Method: '+(isManual?'Manual Entry':'Digital Entry'),'Items with counts: '+itemCount,'','ITEM COUNTS:','─────────────────────────────────────'].concat(filledLines);
+  if(summaryLines.length){ bodyLines.push(''); bodyLines.push('VARIANCES: '+variances); bodyLines=bodyLines.concat(summaryLines); }
+  window.location.href='mailto:Dhomiller@carparts.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(bodyLines.join('\n'));
+  cntMode='choose'; cntEntries={}; manualEntries={};
+  renderContent();
+}
+
+function cntSetEntry(item,qt,val){ cntEntries[item+'||'+qt]=parseInt(val)||0; }
 
 function updateDiffCell(inp){
-  var item = inp.dataset.item;
-  var qt = inp.dataset.qt;
-  var key = item + '||' + qt;
-  var sysVal = getSystemQty(item, qt);
-  var actVal = parseInt(inp.value);
-  var diff = isNaN(actVal) ? null : actVal - sysVal;
-  var id = 'diff_' + btoa(encodeURIComponent(key)).replace(/=/g,'');
-  var cell = document.getElementById(id);
-  if(!cell) return;
-  cell.className = 'ce-diff ' + (diff === null ? '' : diff === 0 ? 'ok' : Math.abs(diff) <= 2 ? 'warn' : 'bad');
-  cell.textContent = diff === null ? '—' : diff === 0 ? '✓' : (diff > 0 ? '+' : '') + diff;
+  var key=inp.dataset.item+'||'+inp.dataset.qt;
+  var sysVal=getSystemQty(inp.dataset.item,inp.dataset.qt);
+  var actVal=parseInt(inp.value);
+  var diff=isNaN(actVal)?null:actVal-sysVal;
+  var id='diff_'+btoa(encodeURIComponent(key)).replace(/=/g,'');
+  var cell=document.getElementById(id); if(!cell) return;
+  cell.className='ce-diff '+(diff===null?'':diff===0?'ok':Math.abs(diff)<=2?'warn':'bad');
+  cell.textContent=diff===null?'—':diff===0?'✓':(diff>0?'+':'')+diff;
 }
 
-function getSystemQty(item, qt){
+function getSystemQty(item,qt){
   if(!state||!state.racks) return 0;
   var total=0;
   Object.values(state.racks).forEach(function(rack){
     if(!rack.slots) return;
     Object.values(rack.slots).forEach(function(slot){
       if(!slot||!slot.sections) return;
-      slot.sections.forEach(function(sec){
-        if(sec&&sec.supply===item&&sec.qtys&&sec.qtys[qt]) total+=parseInt(sec.qtys[qt])||0;
-      });
+      slot.sections.forEach(function(sec){ if(sec&&sec.supply===item&&sec.qtys&&sec.qtys[qt]) total+=parseInt(sec.qtys[qt])||0; });
     });
   });
   return total;
 }
 
-function getLastCount(){
-  if(!state.counts) return null;
-  var keys = Object.keys(state.counts).sort();
-  return keys.length ? state.counts[keys[keys.length-1]] : null;
-}
-
-function submitDigitalCount(){
-  var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
-  var qtyTypes = state.qtyTypes || ['Pallets','Cartons'];
-  var variances = 0; var itemCount = 0; var summaryLines = [];
-  Object.keys(sups).forEach(function(cat){
-    (sups[cat]||[]).forEach(function(item){
-      qtyTypes.forEach(function(qt){
-        var key = item + '||' + qt;
-        if(cntEntries[key] === undefined) return;
-        itemCount++;
-        var sys = getSystemQty(item, qt);
-        var act = cntEntries[key];
-        var diff = act - sys;
-        if(diff !== 0){
-          variances++;
-          summaryLines.push(item + ' (' + qt + '): system=' + sys + ' counted=' + act + ' diff=' + (diff>0?'+':'') + diff);
-        }
-      });
-    });
-  });
-
-  var lastCount = getLastCount();
-  var lastSummary = lastCount ? lastCount.summary : null;
-
-  // Save to Firebase
-  if(!state.counts) state.counts = {};
-  var id = 'cnt_' + Date.now();
-  var summary = summaryLines.length ? summaryLines.join('; ') : 'No variances found.';
-  state.counts[id] = {
-    dc: currentDC, submittedBy: userName||'Unknown',
-    submittedAt: new Date().toISOString(),
-    itemCount: itemCount, variances: variances,
-    entries: deepCopy(cntEntries), summary: summary,
-    method: _ocrMethod ? 'ocr' : 'digital'
-  };
-  logEvent('count_submission',{dc:currentDC,submittedBy:userName||'Unknown',itemCount:itemCount,variances:variances,summary:summary,entries:deepCopy(cntEntries)});
-  // Run anomaly detection against previous count
-  var anomalies=detectAnomalies(state.counts[id],lastCount);
-  if(anomalies.length) state.counts[id].anomalies=anomalies;
-  saveDB();
-
-  // Build per-count email to Don (fires automatically on every submission)
-  var subject='['+currentDC+'] Count Submitted — '+new Date().toLocaleDateString()+' — '+(variances>0?variances+' variance(s)':'No variances');
-  var body='COUNT SUBMISSION — '+currentDC+'\n'
-    +'Submitted by: '+(userName||'Unknown')+'\n'
-    +'Date: '+new Date().toLocaleString()+'\n'
-    +'Method: '+(_ocrMethod?'Photo/Scan':'Digital Entry')+'\n\n'
-    +'RESULTS\n'
-    +'Items counted: '+itemCount+'\n'
-    +'Variances found: '+variances+'\n\n'
-    +(summaryLines.length?'VARIANCE DETAILS:\n'+summaryLines.join('\n')+'\n\n':'All counts match system quantities.\n\n')
-    +(lastCount?'PREVIOUS COUNT SUMMARY:\n'+(lastCount.summary||'No summary')+'\n\n':'No previous count to compare.\n\n')
-    +'View full report: https://mcalabro108.github.io/indirect-materials-tracker\n';
-  window.location.href='mailto:Dhomiller@carparts.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
-
-  cntMode = 'choose'; cntEntries = {};
-  renderContent();
-}
-
-function viewCount(k){
-  var c = state.counts&&state.counts[k];
-  if(!c){ alert('Count not found.'); return; }
-  var msg = 'Count by ' + (c.submittedBy||'Unknown') + '\n'
-    + new Date(c.submittedAt).toLocaleString() + '\n'
-    + (c.dc||currentDC) + ' · ' + (c.itemCount||0) + ' items counted\n\n'
-    + (c.variances===0 ? '✓ No variances found.' : c.variances + ' variance(s) found.\n\n' + (c.summary||''));
-  alert(msg);
-}
-function deleteCount(k){
-  if(!confirm('Delete this count record? This cannot be undone.')) return;
-  if(state.counts) delete state.counts[k];
-  saveDB(); renderContent();
-}
+function viewCount(k){ var c=state.counts&&state.counts[k]; if(!c){alert('Count not found.');return;} alert('Count by '+(c.submittedBy||'Unknown')+'\n'+new Date(c.submittedAt).toLocaleString()+'\n'+(c.dc||currentDC)+' · '+(c.itemCount||0)+' items\n\n'+(c.variances===0?'✓ No variances.':c.variances+' variance(s).\n\n'+(c.summary||''))); }
+function deleteCount(k){ if(!confirm('Delete this count record?')) return; if(state.counts) delete state.counts[k]; saveDB(); renderContent(); }
 
 // ── PRINT FORM ─────────────────────────────────────────────────────────────
 var printFormMode='count'; // count | location
