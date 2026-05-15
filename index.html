@@ -2138,67 +2138,67 @@ function renderCountEntry(){
 function renderLocationCount(){
   var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
   var cats = sharedSupplies ? sharedSupplies.cats : DCATS;
-  var qtyTypes = state.qtyTypes || ['Pallets','Each'];
+  var qtyTypes = state.qtyTypes || ['Pallets','Each','Cartons'];
   var allSupplyItems = Object.values(sups).flat();
 
   var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">'
     + '<div><div style="font-size:15px;font-weight:700;color:var(--dark)">Location Count</div>'
-    + '<div style="font-size:12px;color:var(--gray);margin-top:2px">Live system totals from rack and overflow locations, with optional override for physical counts.</div></div>'
+    + '<div style="font-size:12px;color:var(--gray);margin-top:2px">Live system totals from rack and overflow, with optional override for physical counts.</div></div>'
     + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
   + '</div>';
 
   html += '<div style="background:#e8f4fd;border-left:3px solid #3b82f6;padding:10px 14px;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:1rem;font-size:12px;color:#1e40af;line-height:1.7">'
-    + '<b>How this works:</b> The <b>System</b> column shows live totals pulled directly from your rack and overflow entries. '
-    + 'Use the <b>Override</b> column to enter an actual physical count if it differs from the system. '
-    + 'Overrides are included in the email to Don — they do <b>not</b> update your rack locations. '
-    + 'Leave Override blank to send the system total as-is. '
-    + 'To update the system total, go to the Rack or Overflow tab and edit the quantity there.'
+    + '<b>How this works:</b> <b>System</b> shows the live total from rack and overflow entries. '
+    + 'Use <b>Override</b> to enter a different physical count — select the unit from the dropdown. '
+    + 'Overrides are sent to Don but do <b>not</b> update rack locations. Leave Override blank to send the system total.'
   + '</div>';
 
-  // Column headers — one set per qty type
   html += '<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:13px"><thead><tr>'
-    + '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1)">Item</th>';
-  qtyTypes.forEach(function(qt){
-    html += '<th style="background:var(--navy);color:#fff;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);min-width:80px">'
-      + escHtml(qt) + '<br><span style="font-weight:400;opacity:.65;font-size:10px">System</span></th>'
-      + '<th style="background:#2a4a7f;color:#fff;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);min-width:90px">'
-      + escHtml(qt) + '<br><span style="font-weight:400;opacity:.65;font-size:10px">Override</span></th>';
-  });
-  html += '</tr></thead><tbody>';
+    + '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1)">Item</th>'
+    + '<th style="background:var(--navy);color:#fff;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);min-width:100px">System Total</th>'
+    + '<th style="background:#2a4a7f;color:#fff;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);min-width:90px">Override</th>'
+    + '<th style="background:#2a4a7f;color:#fff;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);min-width:120px">Unit</th>'
+    + '</tr></thead><tbody>';
 
   Object.keys(cats).forEach(function(cat){
     var items = sups[cat] || [];
     if(!items.length) return;
     var cs = cats[cat] || {bg:'#f9fafb',text:'#374151'};
-    html += '<tr><td colspan="' + (1 + qtyTypes.length*2) + '" style="background:' + cs.bg + ';color:' + cs.text + ';font-size:11px;font-weight:800;padding:6px 14px;text-transform:uppercase;letter-spacing:.5px;border:1px solid #e2e6ed">' + escHtml(cat) + '</td></tr>';
+    html += '<tr><td colspan="4" style="background:' + cs.bg + ';color:' + cs.text + ';font-size:11px;font-weight:800;padding:6px 14px;text-transform:uppercase;letter-spacing:.5px;border:1px solid #e2e6ed">' + escHtml(cat) + '</td></tr>';
     items.forEach(function(item, idx){
       var bg = idx%2===0 ? '#fff' : '#fafbfc';
-      html += '<tr style="background:' + bg + '"><td style="padding:8px 14px;border:1px solid var(--gray-lt);font-weight:600;color:var(--dark)">' + escHtml(item) + '</td>';
-      qtyTypes.forEach(function(qt){
-        var sys = getSystemQty(item, qt);
-        var ovKey = item + '||' + qt;
-        var ovVal = locationOverrides[ovKey] !== undefined ? locationOverrides[ovKey] : '';
-        var hasOverride = ovVal !== '';
-        var diff = hasOverride ? (parseInt(ovVal)||0) - sys : null;
-        var diffColor = diff === null ? '' : diff === 0 ? '#16a34a' : diff > 0 ? '#d97706' : '#dc2626';
-        html += '<td style="padding:8px 10px;border:1px solid var(--gray-lt);text-align:center;font-weight:700;color:' + (sys>0?'var(--navy)':'var(--gray-mid)') + '">' + (sys > 0 ? sys : '—') + '</td>'
-          + '<td style="padding:4px 6px;border:1px solid var(--gray-lt);text-align:center;background:#f0f4ff">'
-            + '<div style="display:flex;align-items:center;gap:4px;justify-content:center">'
-              + '<input type="number" min="0" value="' + ovVal + '" placeholder="—"'
-                + ' data-item="' + escHtml(item) + '" data-qt="' + escHtml(qt) + '"'
-                + ' onchange="locationOverrides[this.dataset.item+\'||\'+this.dataset.qt]=this.value===\'\'?undefined:parseInt(this.value)||0;renderContent()"'
-                + ' style="width:64px;font-size:14px;font-weight:700;padding:5px 4px;border:2px solid '+(hasOverride?'var(--orange)':'var(--gray-lt)')+';border-radius:6px;text-align:center;font-family:Inter,sans-serif;color:var(--dark);background:#fff"'
-                + ' onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\''+(hasOverride?'var(--orange)':'var(--gray-lt)')+'\'">'
-              + (diff !== null ? '<span style="font-size:11px;font-weight:700;color:'+diffColor+'">' + (diff>0?'+':'') + diff + '</span>' : '')
-            + '</div>'
-          + '</td>';
-      });
-      html += '</tr>';
+      // System total — sum all qty types to show one number
+      var sysTotals = qtyTypes.map(function(qt){ return {qt:qt, val:getSystemQty(item,qt)}; }).filter(function(x){ return x.val > 0; });
+      var sysDisplay = sysTotals.length ? sysTotals.map(function(x){ return x.val+' '+x.qt; }).join(', ') : '—';
+      var ovKey = item + '||override';
+      var ovEntry = locationOverrides[ovKey] || {qty:'', unit: qtyTypes[0]||'Pallets'};
+      var hasOverride = ovEntry.qty !== '' && ovEntry.qty !== undefined;
+      var opts = qtyTypes.map(function(qt){
+        return '<option value="'+escHtml(qt)+'"'+(ovEntry.unit===qt?' selected':'')+'>'+escHtml(qt)+'</option>';
+      }).join('');
+      html += '<tr style="background:' + bg + '">'
+        + '<td style="padding:8px 14px;border:1px solid var(--gray-lt);font-weight:600;color:var(--dark)">' + escHtml(item) + '</td>'
+        + '<td style="padding:8px 10px;border:1px solid var(--gray-lt);text-align:center;font-weight:700;color:' + (sysTotals.length?'var(--navy)':'var(--gray-mid)') + '">' + sysDisplay + '</td>'
+        + '<td style="padding:5px 8px;border:1px solid var(--gray-lt);text-align:center;background:#f0f4ff">'
+          + '<input type="number" min="0" value="' + (hasOverride?ovEntry.qty:'') + '" placeholder="—"'
+            + ' data-item="' + escHtml(item) + '"'
+            + ' onchange="var e=locationOverrides[this.dataset.item+\'||override\']||{qty:\'\',unit:\'' + escHtml(qtyTypes[0]||'Pallets') + '\'};e.qty=this.value===\'\'?\'\':(parseInt(this.value)||0);locationOverrides[this.dataset.item+\'||override\']=e;renderContent()"'
+            + ' style="width:72px;font-size:14px;font-weight:700;padding:6px;border:2px solid '+(hasOverride?'var(--orange)':'var(--gray-lt)')+';border-radius:7px;text-align:center;font-family:Inter,sans-serif;color:var(--dark)"'
+            + ' onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\''+(hasOverride?'var(--orange)':'var(--gray-lt)') + '\'">'
+        + '</td>'
+        + '<td style="padding:5px 8px;border:1px solid var(--gray-lt);text-align:center;background:#f0f4ff">'
+          + '<select data-item="' + escHtml(item) + '" onchange="var e=locationOverrides[this.dataset.item+\'||override\']||{qty:\'\',unit:this.value};e.unit=this.value;locationOverrides[this.dataset.item+\'||override\']=e"'
+            + ' style="width:110px;font-size:13px;font-weight:600;padding:7px 8px;border:2px solid var(--gray-lt);border-radius:7px;font-family:Inter,sans-serif;color:var(--dark);background:#fff;cursor:pointer"'
+            + ' onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\'var(--gray-lt)\'">'
+            + opts
+          + '</select>'
+        + '</td>'
+      + '</tr>';
     });
   });
   html += '</tbody></table></div>';
 
-  // Reconciliation section
+  // Reconciliation
   var reconcile = [];
   if(state && state.racks){
     Object.values(state.racks).forEach(function(rack){
@@ -2211,7 +2211,7 @@ function renderLocationCount(){
           if(allSupplyItems.includes(sec.supply)) return;
           var existing = reconcile.find(function(r){ return r.item===sec.supply; });
           if(!existing){
-            var qs = {};
+            var qs={};
             if(sec.qtys) Object.keys(sec.qtys).forEach(function(qt){ if(parseInt(sec.qtys[qt])>0) qs[qt]=(qs[qt]||0)+parseInt(sec.qtys[qt]); });
             reconcile.push({item:sec.supply,qtys:qs});
           } else {
@@ -2221,19 +2221,18 @@ function renderLocationCount(){
       });
     });
   }
-
   if(reconcile.length){
     html += '<div style="margin-top:1.5rem;padding:12px 16px;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:var(--radius-lg)">'
       + '<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px">⚠ Reconciliation — items in locations not on the supply list</div>'
-      + '<div style="font-size:12px;color:#78350f;margin-bottom:10px">These items are assigned to rack slots but don\'t match any supply list entry. Go to the slot and update it to the correct supply list item, or add the item to the Supply List tab.</div>'
+      + '<div style="font-size:12px;color:#78350f;margin-bottom:10px">These items are in rack slots but don\'t match the supply list. Update the slot or add the item to the Supply List tab.</div>'
       + '<table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr>'
-        + '<th style="background:#f59e0b;color:#fff;padding:7px 12px;text-align:left;font-weight:700;text-transform:uppercase;font-size:11px">Item (as stored in slot)</th>'
+        + '<th style="background:#f59e0b;color:#fff;padding:7px 12px;text-align:left;font-weight:700;text-transform:uppercase;font-size:11px">Item (as stored)</th>'
         + '<th style="background:#f59e0b;color:#fff;padding:7px 12px;text-align:center;font-weight:700;text-transform:uppercase;font-size:11px">Quantities</th>'
       + '</tr></thead><tbody>';
     reconcile.forEach(function(r,idx){
-      var bg = idx%2===0?'#fff':'#fffbeb';
-      var qtyStr = Object.keys(r.qtys).length ? Object.keys(r.qtys).map(function(qt){ return r.qtys[qt]+' '+qt; }).join(', ') : '—';
-      html += '<tr style="background:'+bg+'"><td style="padding:7px 12px;border:1px solid #fde68a;font-weight:600;color:#92400e">'+escHtml(r.item)+'</td><td style="padding:7px 12px;border:1px solid #fde68a;text-align:center;color:#78350f">'+qtyStr+'</td></tr>';
+      var bg=idx%2===0?'#fff':'#fffbeb';
+      var qtyStr=Object.keys(r.qtys).length?Object.keys(r.qtys).map(function(qt){return r.qtys[qt]+' '+qt;}).join(', '):'—';
+      html+='<tr style="background:'+bg+'"><td style="padding:7px 12px;border:1px solid #fde68a;font-weight:600;color:#92400e">'+escHtml(r.item)+'</td><td style="padding:7px 12px;border:1px solid #fde68a;text-align:center;color:#78350f">'+qtyStr+'</td></tr>';
     });
     html += '</tbody></table></div>';
   }
@@ -2244,8 +2243,6 @@ function renderLocationCount(){
   + '</div>';
   return html;
 }
-
-// ── STANDALONE COUNT ──────────────────────────────────────────────────────
 function renderStandaloneCount(){
   var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
   var cats = sharedSupplies ? sharedSupplies.cats : DCATS;
@@ -2323,28 +2320,17 @@ function renderCountPreview(){
   var itemCount = 0;
 
   if(isLocation){
-    var qtyTypes2 = state.qtyTypes || ['Pallets','Each'];
+    var qtyTypes2 = state.qtyTypes || ['Pallets','Each','Cartons'];
     Object.values(sups).flat().forEach(function(item){
-      var qtySummary = [];
-      var hasOverride = false;
-      qtyTypes2.forEach(function(qt){
-        var sys = getSystemQty(item, qt);
-        var ovKey = item + '||' + qt;
-        var ov = locationOverrides[ovKey];
-        var val = ov !== undefined ? parseInt(ov)||0 : sys;
-        if(val > 0){
-          var line = qt + ': ' + val;
-          if(ov !== undefined && (parseInt(ov)||0) !== sys){
-            line += ' (system: ' + sys + ')';
-            hasOverride = true;
-          }
-          qtySummary.push(line);
-        }
-      });
-      if(qtySummary.length){
-        filledLines.push(item + (hasOverride?' ⚠':'') + ' — ' + qtySummary.join(', '));
-        itemCount++;
-      }
+      var sysTotals = qtyTypes2.map(function(qt){ return {qt:qt,val:getSystemQty(item,qt)}; }).filter(function(x){ return x.val>0; });
+      var ovEntry = locationOverrides[item+'||override'];
+      var hasOverride = ovEntry && ovEntry.qty !== '' && ovEntry.qty !== undefined;
+      if(!sysTotals.length && !hasOverride) return;
+      var sysStr = sysTotals.map(function(x){ return x.val+' '+x.qt; }).join(', ') || '—';
+      var line = item + ' — System: ' + sysStr;
+      if(hasOverride) line += ' | Override: ' + ovEntry.qty + ' ' + (ovEntry.unit||'Pallets') + ' ⚠';
+      filledLines.push(line);
+      itemCount++;
     });
   } else {
     Object.keys(standaloneEntries).forEach(function(item){
@@ -2399,22 +2385,16 @@ function submitCount(){
   var filledLines = []; var itemCount = 0;
 
   if(isLocation){
-    var qtyTypes3 = state.qtyTypes || ['Pallets','Each'];
+    var qtyTypes3 = state.qtyTypes || ['Pallets','Each','Cartons'];
     Object.values(sups).flat().forEach(function(item){
-      var qtySummary = [];
-      var hasOverride = false;
-      qtyTypes3.forEach(function(qt){
-        var sys = getSystemQty(item, qt);
-        var ovKey = item+'||'+qt;
-        var ov = locationOverrides[ovKey];
-        var val = ov !== undefined ? parseInt(ov)||0 : sys;
-        if(val > 0){
-          var line = qt+': '+val;
-          if(ov !== undefined && (parseInt(ov)||0) !== sys){ line += ' (system: '+sys+')'; hasOverride=true; }
-          qtySummary.push(line);
-        }
-      });
-      if(qtySummary.length){ filledLines.push(item+(hasOverride?' ⚠':'')+' — '+qtySummary.join(', ')); itemCount++; }
+      var sysTotals = qtyTypes3.map(function(qt){ return {qt:qt,val:getSystemQty(item,qt)}; }).filter(function(x){ return x.val>0; });
+      var ovEntry = locationOverrides[item+'||override'];
+      var hasOverride = ovEntry && ovEntry.qty !== '' && ovEntry.qty !== undefined;
+      if(!sysTotals.length && !hasOverride) return;
+      var sysStr = sysTotals.map(function(x){ return x.val+' '+x.qt; }).join(', ') || '—';
+      var line = item + ' — System: ' + sysStr;
+      if(hasOverride) line += ' | Override: ' + ovEntry.qty + ' ' + (ovEntry.unit||'Pallets') + ' ⚠';
+      filledLines.push(line); itemCount++;
     });
   } else {
     Object.keys(standaloneEntries).forEach(function(item){
