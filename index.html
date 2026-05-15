@@ -2250,17 +2250,23 @@ function renderStandaloneCount(){
   var sups = sharedSupplies ? sharedSupplies.supplies : DSUP;
   var cats = sharedSupplies ? sharedSupplies.cats : DCATS;
   var qtyTypes = state.qtyTypes || ['Pallets','Each'];
+
   var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">'
     + '<div><div style="font-size:15px;font-weight:700;color:var(--dark)">Standalone Count</div>'
     + '<div style="font-size:12px;color:var(--gray);margin-top:2px">Enter physical counts. Does not update rack or overflow locations.</div></div>'
-    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button></div>';
-  html += '<div style="background:#fff8ec;border-left:3px solid var(--orange);padding:9px 14px;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:1rem;font-size:12px;color:#92400e;line-height:1.6">'
-    + '📋 Enter the count and select the unit type (Each, Pallets, etc.) for each item you counted. Leave blank for items not counted.</div>';
-  html += '<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:13px"><thead><tr>'
+    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
+  + '</div>';
+
+  html += '<div style="background:#fff8ec;border-left:3px solid var(--orange);padding:9px 14px;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:1rem;font-size:12px;color:#92400e;line-height:1.7">'
+    + '📋 Enter the count for each item you physically counted. Use the unit dropdown to select Pallets, Each, Cartons, etc. Leave the count blank for items not counted. This sends to Don without updating any locations.'
+  + '</div>';
+
+  html += '<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;max-width:620px;font-size:13px"><thead><tr>'
     + '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1)">Supply Item</th>'
-    + '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);width:90px">Count</th>'
-    + '<th style="background:var(--navy);color:#fff;padding:9px 14px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1)">Unit</th>'
+    + '<th style="background:var(--navy);color:#fff;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);width:90px">Count</th>'
+    + '<th style="background:var(--navy);color:#fff;padding:9px 10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(255,255,255,.1);width:130px">Unit</th>'
     + '</tr></thead><tbody>';
+
   Object.keys(cats).forEach(function(cat){
     var items = sups[cat] || [];
     if(!items.length) return;
@@ -2268,15 +2274,10 @@ function renderStandaloneCount(){
     html += '<tr><td colspan="3" style="background:' + cs.bg + ';color:' + cs.text + ';font-size:11px;font-weight:800;padding:6px 14px;text-transform:uppercase;letter-spacing:.5px;border:1px solid #e2e6ed">' + escHtml(cat) + '</td></tr>';
     items.forEach(function(item, idx){
       var bg = idx%2===0 ? '#fff' : '#fafbfc';
-      var entry = standaloneEntries[item] || {qty:'', unit: qtyTypes[0]||'Each'};
-      var unitBtns = qtyTypes.map(function(qt){
-        var active = (entry.unit === qt);
-        return '<button onclick="saSetUnit(\''+escHtml(item).replace(/'/g,"\\'")+'\',' + '\''+escHtml(qt)+'\''+')" '
-          + 'style="padding:5px 10px;border:1.5px solid '+(active?'var(--orange)':'var(--gray-lt)')+';border-radius:6px;'
-          + 'background:'+(active?'var(--orange)':'#fff')+';color:'+(active?'#fff':'var(--gray)')+';'
-          + 'font-size:11px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">'
-          + escHtml(qt)+'</button>';
-      }).join(' ');
+      var entry = standaloneEntries[item] || {qty:'', unit: qtyTypes[0]||'Pallets'};
+      var opts = qtyTypes.map(function(qt){
+        return '<option value="'+escHtml(qt)+'"'+(entry.unit===qt?' selected':'')+'>'+escHtml(qt)+'</option>';
+      }).join('');
       html += '<tr style="background:' + bg + '">'
         + '<td style="padding:8px 14px;border:1px solid var(--gray-lt);font-weight:600;color:var(--dark)">' + escHtml(item) + '</td>'
         + '<td style="padding:5px 8px;border:1px solid var(--gray-lt);text-align:center">'
@@ -2286,27 +2287,32 @@ function renderStandaloneCount(){
             + ' style="width:72px;font-size:15px;font-weight:700;padding:6px;border:2px solid var(--gray-lt);border-radius:7px;text-align:center;font-family:Inter,sans-serif;color:var(--dark)"'
             + ' onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\'var(--gray-lt)\'">'
         + '</td>'
-        + '<td style="padding:5px 10px;border:1px solid var(--gray-lt);text-align:center">'
-          + '<div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap">' + unitBtns + '</div>'
+        + '<td style="padding:5px 8px;border:1px solid var(--gray-lt);text-align:center">'
+          + '<select data-item="' + escHtml(item) + '" onchange="saSetUnit(this.dataset.item,this.value)"'
+            + ' style="width:115px;font-size:13px;font-weight:600;padding:7px 8px;border:2px solid var(--gray-lt);border-radius:7px;font-family:Inter,sans-serif;color:var(--dark);background:#fff;cursor:pointer"'
+            + ' onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\'var(--gray-lt)\'">'
+            + opts
+          + '</select>'
         + '</td>'
       + '</tr>';
     });
   });
+
   html += '</tbody></table></div>';
   html += '<div style="display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap">'
     + '<button class="btn b-org" onclick="cntPreviewMode=\'standalone\';cntMode=\'preview\';renderContent()" style="padding:10px 24px;font-size:15px">👁 Preview & Send to Don →</button>'
-    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button></div>';
+    + '<button class="btn" onclick="cntMode=\'choose\';renderContent()">← Back</button>'
+  + '</div>';
   return html;
 }
 
 function saSetQty(item, val){
-  if(!standaloneEntries[item]) standaloneEntries[item] = {qty:'', unit:(state.qtyTypes&&state.qtyTypes[0])||'Each'};
+  if(!standaloneEntries[item]) standaloneEntries[item] = {qty:'', unit:(state.qtyTypes&&state.qtyTypes[0])||'Pallets'};
   standaloneEntries[item].qty = val===''?'':parseInt(val)||0;
 }
 function saSetUnit(item, unit){
   if(!standaloneEntries[item]) standaloneEntries[item] = {qty:'', unit:unit};
   else standaloneEntries[item].unit = unit;
-  renderContent();
 }
 
 function renderCountPreview(){
