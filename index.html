@@ -3296,24 +3296,23 @@ var HELP_SECTIONS = {
     nav:'hn-count', title:'📋 Count Entry',
     content:function(){
       return '<div class="help-h1">Count Entry Tab</div>'
-        +'<p class="help-lead">Submit inventory counts two ways: type them directly on screen (Digital Entry), or upload photos and scans of your filled count sheet (Photo/Scan Upload). Both methods email Don automatically when you approve.</p>'
-        +'<div class="help-h2">Option 1 — Digital Entry</div>'
-        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">Use a phone or tablet while walking the floor, or sit at a desk after filling in the paper Count Form.</p>'
-        +hs([['1','Click Digital Entry','Opens a table of all supply items.'],
-             ['2','Type your counts','Enter the actual quantity you counted for each item and quantity type.'],
-             ['3','Review the Diff column','Green = matches system, Yellow = 10–25% variance, Red = over 25% variance.'],
-             ['4','Click Submit','Opens Outlook to Don with the full results. Hit Send.']])
-        +'<div class="help-h2">Option 2 — Photo / Scan Upload</div>'
-        +'<p style="font-size:13px;color:var(--gray);margin-bottom:8px">Google Vision reads item names and totals from your filled Count Form automatically.</p>'
-        +hs([['1','Print the Count Form','Go to the Print Form tab → select Count Form → Print.'],
-             ['2','Fill it in by hand','Walk the floor. Write tally marks and totals clearly.'],
-             ['3','Photograph or scan','Phone camera (straight-on, good lighting) or flatbed/MFP scanner saved as PDF or JPG.'],
-             ['4','Upload the files','Click Photo/Scan Upload → drag files or click to select. Multiple files OK.'],
-             ['5','Process','Google Vision reads every file and extracts item names and totals.'],
-             ['6','Review & approve','Check for misreads, correct any errors, then click Approve & Email Don.']])
-        +'<div class="help-h2">Photo tips for accurate scanning</div>'
-        +'<ul class="help-bul"><li><b>Write totals clearly and large</b> in the Total column — that\'s what the app reads</li><li><b>Block capitals</b> for item names — easier to scan than cursive</li><li><b>Flat surface</b> — sheet on a table, not held in hand</li><li><b>Good lighting</b> — avoid shadows falling across the text</li><li><b>Straight-on angle</b> — fill the frame, not at a diagonal</li><li>Scanned PDFs are often cleaner than phone photos</li></ul>'
-        +'<div class="help-tip"><b>Photo upload not available?</b> This feature requires configuration by your supervisor. Contact admin to enable it on your device.</div>';
+        +'<p class="help-lead">Submit inventory counts to Don two ways — both show a full email preview before sending. Choose from the Count Entry home screen.</p>'
+        +'<div class="help-h2">📍 Location Count</div>'
+        +'<p style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:8px">Shows live totals pulled directly from your rack slots and overflow entries. Use this to send Don a snapshot of exactly what the system currently shows.</p>'
+        +'<ul class="help-bul"><li><b>System</b> column — current total for each item across all rack and overflow locations</li>'
+        +'<li><b>Override</b> column — enter a different physical count if it differs from the system</li>'
+        +'<li><b>Unit dropdown</b> — select Pallets, Each, or Cartons for the override</li>'
+        +'<li>Overrides appear in the email to Don but do <b>not</b> update rack locations</li>'
+        +'<li>Leave Override blank to send the system total as-is</li>'
+        +'<li>A <b>Reconciliation</b> section at the bottom flags items in slots that don\'t match the supply list</li></ul>'
+        +'<div class="help-h2">📋 Standalone Count</div>'
+        +'<p style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:8px">Enter counts independently by hand without affecting any locations. Use for a physical floor count you want to send to Don separately.</p>'
+        +'<ul class="help-bul"><li>Every supply list item listed with a count input and a unit dropdown (Pallets, Each, Cartons)</li>'
+        +'<li>Enter the count you physically observed for each item</li>'
+        +'<li>Leave blank for items not counted</li>'
+        +'<li>Does not update rack or overflow locations</li></ul>'
+        +'<div class="help-h2">Preview & Send</div>'
+        +'<p style="font-size:13px;color:var(--gray);line-height:1.6">Both count types show a full preview of the email before opening Outlook. Review the subject line, all item counts, and any overrides flagged with ⚠, then click Send to Don.</p>';
     }
   },
   print:{
@@ -3388,9 +3387,9 @@ var HELP_SECTIONS = {
     nav:'hn-guide', title:'📄 User Guide',
     content:function(){
       return '<div class="help-h1">User Guide</div>'
-        +'<p class="help-lead">The full user guide is a Word document covering every feature of the tracker in detail. It includes a regular user section and a separate admin/settings section at the end.</p>'
+        +'<p class="help-lead">The full user guide is a Word document covering every feature of the tracker — Overview, Getting Started, Rack View, Overflow, Delivery, Count Entry (Location and Standalone), Print Form, Supply List, Reports, Settings, and Admin.</p>'
         +'<div class="help-h2">What\'s in the guide</div>'
-        +'<ul class="help-bul"><li>Getting started — password, DC selection, name setup</li><li>Rack view — slots, sections, columns, levels, floor bays</li><li>Overflow, Delivery, Count Entry, Print Form, Supply List</li><li>Reports — all five sub-views explained</li><li>Getting help — in-app help, instruction boxes</li><li><b>Admin section</b> — password management, weekly report, Google Vision API key, DC URLs, Firebase rules</li></ul>'
+        +'<ul class="help-bul"><li>Getting started — password, DC selection, name setup</li><li>Rack view — slots, sections, columns, levels, floor bays</li><li>Overflow, Delivery, Count Entry, Print Form, Supply List</li><li>Count Entry — Location Count with override, Standalone Count with unit dropdown</li><li>Reports — all five sub-views explained</li><li>Admin section — API key, Firebase rules, weekly report, DC URLs</li><li>Quick reference card — common tasks at a glance</li></ul>'
         +'<div class="help-actions"><a class="help-btn-p" href="https://mcalabro108.github.io/indirect-materials-tracker/Supply_Rack_Tracker_User_Guide.docx" target="_blank">📄 Download User Guide</a></div>';
     }
   },
