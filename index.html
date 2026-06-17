@@ -527,9 +527,14 @@ mark{background:#fff3cd;color:var(--dark);border-radius:2px;padding:0 2px}
     </div>
     <div class="pw-bd">
       <label>Password</label>
-      <input type="password" id="pw-input" placeholder="••••••••••"
+      <!-- Dummy fields trick browser into not autofilling the real input -->
+      <input type="text" style="display:none" name="username">
+      <input type="password" style="display:none" name="dummy">
+      <input type="text" id="pw-input" placeholder="Enter password"
              onkeydown="if(event.key==='Enter')checkPassword()"
-             autocomplete="off">
+             autocomplete="new-password"
+             onfocus="this.select()"
+             style="font-family:monospace;letter-spacing:2px">
       <div class="pw-error" id="pw-error"></div>
       <button class="pw-btn" onclick="checkPassword()">Enter →</button>
       <div class="pw-hint">Contact your supervisor if you need the password.</div>
@@ -715,7 +720,7 @@ function hashString(str){
     });
 }
 function checkPassword(){
-  var val = document.getElementById("pw-input").value;
+  var val = document.getElementById("pw-input").value.trim();
   if(!val){showPwError("Please enter the password."); return;}
   hashString(val).then(function(hash){
     if(hash === PW_HASH){
@@ -725,7 +730,7 @@ function checkPassword(){
       document.getElementById("pw-error").textContent = "";
       bootApp();
     } else {
-      showPwError("Incorrect password. Try again.");
+      showPwError("Incorrect password. Please type CarParts2024! exactly.");
       document.getElementById("pw-input").value = "";
       document.getElementById("pw-input").focus();
     }
