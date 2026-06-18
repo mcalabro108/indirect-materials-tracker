@@ -789,7 +789,8 @@ var fbDCRef   = null;
 var fbSupRef  = null;
 var fbListener = null;
 var fbSupListener = null;
-var sharedSupplies = null; // loaded from /shared path
+var sharedSupplies = null;
+var userRole  = null; // 'admin' | 'counter' — loaded from Firebase after DC selected
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
 function emptySection(){
@@ -946,20 +947,252 @@ function selectCustomDC(){
   pickDC(v);
 }
 
+// ── USER TIERS ────────────────────────────────────────────────────────────
+// Roles: 'admin' (full access) | 'counter' (slot entry, delivery, counts, reports - no architecture)
+
+function can(action){
+  if(!userRole) return false;
+  if(userRole==='admin') return true;
+  // Counter permissions
+  var counterOk=['editSlot','viewRack','overflow','delivery','count','print','reports'];
+  return counterOk.indexOf(action)>=0;
+}
+
+function isAdmin(){ return userRole==='admin'; }
+
+// Check for invite link on page load
+function checkInviteUrl(){
+  var url=new URL(window.location.href);
+  var invite=url.searchParams.get('invite');
+  if(!invite) return false;
+  // Store invite token — will be resolved after password + name entry
+  sessionStorage.setItem('cpPendingInvite', invite);
+  // Remove from URL cleanly
+  url.searchParams.delete('invite');
+  window.history.replaceState({},'',url.toString());
+  return true;
+}
+
+// After user enters name — check if there's a pending invite to process
+function resolveInvite(name, dc){
+  var token=sessionStorage.getItem('cpPendingInvite');
+  if(!token) return;
+  var db=firebase.database();
+  db.ref('invites/'+token).once('value', function(snap){
+    var inv=snap.val();
+    if(!inv){ alert('This invite link has already been used or has expired.'); return; }
+    if(inv.dc !== dc){ alert('This invite is for '+inv.dc+' — please switch to that DC.'); return; }
+    var key=name.toLowerCase().replace(/[^a-z0-9]/g,'_')+'_'+Date.now();
+    // Save user role in Firebase
+    db.ref('dc/'+dc+'/users/'+key).set({
+      name:name, role:inv.role, grantedAt:new Date().toISOString(), inviteToken:token
+    });
+    // Mark invite as used
+    db.ref('invites/'+token).remove();
+    sessionStorage.removeItem('cpPendingInvite');
+    // Apply role
+    userRole=inv.role;
+    localStorage.setItem('cpRole_'+dc, inv.role);
+    localStorage.setItem('cpUserKey_'+dc, key);
+    renderTabs(); renderContent();
+    alert('Welcome! You have been given '+(inv.role==='admin'?'Admin':'Counter')+' access to '+dc+'.');
+  });
+}
+
+// Load role for current user + DC
+function loadUserRole(dc, name){
+  // Check localStorage cache first (fast)
+  var cached=localStorage.getItem('cpRole_'+dc);
+  if(cached){ userRole=cached; renderTabs(); renderContent(); }
+
+  // Verify against Firebase (authoritative)
+  var db=firebase.database();
+  var userKey=localStorage.getItem('cpUserKey_'+dc);
+  if(userKey){
+    db.ref('dc/'+dc+'/users/'+userKey).once('value', function(snap){
+      var u=snap.val();
+      if(u && u.role){
+        userRole=u.role;
+        localStorage.setItem('cpRole_'+dc, u.role);
+      } else {
+        // User key not found — might be a pre-tier user, grant admin
+        userRole='admin';
+        localStorage.setItem('cpRole_'+dc,'admin');
+      }
+      renderTabs(); renderContent();
+    });
+  } else {
+    // No key — legacy user or first time. Check if any users exist for this DC
+    db.ref('dc/'+dc+'/users').once('value', function(snap){
+      if(!snap.exists()){
+        // No users yet — this is a pre-tier user, grant admin and register
+        userRole='admin';
+        var key=name.toLowerCase().replace(/[^a-z0-9]/g,'_')+'_'+Date.now();
+        db.ref('dc/'+dc+'/users/'+key).set({
+          name:name, role:'admin', grantedAt:new Date().toISOString(), note:'legacy-user'
+        });
+        localStorage.setItem('cpRole_'+dc,'admin');
+        localStorage.setItem('cpUserKey_'+dc,key);
+      } else {
+        // Users exist but this person isn't registered — pending
+        userRole='pending';
+      }
+      renderTabs(); renderContent();
+    });
+  }
+}
+
+// ── INVITE MANAGEMENT (Admin only) ────────────────────────────────────────
+function generateInvite(dc, role){
+  var chars='ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  var token='';
+  for(var i=0;i<12;i++) token+=chars.charAt(Math.floor(Math.random()*chars.length));
+  var db=firebase.database();
+  db.ref('invites/'+token).set({
+    dc:dc, role:role, createdAt:new Date().toISOString(),
+    createdBy:userName||'Admin'
+  });
+  var link=window.location.origin+window.location.pathname+'?dc='+dc+'&invite='+token;
+  return link;
+}
+
+function showInviteModal(dc){
+  var role='counter';
+  var html='<div style="padding:0">'
+    +'<div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:12px">Generate Invite Link</div>'
+    +'<div style="font-size:13px;color:var(--gray);margin-bottom:14px">Create a one-time link to send to a new user. They open it, enter the password and their name, and are automatically granted the selected role at '+dc+'.</div>'
+    +'<div style="margin-bottom:14px">'
+      +'<label style="font-size:12px;font-weight:700;color:var(--dark);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:8px">Role</label>'
+      +'<div style="display:flex;gap:10px">'
+        +'<button id="inv-role-counter" onclick="document.getElementById(\'inv-role-counter\').style.background=\'var(--orange)\';document.getElementById(\'inv-role-counter\').style.color=\'#fff\';document.getElementById(\'inv-role-admin\').style.background=\'#fff\';document.getElementById(\'inv-role-admin\').style.color=\'var(--gray)\';document.getElementById(\'inv-role-val\').value=\'counter\'" '
+          +'style="flex:1;padding:10px;border:2px solid var(--orange);border-radius:8px;background:var(--orange);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">📋 Counter</button>'
+        +'<button id="inv-role-admin" onclick="document.getElementById(\'inv-role-admin\').style.background=\'var(--navy)\';document.getElementById(\'inv-role-admin\').style.color=\'#fff\';document.getElementById(\'inv-role-counter\').style.background=\'#fff\';document.getElementById(\'inv-role-counter\').style.color=\'var(--gray)\';document.getElementById(\'inv-role-val\').value=\'admin\'" '
+          +'style="flex:1;padding:10px;border:2px solid var(--gray-lt);border-radius:8px;background:#fff;color:var(--gray);font-size:13px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">⚙ Admin</button>'
+      +'</div>'
+      +'<input type="hidden" id="inv-role-val" value="counter">'
+    +'</div>'
+    +'<div id="inv-link-out" style="display:none;margin-top:12px">'
+      +'<label style="font-size:12px;font-weight:700;color:var(--dark);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">Invite Link (one-time use)</label>'
+      +'<div style="display:flex;gap:8px;align-items:center">'
+        +'<input id="inv-link-val" type="text" readonly style="flex:1;font-size:12px;padding:8px 10px;border:1.5px solid var(--gray-lt);border-radius:8px;font-family:monospace;color:var(--dark);background:var(--offwhite)">'
+        +'<button onclick="var el=document.getElementById(\'inv-link-val\');el.select();document.execCommand(\'copy\');this.textContent=\'✓ Copied\'" style="padding:8px 14px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;white-space:nowrap">Copy</button>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--gray);margin-top:6px">Send this link via email, Teams, or text. It expires after one use.</div>'
+    +'</div>'
+    +'<div style="display:flex;gap:10px;margin-top:16px">'
+      +'<button onclick="var r=document.getElementById(\'inv-role-val\').value;var link=generateInvite(\''+dc+'\',r);document.getElementById(\'inv-link-val\').value=link;document.getElementById(\'inv-link-out\').style.display=\'block\'" '
+        +'style="padding:9px 20px;border:none;border-radius:8px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">Generate Link</button>'
+      +'<button onclick="closeModal()" style="padding:9px 16px;border:1.5px solid var(--gray-lt);border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;color:var(--gray)">Close</button>'
+    +'</div>'
+  +'</div>';
+  openModal('Invite New User — '+dc, html);
+}
+
+// ── USERS TAB (Settings) ──────────────────────────────────────────────────
+function renderUsersPanel(){
+  if(!isAdmin()) return '<div style="padding:2rem;color:var(--gray);text-align:center">Admin access required.</div>';
+  var dcs=['LAS','LSL','JAX','GPT'];
+  var html='<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px">User Management</div>'
+    +'<div style="font-size:12px;color:var(--gray);margin-bottom:16px">Manage users across all DCs. Generate invite links to add new users with a specific role.</div>';
+
+  dcs.forEach(function(dc){
+    html+='<div style="margin-bottom:1.5rem">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+        +'<div style="font-size:13px;font-weight:700;color:var(--navy)">'+dc+'</div>'
+        +(isAdmin()?'<button onclick="showInviteModal(\''+dc+'\')" class="btn b-org" style="font-size:12px;padding:5px 12px">+ Invite User</button>':'')
+      +'</div>'
+      +'<div id="users-list-'+dc+'" style="font-size:12px;color:var(--gray);font-style:italic">Loading…</div>'
+    +'</div>';
+  });
+  // Load users for all DCs
+  setTimeout(function(){
+    dcs.forEach(function(dc){
+      var el=document.getElementById('users-list-'+dc);
+      if(!el) return;
+      firebase.database().ref('dc/'+dc+'/users').once('value',function(snap){
+        var users=snap.val();
+        if(!users||!Object.keys(users).length){
+          el.innerHTML='<span style="color:var(--gray-mid)">No users registered yet.</span>';
+          return;
+        }
+        var rows=Object.keys(users).map(function(k){
+          var u=users[k];
+          var roleColor=u.role==='admin'?'var(--navy)':'var(--orange)';
+          var roleLabel=u.role==='admin'?'⚙ Admin':'📋 Counter';
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fff;border:1px solid var(--gray-lt);border-radius:8px;margin-bottom:5px">'
+            +'<div style="display:flex;align-items:center;gap:10px">'
+              +'<div style="width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">'+escHtml((u.name||'?')[0].toUpperCase())+'</div>'
+              +'<div>'
+                +'<div style="font-size:13px;font-weight:600;color:var(--dark)">'+escHtml(u.name||'Unknown')+'</div>'
+                +'<div style="font-size:11px;color:var(--gray)">'+new Date(u.grantedAt||0).toLocaleDateString()+'</div>'
+              +'</div>'
+            +'</div>'
+            +'<div style="display:flex;align-items:center;gap:8px">'
+              +'<span style="font-size:11px;font-weight:700;color:'+roleColor+';background:'+roleColor+'18;padding:3px 10px;border-radius:20px">'+roleLabel+'</span>'
+              +(isAdmin()?'<button onclick="changeUserRole(\''+dc+'\',\''+k+'\',\''+u.role+'\')" style="font-size:11px;padding:4px 8px;border:1px solid var(--gray-lt);border-radius:6px;background:#fff;cursor:pointer;font-family:Inter,sans-serif;color:var(--gray)">Change</button>':'')
+              +(isAdmin()?'<button onclick="removeUser(\''+dc+'\',\''+k+'\')" style="font-size:11px;padding:4px 8px;border:1px solid #fca5a5;border-radius:6px;background:#fff;cursor:pointer;font-family:Inter,sans-serif;color:#dc2626">Remove</button>':'')
+            +'</div>'
+          +'</div>';
+        }).join('');
+        el.innerHTML=rows;
+      });
+    });
+  },100);
+  return html;
+}
+
+function changeUserRole(dc, key, currentRole){
+  var newRole=currentRole==='admin'?'counter':'admin';
+  if(!confirm('Change this user to '+newRole+' at '+dc+'?')) return;
+  firebase.database().ref('dc/'+dc+'/users/'+key+'/role').set(newRole);
+  setTimeout(function(){
+    var el=document.getElementById('users-list-'+dc);
+    if(el) el.innerHTML='Refreshing…';
+    // Re-render
+    var settingsEl=document.getElementById('content');
+    if(settingsEl) settingsEl.innerHTML=renderSettings();
+  },500);
+}
+
+function removeUser(dc, key){
+  if(!confirm('Remove this user from '+dc+'? They will lose access immediately.')) return;
+  firebase.database().ref('dc/'+dc+'/users/'+key).remove();
+  setTimeout(function(){
+    var settingsEl=document.getElementById('content');
+    if(settingsEl) settingsEl.innerHTML=renderSettings();
+  },500);
+}
+
+// ── PENDING ACCESS SCREEN ─────────────────────────────────────────────────
+function renderPendingScreen(){
+  return '<div style="text-align:center;padding:4rem 2rem;max-width:480px;margin:0 auto">'
+    +'<div style="font-size:48px;margin-bottom:16px">🔐</div>'
+    +'<div style="font-size:20px;font-weight:800;color:var(--navy);margin-bottom:8px">Access Pending</div>'
+    +'<div style="font-size:14px;color:var(--gray);line-height:1.7;margin-bottom:24px">You\'re not yet registered at <strong>'+escHtml(currentDC||'')+'</strong>. Ask your supervisor to send you an invite link for this distribution center.</div>'
+    +'<div style="background:var(--offwhite);border:1.5px solid var(--gray-lt);border-radius:var(--radius-lg);padding:16px;text-align:left;font-size:13px;color:var(--gray);line-height:1.7">'
+      +'<b>To get access:</b><br>'
+      +'1. Ask your supervisor (Admin) to go to <b>Settings → Users</b><br>'
+      +'2. Click <b>+ Invite User</b> next to '+escHtml(currentDC||'')+'<br>'
+      +'3. They select your role and generate a link<br>'
+      +'4. Open that link — you\'ll be registered automatically'
+    +'</div>'
+    +'<button onclick="switchDC()" class="btn" style="margin-top:20px">← Choose a different DC</button>'
+  +'</div>';
+}
+
 function pickDC(code){
   code=code.toUpperCase().replace(/[^A-Z0-9]/g,"");
   if(!code)return;
   currentDC=code;
-  // Update URL param without reload
+  userRole=null; // reset role for new DC
   var url=new URL(window.location.href);
   url.searchParams.set("dc",code);
   window.history.replaceState({},"",url.toString());
-  // Update badge
   document.getElementById("dc-badge").textContent=code;
-  // Hide picker
   document.getElementById("dc-screen").classList.add("hidden");
-  // Attach Firebase listeners
   attachFirebase(code);
+  // Load user role for this DC (after name is set)
+  if(userName) loadUserRole(code, userName);
 }
 
 function switchDC(){
@@ -1070,27 +1303,29 @@ function renderTabs(){
       var r=state.racks[rid]; if(!r)return;
       var isActive=rid===curTab;
       if(isActive&&editingTabId===rid){
-        // Show inline input for renaming
         html+='<span class="tab active" style="padding:12px 8px;cursor:default">'
           +'<input class="tab-name-input" id="tab-rename-input" type="text" value="'+r.name+'"'
           +' onblur="commitTabRename(\''+rid+'\')" onkeydown="if(event.key===\'Enter\')commitTabRename(\''+rid+'\');if(event.key===\'Escape\')cancelTabRename()" onclick="event.stopPropagation()">'
           +'</span>';
       } else {
-        html+='<button class="tab'+(isActive?" active":"")+'" onclick="switchTab(\''+rid+'\')" ondblclick="startTabRename(\''+rid+'\')" title="Double-click to rename">'+r.name+'</button>';
+        // Counters can't double-click to rename
+        var dbl=isAdmin()?'ondblclick="startTabRename(\''+rid+'\')" title="Double-click to rename"':'';
+        html+='<button class="tab'+(isActive?" active":"")+'" onclick="switchTab(\''+rid+'\')" '+dbl+'>'+r.name+'</button>';
       }
     });
   }
-  // Add rack button
-  if(state) html+='<button class="tab-add-btn" onclick="addRack()" title="Add new rack tab">＋</button>';
+  // Add rack button — admin only
+  if(state&&isAdmin()) html+='<button class="tab-add-btn" onclick="addRack()" title="Add new rack tab">＋</button>';
   html+='<button class="tab'+(curTab==="overflow"?" active":"")+'" onclick="switchTab(\'overflow\')">Overflow</button>';
   html+='<button class="tab'+(curTab==="delivery"?" active":"")+'" onclick="switchTab(\'delivery\')">🚚 Delivery</button>';
   html+='<button class="tab'+(curTab==="countentry"?" active":"")+'" onclick="switchTab(\'countentry\')">📋 Count Entry</button>';
   html+='<button class="tab'+(curTab==="printform"?" active":"")+'" onclick="switchTab(\'printform\')">🖨️ Print Form</button>';
   html+='<button class="tab'+(curTab==="reports"?" active":"")+'" onclick="switchTab(\'reports\')">📊 Reports</button>';
-  html+='<button class="tab'+(curTab==="supplylist"?" active":"")+'" onclick="switchTab(\'supplylist\')">Supply List</button>';
-  html+='<button class="tab settings-tab'+(curTab==="settings"?" active":"")+'" onclick="switchTab(\'settings\')">⚙ Settings</button>';
+  if(isAdmin()){
+    html+='<button class="tab'+(curTab==="supplylist"?" active":"")+'" onclick="switchTab(\'supplylist\')">Supply List</button>';
+    html+='<button class="tab settings-tab'+(curTab==="settings"?" active":"")+'" onclick="switchTab(\'settings\')">⚙ Settings</button>';
+  }
   el.innerHTML=html;
-  // Focus rename input if active
   if(editingTabId){var inp=document.getElementById("tab-rename-input");if(inp){inp.focus();inp.select();}}
 }
 
@@ -1111,44 +1346,59 @@ window.addEventListener('resize',function(){
 
 function renderContent(){
   var el=document.getElementById("content"); if(!el)return;
+  // Save scroll positions before re-render
+  var savedRackScroll=0;
+  var rw=document.querySelector('.rack-wrap');
+  if(rw) savedRackScroll=rw.scrollLeft;
+
   if(!state||!curTab){
     el.innerHTML='<div class="connecting-msg"><div class="spinner"></div><div class="conn-txt">Connecting to '+(currentDC||"database")+'…</div></div>';
     return;
   }
+  // Pending access — user not yet registered at this DC
+  if(userRole==='pending'){
+    el.innerHTML=renderPendingScreen();
+    return;
+  }
   if(curTab==="overflow")    {el.innerHTML=renderOverflow();    return;}
-  if(curTab==="supplylist")  {el.innerHTML=renderSupplyList();  return;}
-  if(curTab==="settings")    {el.innerHTML=renderSettings();    return;}
+  if(curTab==="supplylist")  {if(!isAdmin()){el.innerHTML='<div style="padding:2rem;text-align:center;color:var(--gray)">Admin access required for Supply List.</div>';return;} el.innerHTML=renderSupplyList();  return;}
+  if(curTab==="settings")    {if(!isAdmin()){el.innerHTML='<div style="padding:2rem;text-align:center;color:var(--gray)">Admin access required for Settings.</div>';return;} el.innerHTML=renderSettings();    return;}
   if(curTab==="delivery")    {el.innerHTML=renderDelivery();    return;}
   if(curTab==="countentry")  {el.innerHTML=renderCountEntry();  return;}
   if(curTab==="printform")   {el.innerHTML=renderPrintForm();   showPrintForm(); return;}
   if(curTab==="reports")     {el.innerHTML='<div id="rpt-root"><div class="connecting-msg"><div class="spinner"></div><div class="conn-txt">Loading report data…</div></div></div>'; loadReportData(); return;}
   var rack=state.racks[curTab];
   if(!rack){
-    // curTab may point to a deleted rack — fall back to first available
     var firstRack=state.rackOrder&&state.rackOrder[0];
     if(firstRack){curTab=firstRack; rack=state.racks[curTab];}
     if(!rack){el.innerHTML='<div class="connecting-msg"><div class="spinner"></div><div class="conn-txt">Loading…</div></div>';return;}
   }
   el.innerHTML=renderRack(rack,curTab);
+  // Restore rack horizontal scroll position after re-render
+  if(savedRackScroll>0){
+    var newRw=document.querySelector('.rack-wrap');
+    if(newRw) newRw.scrollLeft=savedRackScroll;
+  }
 }
 
 // ── RACK RENDERER ─────────────────────────────────────────────────────────
 function renderRack(rack, rackId){
   var cats=sharedSupplies?sharedSupplies.cats:DCATS;
   var html=pageCtx('rack','A visual map of <strong>'+escHtml(rack.name)+'</strong>. Each column is a rack bay; each row is a shelf level. <strong>Click any white card</strong> to assign a supply item and enter quantities. Changes sync instantly to your whole team.');
-  // Controls bar — columns only (levels now per-column)
+  // Controls bar — admin only
   html+='<div class="rack-ctrl-bar">'
     +'<div class="rck-name">'+rack.name+'</div>'
-    +'<div class="ctrl-group">'
+    +(isAdmin()?'<div class="ctrl-group">'
       +'<span class="ctrl-lbl">Columns</span>'
       +'<button class="ctrl-btn sub" onclick="removeCol(\''+rackId+'\',null)">−</button>'
       +'<span class="ctrl-val">'+rack.cols+'</span>'
       +'<button class="ctrl-btn add" onclick="addCol(\''+rackId+'\',null)">+</button>'
-    +'</div>'
-    +'<div style="font-size:12px;color:var(--gray);display:flex;align-items:center;gap:5px">'
+    +'</div>':'')
+    +(isAdmin()?'<div style="font-size:12px;color:var(--gray);display:flex;align-items:center;gap:5px">'
       +'<span style="display:inline-block;width:12px;height:3px;background:var(--orange);border-radius:2px"></span>'
       +'Each column has independent level controls at the top'
-    +'</div>'
+    +'</div>':'')
+    +(userRole==='counter'?'<div style="font-size:12px;color:var(--gray);display:flex;align-items:center;gap:6px"><span style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:20px;padding:2px 10px;font-weight:700;font-size:11px">📋 Counter Mode</span>Click any slot to assign or update inventory</div>':'')
     +'</div>';
 
   // Legend
@@ -1172,21 +1422,20 @@ function renderRack(rack, rackId){
     var fbW=Math.max(120,fbSec*130);
 
     html+='<div style="display:flex;flex-direction:column;align-items:center;gap:0">'
-      +'<div class="rack-ins-col" title="Insert column here" onclick="addCol(\''+rackId+'\','+ci+')">'
+      +(isAdmin()?'<div class="rack-ins-col" title="Insert column here" onclick="addCol(\''+rackId+'\','+ci+')">'
         +'<button onclick="event.stopPropagation();addCol(\''+rackId+'\','+ci+')" title="Insert column here">+</button>'
-      +'</div>'
-      // Floor-between toggle button
-      +'<button class="floor-add-btn" style="margin-top:6px;width:auto;padding:4px 7px;font-size:10px" '
+      +'</div>':'')
+      +(isAdmin()?'<button class="floor-add-btn" style="margin-top:6px;width:auto;padding:4px 7px;font-size:10px" '
         +'onclick="toggleFloorBetween(\''+rackId+'\','+ci+')" title="'+(hasFB?"Remove":"Add")+'floor bay here">'
         +(hasFB?'✕ Floor':'+ Floor')
-      +'</button>'
+      +'</button>':'')
       +(hasFB
         ?'<div class="floor-bay-between" style="width:'+fbW+'px"><div class="rack-slot-row">'
           +buildFloorSections(fbSlot,rackId,fbKey,true)
-          +'<div class="slot-ctrl-bar" onclick="event.stopPropagation()" style="opacity:1;position:relative;display:flex;gap:3px;padding:3px 0">'
+          +(isAdmin()?'<div class="slot-ctrl-bar" onclick="event.stopPropagation()" style="opacity:1;position:relative;display:flex;gap:3px;padding:3px 0">'
             +(fbSec<5?'<button class="slot-ctrl-btn add-sec" onclick="addSection(\''+rackId+'\',\''+fbKey+'\')" title="Add section">+</button>':"")
             +(fbSec>1?'<button class="slot-ctrl-btn rem-sec" onclick="removeSection(\''+rackId+'\',\''+fbKey+'\')" title="Remove section">−</button>':"")
-          +'</div>'
+          +'</div>':'')
         +'</div></div>'
         :"")
     +'</div>';
@@ -1201,7 +1450,6 @@ function renderRack(rack, rackId){
     var colLevelNames=(rack.colLevelNames&&rack.colLevelNames[ci])||makeLevelNames(colLevels);
     var cName=(rack.colNames&&rack.colNames[ci])||("Col "+(ci+1));
 
-    // Column tower — width scales with max sections in this column
     var maxSec=1;
     for(var li2=0;li2<colLevels;li2++){
       var sk=ci+"_"+li2;
@@ -1211,18 +1459,19 @@ function renderRack(rack, rackId){
     var towerW=Math.max(180, maxSec*160);
 
     html+='<div class="rack-col-tower" style="flex:0 0 '+towerW+'px;min-width:'+towerW+'px">'
-      // Column header
       +'<div class="rack-col-hd">'
-        +'<input class="inline-name-input" type="text" value="'+escHtml(cName)+'"'
-          +' onblur="renameCol(\''+rackId+'\','+ci+',this.value)"'
-          +' onclick="event.stopPropagation()" title="Click to rename">'
-        +'<div class="col-level-ctrl">'
+        +(isAdmin()
+          ?'<input class="inline-name-input" type="text" value="'+escHtml(cName)+'"'
+            +' onblur="renameCol(\''+rackId+'\','+ci+',this.value)"'
+            +' onclick="event.stopPropagation()" title="Click to rename">'
+          :'<span style="color:#fff;font-size:12px;font-weight:700;padding:2px 4px">'+escHtml(cName)+'</span>')
+        +(isAdmin()?'<div class="col-level-ctrl">'
           +'<span>Levels</span>'
           +'<button class="sub" onclick="removeColLevel(\''+rackId+'\','+ci+')" title="Remove level">−</button>'
           +'<span style="color:#fff;font-size:11px;min-width:14px;text-align:center">'+colLevels+'</span>'
           +'<button class="add" onclick="addColLevel(\''+rackId+'\','+ci+')" title="Add level">+</button>'
-        +'</div>'
-        +'<button onclick="removeCol(\''+rackId+'\','+ci+')" style="width:18px;height:18px;border-radius:5px;border:1px solid rgba(220,38,38,.4);background:rgba(220,38,38,.15);color:#fca5a5;font-size:11px;cursor:pointer;margin-top:3px" title="Remove column">✕</button>'
+        +'</div>':'')
+        +(isAdmin()?'<button onclick="removeCol(\''+rackId+'\','+ci+')" style="width:18px;height:18px;border-radius:5px;border:1px solid rgba(220,38,38,.4);background:rgba(220,38,38,.15);color:#fca5a5;font-size:11px;cursor:pointer;margin-top:3px" title="Remove column">✕</button>':'')
       +'</div>';
 
     // Levels — top to bottom
@@ -1232,19 +1481,19 @@ function renderRack(rack, rackId){
       var slot=(rack.slots&&rack.slots[slotKey])||emptySlot();
       if(!slot.sections||!slot.sections.length) slot.sections=[emptySection()];
 
-      // Beam (orange horizontal bar) between levels
       if(li>0) html+='<div class="rack-beam"></div>';
 
       html+='<div class="rack-bay">'
         +'<div class="rack-bay-label">'
-          +'<input class="inline-name-input" type="text" value="'+escHtml(lvName)+'"'
-            +' onblur="renameColLevel(\''+rackId+'\','+ci+','+li+',this.value)"'
-            +' onclick="event.stopPropagation()" title="Rename level">'
-          +'<button onclick="removeColLevel(\''+rackId+'\','+ci+')" style="width:14px;height:14px;border-radius:4px;border:none;background:rgba(220,38,38,.15);color:#fca5a5;font-size:9px;cursor:pointer;flex-shrink:0;line-height:1" title="Remove this level">✕</button>'
+          +(isAdmin()
+            ?'<input class="inline-name-input" type="text" value="'+escHtml(lvName)+'"'
+              +' onblur="renameColLevel(\''+rackId+'\','+ci+','+li+',this.value)"'
+              +' onclick="event.stopPropagation()" title="Rename level">'
+              +'<button onclick="removeColLevel(\''+rackId+'\','+ci+')" style="width:14px;height:14px;border-radius:4px;border:none;background:rgba(220,38,38,.15);color:#fca5a5;font-size:9px;cursor:pointer;flex-shrink:0;line-height:1" title="Remove this level">✕</button>'
+            :'<span style="color:rgba(255,255,255,.7);font-size:11px">'+escHtml(lvName)+'</span>')
         +'</div>'
         +'<div class="rack-slot-row">';
 
-      // Sections
       var numSec=slot.sections.length;
       slot.sections.forEach(function(sec,si){
         var secLabel=numSec>1?["Left","Ctr-L","Center","Ctr-R","Right"].slice(0,numSec)[si]||("S"+(si+1)):null;
@@ -1252,14 +1501,14 @@ function renderRack(rack, rackId){
           +'" onclick="openSlotModal(\''+rackId+'\',\''+slotKey+'\','+si+')">'
           +(secLabel?'<div class="slot-section-lbl">'+secLabel+'</div>':"")
           +buildSlotInner(sec)
-          +'<div class="slot-ctrl-bar" onclick="event.stopPropagation()">'
+          +(isAdmin()?'<div class="slot-ctrl-bar" onclick="event.stopPropagation()">'
             +(numSec<5?'<button class="slot-ctrl-btn add-sec" onclick="addSection(\''+rackId+'\',\''+slotKey+'\')" title="Add section">+</button>':"")
             +(numSec>1?'<button class="slot-ctrl-btn rem-sec" onclick="removeSection(\''+rackId+'\',\''+slotKey+'\')" title="Remove last section">−</button>':"")
-          +'</div>'
+          +'</div>':'')
         +'</div>';
       });
 
-      html+='</div></div>'; // close slot-row + bay
+      html+='</div></div>';
     }
     // Per-column floor bay
     var hasColFloor=rack.colFloor&&rack.colFloor[ci];
@@ -1267,20 +1516,22 @@ function renderRack(rack, rackId){
     var cfSlot=(rack.slots&&rack.slots[cfKey])||emptySlot();
     if(!cfSlot.sections||!cfSlot.sections.length) cfSlot.sections=[emptySection()];
     var cfSec=cfSlot.sections.length;
-    html+='<div style="display:flex;align-items:center;justify-content:center;padding:4px 0">'
-      +'<button class="floor-add-btn" onclick="toggleColFloor(\''+rackId+'\','+ci+')">'
-        +(hasColFloor?'✕ Remove Floor':'+ Add Floor')
-      +'</button>'
-    +'</div>';
+    if(isAdmin()){
+      html+='<div style="display:flex;align-items:center;justify-content:center;padding:4px 0">'
+        +'<button class="floor-add-btn" onclick="toggleColFloor(\''+rackId+'\','+ci+')">'
+          +(hasColFloor?'✕ Remove Floor':'+ Add Floor')
+        +'</button>'
+      +'</div>';
+    }
     if(hasColFloor){
       html+='<div class="floor-bay-col">'
         +'<div class="rack-slot-row">'
           +buildFloorSections(cfSlot,rackId,cfKey,false)
         +'</div>'
-        +'<div style="display:flex;gap:3px;justify-content:flex-end;margin-top:4px">'
+        +(isAdmin()?'<div style="display:flex;gap:3px;justify-content:flex-end;margin-top:4px">'
           +(cfSec<5?'<button class="slot-ctrl-btn add-sec" onclick="addSection(\''+rackId+'\',\''+cfKey+'\')" title="Add section">+</button>':"")
           +(cfSec>1?'<button class="slot-ctrl-btn rem-sec" onclick="removeSection(\''+rackId+'\',\''+cfKey+'\')" title="Remove section">−</button>':"")
-        +'</div>'
+        +'</div>':'')
       +'</div>';
     }
 
@@ -1615,6 +1866,12 @@ function renderSettings(){
       +'<p style="font-size:12px;color:var(--gray-mid);margin-top:10px">Each DC has its own isolated rack data. The supply list is shared across all DCs.</p>'
     +'</div></div>';
 
+  // Users panel
+  html+='<div class="settings-card">'
+    +'<div class="settings-card-hd"><h3>👥 Users</h3></div>'
+    +'<div class="settings-card-bd">'+renderUsersPanel()+'</div>'
+  +'</div>';
+
   // Admin section — locked behind admin PIN
   var adminAuthed=sessionStorage.getItem('cpAdminAuth')==='1';
   html+='<div class="settings-card">'
@@ -1939,6 +2196,10 @@ function confirmName(){
   userName=v; localStorage.setItem("cpUser",v);
   document.getElementById("name-ov").style.display="none";
   document.getElementById("uname").textContent=v;
+  // Load role for current DC
+  if(currentDC) loadUserRole(currentDC, v);
+  // Resolve any pending invite
+  if(currentDC && sessionStorage.getItem('cpPendingInvite')) resolveInvite(v, currentDC);
 }
 function changeName(){
   document.getElementById("ninput").value=userName;
@@ -3584,6 +3845,8 @@ function instrBox(title,items){
 
 // ── BOOT ──────────────────────────────────────────────────────────────────
 function bootApp(){
+  // Check for invite URL before anything else
+  checkInviteUrl();
   renderTabs();
   renderContent();
   initDCPicker();
@@ -3598,6 +3861,8 @@ function bootApp(){
       if(!localStorage.getItem('cpTourDone')) startTour();
     },1200);
   } else {
+    // Check for invite in URL even before login
+    checkInviteUrl();
     setTimeout(function(){ var el=document.getElementById("pw-input"); if(el) el.focus(); }, 100);
   }
 })();
